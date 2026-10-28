@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="UTF-8">
+    <meta name="description" content="A Page.">
+    <meta name="keywords" content="ishpiesh,ish,ishpage">
+    <!--<meta name="viewport" content="width=device-width, initial-scale=1" /> -->
+
+    <!-- Stylesheet link -->
+    <link type="text/css" rel="stylesheet" href="/files/default.css">
+
+    <title>Ish Page</title>
+
+    <link rel="icon" href="/files/favicon.ico">
+</head>
+<!-- header -->
+
+<body style="background-color:#000000; color: green;  text-align: center;">
+
+ <div class="header">
+        <span style="font-family: 'BlueScreen'; line-height: 80%; font-size: 10vw; display: inline-block;">
+ISHPAGE
+        </span>
+        <br><br>
+        <span id="splash1" style="text-align: center; font-family: 'BasicManual'; color: green; line-height: 0.5vw; font-size: 2vw; margin-bottom:20px">
+        </span>
+
+    </div>
+
+    <br><br>
+
+    <!-- button links -->
+
+        <!-- <div class="column">
+        </div> -->
+        <div class="column">
+            <p style="color: green;">
+                <a href="/ishabout">
+                    <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 5vw;display: inline-block;text-align: center;white-space: pre;'>
+about
+                    </span>
+                </a>
+                <br><br>
+                <a href="/ishthoughtson">
+                    <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 5vw;display: inline-block;text-align: center;white-space: pre;'>
+thoughtson
+
+                    </span>
+                </a>
+                <br><br>
+                <a href="/ishmusic">
+                    <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 5vw;display: inline-block;text-align: center;white-space: pre;'>
+music
+                    </span>
+                    <br><br>
+                </a>
+                    <a href="/ishproject">
+                        <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 5vw;display: inline-block;text-align: center; white-space: pre;'>
+projects
+
+                        </span>
+                    </a>
+                    <br><br><br><br>
+                    <a href="/terminal">
+                        <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 1vw;display: inline-block;text-align: center; white-space: pre;'>
+do you like terminals? click me...
+
+                        </span>
+                    </a>
+            </p>
+        </div>
+            <!-- <div class="column">
+        </div> -->
+
+    <!-- end button links -->
+
+<!--
+    <div class="row">
+    <div class="header-mobile">
+        <span style="font-family: 'BlueScreen'; line-height: 80%; font-size: 13vw; display: inline-block;">
+ISHPAGE
+        </span>
+          <br>
+        <span id="splash2" style="text-align: center; font-family: 'BlueScreen'; color: green; line-height: 0.5vw; font-size: 2vw">
+        </span>
+    </div>
+</div>
+<div class="row">
+    <div class="column-mobile-middle">
+
+          <p style="color: green;">
+              <a href="/ishabout">
+                  <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 8vw;display: inline-block;text-align: center;white-space: pre;'>
+about
+                  </span>
+              </a>
+              <br><br>
+              <a href="/ishthoughtson">
+                  <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 8vw;display: inline-block;text-align: center;white-space: pre;'>
+thoughtson
+
+                  </span>
+              </a>
+              <br><br>
+              <a href="/ishmusic">
+                  <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 8vw;display: inline-block;text-align: center;white-space: pre;'>
+music
+                  </span>
+                  <br><br>
+              </a>
+                  <a href="/ishproject">
+                      <span style='font-family: "BlueScreen";line-height: 1vw;font-size: 8vw;display: inline-block;text-align: center; white-space: pre;'>
+projects
+
+                      </span>
+                  </a>
+          </p>
+
+
+    </div>
+
+      </div>
+  -->
+<!-- script src attribute -->
+<script src="/ishScript.js"></script>
+
+<!-- unique page scripts -->
+<script>
+    var splashText = new Array("Typical non-qwerty user", "ask me about keyboards!", "ishpage.xyz", "CRTs are the future", "Ask me about cassettes!", "zmk > qmk", "Shout out to Eater of Worlds", "You look lovely today!", "Stream Harumaki Gohan", "Dvorak or Colemak?", "hatsune miku.", "listen to Madeon's Adventure album","don't you have something better to do?","LETS GO LESBIANS", "splash text!", "i installed linux :(", "pre plating since day one", "can you tell I like the hacker aesthetic?","stream sling by clairo","unhealthy obsession with clairo","unhealthy obsession with snail mail","proud niche keyboard layout user","i love concrete <3","i eat concrete in my spare time","WE LOVE MARTENSITE","roads fan","asphalt muncher","will build a ten lane highway through your house","music enthusiast","saw clairegenius","chronic mac n cheese consumer","raid.report/leaderboard/clears/eaterofworlds","spotmatic sp user","arch linux user","FARCILLE ON TOP","unfortunately a dungeon meshi fan","former undertale fan","dont make me smooch you","i go outside sometimes","ITG PLAYER (derogatory)","i play ddr :D","DREEPY ON TOP","sekaiiii de","ichiban ohime sama","you can find me in a box culvert","kagamine rin","MIKURIN","Highway Engineer^tm","sleep token concert goer","reaper of the yuri fields","stream youman","seeing miku in chicago...","IM A CANIAC!","i use vim.","chronic terminal user","40% Keyboards","inline insomniac","Ryzen 5800x RTX 3080 32Gb DDR4-3200 WATER COOLED PC");
+    var i = Math.floor(splashText.length * Math.random());
+    document.getElementById("splash1").innerHTML = `"<em>${splashText[i]}</em>"`;
+    document.getElementById("splash2").innerHTML = `"<em>${splashText[i]}</em>"`;
+</script>
+
+</body>
+
+</html>

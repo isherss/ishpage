@@ -1,0 +1,25 @@
+.terminal {
+    --color: green;
+    --background: black;
+    --link-color: darkblue;
+    --animation: terminal-underline;
+    --line-thickness: 3;
+    resize: both;
+    overflow: hidden;
+}
+
+.center {
+  margin: auto;
+  width: 50%;
+  border: 0.1vw solid green;
+}
+
+body{
+  background-color: black;
+}
+
+@media screen and (min-width: 1200px) {
+    :root {
+        --size: 1.4;
+    }
+}

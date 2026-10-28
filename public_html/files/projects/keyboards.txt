@@ -1,0 +1,10 @@
+<span style:"font-size: 100%;">
+No, not piano keyboards, but the typing keyboards! Every device needs a way to
+communicate with the human, and keyboards are one of the most important communication mediums out there.
+<br><br>
+I love the versatility and infinite options available with keyboards. From layout,
+stagger, size, to case design, mounting, acoustics- to firmware and coding. It
+envelops every level of engineering, and thats insanely fun and challenging. 
+<br><br>
+Click me to learn more!
+</span>

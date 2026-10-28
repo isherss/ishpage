@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <title>Creech Page</title>
+
+	<style>
+    /* specific to this page */
+
+    @import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=Ubuntu:wght@500&display=swap');
+    body{
+      background: #32a0c5 ;
+      color: purple;
+      text-align: center;
+    }
+    h1{
+      margin: 10px;
+      font-size: 80px;
+      font-family: 'Silkscreen', cursive;
+    }
+    .text{
+      display: inline-block;
+      margin: 40px 350px 0px;
+      font-size: 27px;
+      font-family: 'Ubuntu', sans-serif;
+    }
+
+	</style>
+    <link rel="icon" href="/files/favicon.ico">
+  </head>
+  <body>
+
+  <!-- header-->
+  <h1>Creech page</h1>
+
+  <!-- home button -->
+  <a href="/">
+    <span style='font-family: "Lucida Console";'>
+        <img src="/images/housepurple.png" style="height:1.5vw;width:1.5vw;"
+            onmouseover="this.src='/images/housepurplehover.png'" onmouseout="this.src='/images/housepurple.png'">
+    </span>
+  </a>
+  <!-- main body -->
+
+  <div class ="text">
+    <span style="border-top-style: dotted; border-color: purple; padding: 0px 400px;"></span>
+    <p>
+      <!-- main Body of text -->
+      You seem to have found the secret realm of nothing!
+      <br><br>
+      Hi, this page was made by <strong>Creechy</strong>, also a 19 year old, doing my own things! :)
+      <br>
+      There is actually nothing here except that funne sword in a rock down there
+      <br><br>
+      Nothing really special to say about me, I wanted to have a little fun doing something I haven't done
+      on web dev before (the short animation) !!
+      <br><br>
+      Thx ish!
+      <br><br>
+      <br>
+      (*´-｀*)
+
+    </p> 
+    <img src="/images/engine blade in platform.png" alt="engine blade" width="150" height="150">
+  </div>
+    <script>
+    // start script
+    </script>
+
+  </body>
+</html>
