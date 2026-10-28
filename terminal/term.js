@@ -1,6 +1,6 @@
 
 
-$('body').terminal({
+$('div').terminal({
     help: function() {
         this.echo('ls | shows files and folder in your current directory');
     },
