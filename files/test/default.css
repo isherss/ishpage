@@ -1,0 +1,98 @@
+@font-face {
+font-family: Consolas;
+src: url('/files/fonts/Consolas/Consolas.ttf');
+}
+
+@font-face {
+font-family: Tifax;
+src: url('/files/fonts/Tifax/Tifax.ttf');
+}
+
+@font-face {
+font-family: Gamepixies;
+src: url('/files/fonts/Gamepixies/Gamepixies.ttf');
+}
+@font-face {
+font-family: BlueScreen;
+src: url('/files/fonts/BlueScreen/BlueScreen.ttf');
+}
+@font-face {
+font-family: 'Hachicro';
+src: url('/files/fonts/Hachicro/Hachicro.woff2') format('woff2'), /* Super Modern Browsers */
+url('/files/fonts/Hachicro/Hachicro.woff') format('woff'), /* Pretty Modern Browsers */
+url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype'); /* Safari, Android, iOS */
+}
+
+/*
+
+img {
+    width: 77%;
+    height: auto;
+}
+
+a:link {
+    color: green;
+    text-decoration: none;
+}
+
+a:visited {
+    color: green;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #074c0a;
+    text-decoration: none;
+}
+
+a:active {
+    color: green;
+    text-decoration: none;
+} */
+/*.row {
+    display: flex;
+}
+.column {
+    flex: 25%;
+}
+
+.column.middle {
+    flex: 50%;
+}
+
+.header {
+    margin: 0px 0.5vw 0px 0.5vw;
+    text-align: center;
+    border: 10vw solid green;
+} */
+
+/*
+@media (min-width: 800px) {
+    .column.middle {
+        display: none;
+    }
+
+    .header-desktop {
+        display: none;
+    }
+
+    .column.side {
+        display: none;
+    }
+
+}
+
+@media (max-width: 800px) {
+    .column-mobile-middle {
+        flex: 100%;
+    }
+
+    .column-mobile-side {
+        flex: 25%;
+    }
+
+    .header-mobile {
+
+    }
+}
+*/
