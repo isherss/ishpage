@@ -1,7 +1,7 @@
 (function(){
   "use strict";
   var R=window.RNGU;
-  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", DYN_ODDS=15, WIRE_ODDS=10, VERITY_ODDS=30, DBL_ODDS=25, CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=30000, DYN_PROBLEMS=3;
+  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=15, WIRE_ODDS=10, VERITY_ODDS=30, DBL_ODDS=25, CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=30000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function $(id){return document.getElementById(id);}
   function fmt(n){return Number(n).toLocaleString("en-US");}
@@ -44,7 +44,8 @@
     return fresh();
   }
   var state=load();
-  var authUser=null, authDisplayName="", authNameColor="#27F549", authCsrf="", accountStateReady=false, remoteSaveTimer=0, remoteSaveChain=Promise.resolve(), accountServiceAvailable=true;
+  var authUser=null, authDisplayName="", authNameColor="#27F549", authCsrf="", accountStateReady=false, remoteSaveTimer=0, remoteSaveChain=Promise.resolve(), accountServiceAvailable=true, guestBoostEnabled=false;
+  try{ guestBoostEnabled=sessionStorage.getItem(GUEST_BOOST_KEY)==="1"; }catch(e){}
   function setSyncStatus(text,error){ var el=$("accountSync"); if(!el) return; el.textContent=text; el.hidden=!text; el.classList.toggle("error",!!error); }
   function apiRequest(action,options){
     options=options||{}; options.credentials="same-origin";
@@ -83,6 +84,12 @@
     $("accountUser").hidden=!authUser;
     $("accountUser").textContent=authUser?authDisplayName:"";
     $("accountUser").style.color=authUser?authNameColor:"";
+    if(authUser){ guestBoostEnabled=false; try{sessionStorage.removeItem(GUEST_BOOST_KEY);}catch(e){} }
+    var guestBoostBtn=$("guestBoostBtn");
+    guestBoostBtn.hidden=!!authUser;
+    guestBoostBtn.setAttribute("aria-pressed",guestBoostEnabled?"true":"false");
+    guestBoostBtn.textContent="God mode: "+(guestBoostEnabled?"On":"Off");
+    guestBoostBtn.title=guestBoostEnabled?"Unlimited rolls and one-hit coal are on for this guest session":"Toggle unlimited rolls and one-hit coal for this guest session";
     if(!authUser) setSyncStatus(accountServiceAvailable?"":"Unavailable",!accountServiceAvailable);
     else setSyncStatus(accountServiceAvailable?"Cloud save":"Offline cache",!accountServiceAvailable);
   }
@@ -139,7 +146,7 @@
   function allowed(){ return FREE+(state.starterRoll||0)+bonusEarned(); }
   /* Kept as a test switch; normal play uses the persistent mined-roll bank. */
   var TEST_INFINITE_ROLLS=false;
-  function left(){ return TEST_INFINITE_ROLLS?Infinity:allowed()-state.used; }
+  function left(){ return TEST_INFINITE_ROLLS||(!authUser&&guestBoostEnabled)?Infinity:allowed()-state.used; }
   function capped(){ return false; }
   function ensureDay(){
     var k=dayKey();
@@ -361,7 +368,7 @@
 
   /* ---------- coal: each piece takes 5 to 20 hits, and mining one can light a dynamite fuse ---------- */
   var coal=$("coal"), mine=$("mine"), coalHits=$("coalHits"), pos={fx:0.5,fy:0.5};
-  function rollHits(){ return 5+Math.floor(Math.random()*16); }
+  function rollHits(){ return !authUser&&guestBoostEnabled?1:5+Math.floor(Math.random()*16); }
   function ensureHits(){ if(!(state.hitsLeft>0)) state.hitsLeft=rollHits(); }
   function showHits(){ ensureHits(); }
   function bounds(){ return {w:Math.max(mine.clientWidth-coal.offsetWidth,0),h:Math.max(mine.clientHeight-coal.offsetHeight,0)}; }
@@ -961,7 +968,21 @@
     remoteSaveNow(true).catch(function(){});
   });
 
+  document.addEventListener("click",function(e){
+    if(!busy||!cancelReveal) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    cancelReveal();
+  },true);
+
   $("genBtn").addEventListener("click",doRoll);
+  $("guestBoostBtn").addEventListener("click",function(){
+    if(authUser) return;
+    guestBoostEnabled=!guestBoostEnabled;
+    try{ if(guestBoostEnabled) sessionStorage.setItem(GUEST_BOOST_KEY,"1"); else sessionStorage.removeItem(GUEST_BOOST_KEY); }catch(e){}
+    state.hitsLeft=rollHits();
+    setAccountUI(); save(); updateUI();
+  });
   window.addEventListener("resize",layoutCoal);
   document.addEventListener("visibilitychange",function(){ if(!document.hidden&&ensureDay()) updateUI(); });
   setInterval(function(){ if(ensureDay()) updateUI(); },60000);
