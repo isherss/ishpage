@@ -40,7 +40,7 @@ h2{margin:0;font-family:var(--display);font-weight:800;text-transform:uppercase;
 .brand i{font-style:normal;font-size:11px;letter-spacing:.2em;margin-left:8px;padding:2px 7px;border-radius:4px;
   background:linear-gradient(90deg,var(--a1),var(--a2));color:#fff;vertical-align:middle}
 .rolls{font-family:var(--mono);font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.rolls b{color:var(--fg);font-size:18px}
+.rolls b{color:var(--fg);font-family:var(--display);font-size:18px;font-weight:400}
 .rolls.pulse b{animation:pulse .6s ease-out}
 @keyframes pulse{0%{color:var(--a2);transform:scale(1.4)}100%{transform:scale(1)}}
 
