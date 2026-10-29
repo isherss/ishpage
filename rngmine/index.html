@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-first-roll-hide-godmode">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-puzzle-info">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -28,6 +28,9 @@
     <nav class="top-tabs" role="tablist" aria-label="Main navigation">
       <button class="top-tab active" id="mineTab" type="button" role="tab" aria-selected="true" aria-controls="gameMain">Mining</button>
       <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
+      <button class="top-tab" id="rollsTab" type="button" role="tab" aria-selected="false" aria-controls="rollsPanel">Rolls</button>
+      <button class="top-tab" id="badgesTab" type="button" role="tab" aria-selected="false" aria-controls="badgesPanel">Badges</button>
+      <button class="top-tab" id="puzzleInfoTab" type="button" role="tab" aria-selected="false" aria-controls="puzzleInfoPanel">Puzzle Info</button>
     </nav>
     <div class="top-actions">
       <div class="rolls" id="rollsBox" aria-live="polite"><b id="rollsLeft">1</b> <span id="rollsLabel">roll left</span></div>
@@ -95,7 +98,8 @@
           <div class="dyn-top">
             <span class="stick" aria-hidden="true"><i class="fuse"></i></span>
             <span class="dyn-title" id="dynTitle">Dynamite!</span>
-            <span class="dyn-time" id="dynTime" aria-live="off">30s</span>
+            <span class="dyn-time" id="dynTime" aria-live="off">15s</span>
+            <button class="mini-close" id="dynClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button>
           </div>
           <div class="dyn-bar" aria-hidden="true"><i id="dynBar"></i></div>
           <p class="dyn-step" id="dynStep"></p>
@@ -119,11 +123,6 @@
       </div>
     </section>
 
-    <section class="section hist dimmable" aria-labelledby="histH">
-      <div class="panel-head"><h2 id="histH">Recent rolls</h2><span id="best"></span></div>
-      <ol id="hist"></ol>
-      <p class="none" id="histNone">No rolls yet.</p>
-    </section>
   </main>
 
   <section class="leaderboard-panel" id="leaderboardPanel" role="tabpanel" aria-labelledby="leaderboardTab" hidden>
@@ -148,11 +147,27 @@
     </div>
   </section>
 
-  <details class="book dimmable">
-    <summary>Badge book</summary>
-    <p>Badges without a family always score. In a family, only your best badge scores, and the others show under it as Earned. <span id="bookCount"></span>. Badges you have found are checked.</p>
-    <div id="book"></div>
-  </details>
+  <section class="section hist rolls-panel dimmable" id="rollsPanel" role="tabpanel" aria-labelledby="rollsTab" tabindex="0" hidden>
+    <div class="panel-head"><h2 id="histH">Recent rolls</h2><span id="best"></span></div>
+    <ol id="hist"></ol>
+    <p class="none" id="histNone">No rolls yet.</p>
+  </section>
+
+  <section class="badges-panel" id="badgesPanel" role="tabpanel" aria-labelledby="badgesTab" tabindex="0" hidden>
+    <div class="book dimmable">
+      <h1 class="book-title">Badge book</h1>
+      <p>Badges without a family always score. In a family, only your best badge scores, and the others show under it as Earned. <span id="bookCount"></span>. Badges you have found are checked.</p>
+      <div id="book"></div>
+    </div>
+  </section>
+
+  <section class="puzzle-info-panel" id="puzzleInfoPanel" role="tabpanel" aria-labelledby="puzzleInfoTab" tabindex="0" hidden>
+    <div class="puzzle-info-head">
+      <h1>Puzzle Info</h1>
+      <p>Chance is checked independently each time you break a coal.</p>
+    </div>
+    <div class="puzzle-info-list" id="puzzleInfoList"></div>
+  </section>
 
 </div>
 
@@ -176,14 +191,14 @@
 
 <div class="wires" id="wires" hidden role="dialog" aria-modal="true" aria-labelledby="wireTitle">
   <div class="wire-panel">
-    <div class="wire-head"><span id="wireTitle">Match the wires</span><span class="wire-meta"><span id="wireTime">5.0s</span><span id="wireCount">0 / 4</span></span></div>
+    <div class="wire-head"><span id="wireTitle">Match the wires</span><span class="wire-meta"><span id="wireTime">5.0s</span><span id="wireCount">0 / 4</span></span><button class="mini-close" id="wireClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
     <div class="wire-bar" aria-hidden="true"><i id="wireBar"></i></div>
     <svg id="wireSvg" viewBox="0 0 400 400" role="img" aria-label="Four cut wires. Drag each one from the left to the matching color on the right."></svg>
   </div>
 </div>
 <div class="vy cz" id="cz" hidden role="dialog" aria-modal="true" aria-labelledby="czTitle">
   <div class="vy-panel">
-    <div class="vy-head"><span id="czTitle">Captcha</span><span id="czTime">5.0s</span></div>
+    <div class="vy-head"><span id="czTitle">Captcha</span><span id="czTime">5.0s</span><button class="mini-close" id="czClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
     <div class="wire-bar" aria-hidden="true"><i id="czBar"></i></div>
     <canvas class="cz-img" id="czImg" width="320" height="100" role="img" aria-label="Distorted text to type"></canvas>
     <input class="db-in" id="czIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Type the characters" aria-label="Captcha answer">
@@ -192,7 +207,7 @@
 </div>
 <div class="vy db" id="db" hidden role="dialog" aria-modal="true" aria-labelledby="dbTitle">
   <div class="vy-panel">
-    <div class="vy-head"><span id="dbTitle">Double break</span><span id="dbTime">20.0s</span></div>
+    <div class="vy-head"><span id="dbTitle">Double break</span><span id="dbTime">20.0s</span><button class="mini-close" id="dbClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
     <div class="wire-bar" aria-hidden="true"><i id="dbBar"></i></div>
     <div class="db-scene" id="dbScene"></div>
     <input class="db-in" id="dbIn" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="1a 2s 3v" aria-label="Answer">
@@ -201,7 +216,7 @@
 </div>
 <div class="vy" id="vy" hidden role="dialog" aria-modal="true" aria-labelledby="vyTitle">
   <div class="vy-panel">
-    <div class="vy-head"><span id="vyTitle">Verity</span><span><span id="vyTime">15.0s</span><span id="vyRound" hidden></span></span></div>
+    <div class="vy-head"><span id="vyTitle">Verity</span><span><span id="vyTime">15.0s</span><span id="vyRound" hidden></span></span><button class="mini-close" id="vyClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
     <div class="wire-bar" aria-hidden="true"><i id="vyBar"></i></div>
     <p class="vy-label">Inside rooms</p>
     <div class="vy-row vy-far" id="vyIn"></div>
@@ -213,6 +228,7 @@
   </div>
 </div>
   <script src="js/rng-calculator.js"></script>
-  <script src="js/app.js?v=20261029-guest-boost"></script>
+  <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
+  <script src="js/app.js?v=20261029-dynamite-15s"></script>
 </body>
 </html>

@@ -1,7 +1,9 @@
 (function(){
   "use strict";
   var R=window.RNGU;
-  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=15, WIRE_ODDS=10, VERITY_ODDS=30, DBL_ODDS=25, CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=30000, DYN_PROBLEMS=3;
+  var PUZZLE_INFO=window.RNGMINE_PUZZLE_INFO||[];
+  function puzzleOdds(id,fallback){ var puzzle=PUZZLE_INFO.find?PUZZLE_INFO.find(function(item){return item.id===id;}):null; return puzzle&&Number.isFinite(puzzle.oddsDenominator)&&puzzle.oddsDenominator>0?puzzle.oddsDenominator:fallback; }
+  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=15000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function $(id){return document.getElementById(id);}
   function fmt(n){return Number(n).toLocaleString("en-US");}
@@ -140,6 +142,18 @@
     });
   }
   function clearFailedGameProgress(){ if(state.testMinigame){ state.testMinigame=false; } else { state.progress=0; } }
+  function showPracticeClose(id){ $(id).hidden=!state.testMinigame; }
+  function closePracticeMinigame(kind){
+    if(!state.testMinigame) return;
+    pending=[];
+    if(kind==="dyn") endDyn();
+    else if(kind==="wires") closeWires();
+    else if(kind==="verity") closeVerity();
+    else if(kind==="double") closeDouble();
+    else if(kind==="captcha") closeCaptcha();
+    state.testMinigame=false;
+    save(); updateUI();
+  }
   var busy=false, msg="", cancelReveal=null, lastShare="";
 
   function bonusEarned(){ return state.bonus; }
@@ -231,14 +245,17 @@
     $("best").textContent=state.best?"Best: "+state.best.n+" · "+fmt(state.best.total)+" EP":"";
   }
   function renderBook(){
-    var host=$("book"); host.innerHTML="";
+    var host=$("book"), openFamilies={};
+    host.querySelectorAll(".fam[data-family]").forEach(function(item){openFamilies[item.dataset.family]=item.open;});
+    host.innerHTML="";
     var fams={}, order=[], found=0;
     R.BADGES.forEach(function(b){ var k=b.family||"_"; if(!fams[k]){ fams[k]=[]; order.push(k); } fams[k].push(b); if(state.found[b.id]) found++; });
     order.sort(function(a,b){ return a==="_"?-1:b==="_"?1:(a<b?-1:1); });
     $("bookCount").textContent=found+" of "+R.BADGES.length+" found";
     order.forEach(function(f){
-      var wrap=document.createElement("div"); wrap.className="fam";
-      var h=document.createElement("h3"); h.textContent=f==="_"?"Stand-alone":famName(f)+" family"; wrap.appendChild(h);
+      var wrap=document.createElement("details"); wrap.className="fam"; wrap.dataset.family=f;
+      wrap.open=Object.prototype.hasOwnProperty.call(openFamilies,f)?openFamilies[f]:true;
+      var h=document.createElement("summary"); h.className="fam-title"; h.textContent=f==="_"?"Stand-alone":famName(f)+" family"; wrap.appendChild(h);
       fams[f].slice().sort(function(x,y){return x.ep-y.ep;}).forEach(function(d){
         var got=!!state.found[d.id], row=document.createElement("div"); row.className="brow"+(got?"":" miss");
         row.innerHTML='<span class="ck"></span><span class="nm"><span class="n"></span><small></small></span><span class="pts"></span>';
@@ -391,12 +408,15 @@
     var lit=false, wired=false, vyd=false, dbd=false, czd=false;
     if(state.hitsLeft<=0){
       state.coalTotal++; state.progress++; msg="";
+      $("coalCount").textContent=fmt(state.coalTotal)+" coal all-time";
       if(!REDUCED) floater();
       if(state.progress>=PER){
         state.progress=0; state.bonus++;
         msg="Bonus roll earned. You have "+left()+" available.";
         var box=$("rollsBox"); box.classList.remove("pulse"); void box.offsetWidth; box.classList.add("pulse");
       }
+      $("barFill").style.width=(state.progress/PER*100)+"%";
+      $("progText").textContent=state.progress+" / "+PER+" coal to your next roll";
       state.hitsLeft=rollHits();
       moveCoal();
       lit=Math.random()<1/DYN_ODDS;
@@ -404,6 +424,7 @@
       vyd=Math.random()<1/VERITY_ODDS;
       dbd=Math.random()<1/DBL_ODDS;
       czd=Math.random()<1/CZ_ODDS;
+      updateUI();
     }
     save(); showHits();
     pending=[]; if(wired) pending.push("wires"); if(vyd) pending.push("verity"); if(dbd) pending.push("double"); if(czd) pending.push("captcha"); if(lit) pending.push("dyn");
@@ -438,7 +459,7 @@
   function startDynamite(resume){
     if(resume){ dyn.probs=resume.probs.map(fixProb); dyn.idx=resume.idx; dyn.end=resume.end; }
     else { dyn.probs=newProbs(); dyn.idx=0; dyn.end=Date.now()+DYN_MS; state.dyn={probs:dyn.probs,idx:0,end:dyn.end}; save(); }
-    dyn.active=true; document.body.classList.add("dyn-on"); dynEl.hidden=false; dynEl.classList.remove("urgent");
+    dyn.active=true; document.body.classList.add("dyn-on"); dynEl.hidden=false; dynEl.classList.remove("urgent"); showPracticeClose("dynClose");
     showProblem(); dynTick(); clearInterval(dyn.timer); dyn.timer=setInterval(dynTick,100);
     msg="Dynamite! Solve all "+DYN_PROBLEMS+" problems to defuse it."; updateUI();
     try{ dynIn.focus({preventScroll:true}); }catch(e){}
@@ -459,9 +480,7 @@
       dyn.idx++;
       if(dyn.idx>=DYN_PROBLEMS) defuse();
       else { state.dyn.idx=dyn.idx; save(); showProblem(); try{ dynIn.focus({preventScroll:true}); }catch(e2){} }
-    } else {
-      dynIn.value=""; dynEl.classList.remove("wrong"); void dynEl.offsetWidth; dynEl.classList.add("wrong");
-    }
+    } else explode();
   });
   /* ---------- wires: drag each cut wire to its matching color, one wrong match blows the bomb ---------- */
   var WCOL=[{c:"#e53935",s:"circle"},{c:"#2563eb",s:"x"},{c:"#f5c518",s:"tri"},{c:"#d81fc8",s:"star"}];
@@ -525,7 +544,7 @@
   function startWires(resume){
     if(resume){ wire.left=resume.left; wire.right=resume.right; wire.done=resume.done; wire.end=resume.end||(Date.now()+WIRE_MS); }
     else { wire.left=shuffle([0,1,2,3]); wire.right=shuffle([0,1,2,3]); wire.done=[-1,-1,-1,-1]; wire.end=Date.now()+WIRE_MS; state.wire={left:wire.left,right:wire.right,done:wire.done,end:wire.end}; save(); }
-    wire.active=true; wire.locked=false; wire.drag=null;
+    wire.active=true; wire.locked=false; wire.drag=null; showPracticeClose("wireClose");
     wiresEl.classList.remove("blast","ok"); wiresEl.hidden=false; drawWires(); updateUI();
     wireTick(); clearInterval(wire.timer); wire.timer=setInterval(wireTick,50);
   }
@@ -542,6 +561,7 @@
     clearInterval(wire.timer); wire.locked=true; wire.drag=null; drawWires(); pending=[];
     wiresEl.classList.add("blast");
     setTimeout(function(){
+      if(!wire.active) return;
       closeWires(); clearFailedGameProgress(); save(); updateUI();
       if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
     },REDUCED?0:600);
@@ -549,6 +569,7 @@
   function wireDone(){
     clearInterval(wire.timer); wire.locked=true; wiresEl.classList.add("ok");
     setTimeout(function(){
+      if(!wire.active) return;
       closeWires(); save(); updateUI();
       runNext();
     },REDUCED?0:800);
@@ -641,7 +662,7 @@
   function startVerity(resume){
     if(resume&&resume.room&&resume.out){ vy.round=resume.round; vy.room=resume.room; vy.out=resume.out; vy.end=resume.end||(Date.now()+VY_MS); vy.pend=null; vy.locked=false; }
     else { vy.round=0; newPuzzle(); }
-    vy.active=true; vyEl.classList.remove("blast","ok","urgent"); vyEl.hidden=false; drawVy(); updateUI();
+    vy.active=true; vyEl.classList.remove("blast","ok","urgent"); vyEl.hidden=false; showPracticeClose("vyClose"); drawVy(); updateUI();
     vyTick(); clearInterval(vy.timer); vy.timer=setInterval(vyTick,50);
   }
   function vyTick(){
@@ -655,6 +676,7 @@
   function verityBoom(){
     vy.locked=true; vyEl.classList.add("blast");
     setTimeout(function(){
+      if(!vy.active) return;
       closeVerity(); clearFailedGameProgress(); pending=[]; save(); updateUI();
       if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
     },REDUCED?0:600);
@@ -696,8 +718,8 @@
     if(!vy.active||vy.locked) return;
     if(!vy.out.every(function(pr,i){ return pr.indexOf(vy.room[i])<0; })){ verityBoom(); return; }
     vy.round++; vy.locked=true; vyEl.classList.add("ok");
-    if(vy.round>=VY_ROUNDS) setTimeout(function(){ closeVerity(); save(); updateUI(); runNext(); },REDUCED?0:800);
-    else setTimeout(function(){ vyEl.classList.remove("ok"); newPuzzle(); },REDUCED?0:700);
+    if(vy.round>=VY_ROUNDS) setTimeout(function(){ if(!vy.active) return; closeVerity(); save(); updateUI(); runNext(); },REDUCED?0:800);
+    else setTimeout(function(){ if(!vy.active) return; vyEl.classList.remove("ok"); newPuzzle(); },REDUCED?0:700);
   });
   $("vyPal").addEventListener("pointerup",function(e){ vyEnd(e,true); });
   $("vyPal").addEventListener("pointercancel",function(e){ vyEnd(e,false); });
@@ -732,7 +754,7 @@
   function startDouble(resume){
     if(resume&&resume.o){ db.o=resume.o; db.end=resume.end||(Date.now()+DB_MS); }
     else { db.o=dbRoll(); db.end=Date.now()+DB_MS; state.dbl={o:db.o,end:db.end}; save(); }
-    $("dbIn").value=""; db.locked=false; db.active=true; dbEl.classList.remove("blast","ok","urgent"); dbEl.hidden=false; dbDraw(); updateUI(); try{ $("dbIn").focus({preventScroll:true}); }catch(_){}
+    $("dbIn").value=""; db.locked=false; db.active=true; dbEl.classList.remove("blast","ok","urgent"); dbEl.hidden=false; showPracticeClose("dbClose"); dbDraw(); updateUI(); try{ $("dbIn").focus({preventScroll:true}); }catch(_){}
     dbTick(); clearInterval(db.timer); db.timer=setInterval(dbTick,50);
   }
   function dbTick(){
@@ -746,6 +768,7 @@
   function dblBoom(){
     db.locked=true; dbEl.classList.add("blast");
     setTimeout(function(){
+      if(!db.active) return;
       closeDouble(); clearFailedGameProgress(); pending=[]; save(); updateUI();
       if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
     },REDUCED?0:600);
@@ -761,7 +784,7 @@
     if(!g){ var i=$("dbIn"); i.classList.remove("bad"); void i.offsetWidth; i.classList.add("bad"); return; }
     if(g.join()!==dbCounts().join()){ dblBoom(); return; }
     db.locked=true; dbEl.classList.add("ok");
-    setTimeout(function(){ closeDouble(); save(); updateUI(); runNext(); },REDUCED?0:800);
+    setTimeout(function(){ if(!db.active) return; closeDouble(); save(); updateUI(); runNext(); },REDUCED?0:800);
   }
   $("dbGo").addEventListener("click",dbSubmit);
   $("dbIn").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); dbSubmit(); } });
@@ -788,7 +811,7 @@
   function startCaptcha(resume){
     if(resume&&resume.code){ cz.code=resume.code; cz.seed=resume.seed; cz.end=resume.end||(Date.now()+CZ_MS); }
     else { cz.code=czCode(); cz.seed=Math.floor(Math.random()*1e9); cz.end=Date.now()+CZ_MS; state.cz={code:cz.code,seed:cz.seed,end:cz.end}; save(); }
-    cz.locked=false; cz.active=true; $("czIn").value=""; czEl.classList.remove("blast","ok","urgent"); czEl.hidden=false; czDraw(); updateUI();
+    cz.locked=false; cz.active=true; $("czIn").value=""; czEl.classList.remove("blast","ok","urgent"); czEl.hidden=false; showPracticeClose("czClose"); czDraw(); updateUI();
     try{ $("czIn").focus({preventScroll:true}); }catch(_){}
     czTick(); clearInterval(cz.timer); cz.timer=setInterval(czTick,50);
   }
@@ -803,6 +826,7 @@
   function czBoom(){
     cz.locked=true; czEl.classList.add("blast");
     setTimeout(function(){
+      if(!cz.active) return;
       closeCaptcha(); clearFailedGameProgress(); pending=[]; save(); updateUI();
       if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
     },REDUCED?0:600);
@@ -813,10 +837,13 @@
     if(!v){ var i=$("czIn"); i.classList.remove("bad"); void i.offsetWidth; i.classList.add("bad"); return; }
     if(v!==cz.code){ czBoom(); return; }
     cz.locked=true; czEl.classList.add("ok");
-    setTimeout(function(){ closeCaptcha(); save(); updateUI(); runNext(); },REDUCED?0:700);
+    setTimeout(function(){ if(!cz.active) return; closeCaptcha(); save(); updateUI(); runNext(); },REDUCED?0:700);
   }
   $("czGo").addEventListener("click",czSubmit);
   $("czIn").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); czSubmit(); } });
+  [["dynClose","dyn"],["wireClose","wires"],["vyClose","verity"],["dbClose","double"],["czClose","captcha"]].forEach(function(pair){
+    $(pair[0]).addEventListener("click",function(){ closePracticeMinigame(pair[1]); });
+  });
 
   /* TEMPORARY TEST SWITCH: set to false to hide the minigame test buttons */
   var TEST_BUTTONS=true;
@@ -862,6 +889,23 @@
     });
     status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
   }
+  function renderPuzzleInfo(){
+    var list=$("puzzleInfoList");
+    list.innerHTML="";
+    PUZZLE_INFO.forEach(function(puzzle){
+      var card=document.createElement("article"), head=document.createElement("div"), title=document.createElement("h2"), odds=document.createElement("span"), label=document.createElement("span"), text=document.createElement("p"), pct=100/puzzle.oddsDenominator;
+      card.className="puzzle-info-card";
+      head.className="puzzle-info-card-head";
+      title.textContent=puzzle.name;
+      odds.className="puzzle-info-odds";
+      odds.textContent="1 in "+puzzle.oddsDenominator+" · "+(pct<1?pct.toFixed(2):pct.toFixed(1))+"% per coal";
+      label.className="puzzle-info-label";
+      label.textContent="How to solve";
+      text.className="puzzle-info-solution";
+      text.textContent=puzzle.solution;
+      head.appendChild(title);head.appendChild(odds);card.appendChild(head);card.appendChild(label);card.appendChild(text);list.appendChild(card);
+    });
+  }
   function loadLeaderboard(force){
     var status=$("leaderboardStatus");
     if(leaderboardData&&!force){renderLeaderboard();return;}
@@ -882,21 +926,22 @@
     $("leaderboardValueHeading").textContent=leaderboardLabels[metric];
     renderLeaderboard();
   }
-  function selectTopTab(leaderboard){
-    $("gameMain").hidden=leaderboard;
-    $("leaderboardPanel").hidden=!leaderboard;
-    document.querySelector(".book").hidden=leaderboard;
-    $("mineTab").classList.toggle("active",!leaderboard);
-    $("mineTab").setAttribute("aria-selected",leaderboard?"false":"true");
-    $("leaderboardTab").classList.toggle("active",leaderboard);
-    $("leaderboardTab").setAttribute("aria-selected",leaderboard?"true":"false");
-    if(leaderboard){
+  var topTabButtons=Array.prototype.slice.call(document.querySelectorAll(".top-tab[aria-controls]"));
+  function selectTopTab(selectedTab){
+    topTabButtons.forEach(function(tab){
+      var active=tab===selectedTab, panel=$(tab.getAttribute("aria-controls"));
+      tab.classList.toggle("active",active);
+      tab.setAttribute("aria-selected",active?"true":"false");
+      panel.hidden=!active;
+    });
+    if(selectedTab.id==="leaderboardTab"){
       if(authUser&&accountStateReady) remoteSaveNow().catch(function(){}).then(function(){loadLeaderboard(true);});
       else loadLeaderboard();
-    }
+    }else if(selectedTab.id==="rollsTab") renderHist();
+    else if(selectedTab.id==="badgesTab") renderBook();
+    else if(selectedTab.id==="puzzleInfoTab") renderPuzzleInfo();
   }
-  $("mineTab").addEventListener("click",function(){selectTopTab(false);});
-  $("leaderboardTab").addEventListener("click",function(){selectTopTab(true);});
+  topTabButtons.forEach(function(tab){tab.addEventListener("click",function(){selectTopTab(tab);});});
   document.querySelectorAll(".leaderboard-tab[data-metric]").forEach(function(tab){
     tab.addEventListener("click",function(){selectLeaderboardMetric(tab.dataset.metric);});
   });

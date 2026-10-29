@@ -158,9 +158,15 @@ button:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset
 .book{margin-top:40px;border-top:1px solid var(--line);padding-top:14px}
 .book summary{cursor:pointer;font-family:var(--display);font-weight:800;font-size:20px;text-transform:uppercase;letter-spacing:.06em}
 .book p{color:var(--muted);font-size:14px}
-.fam{margin-top:14px}
-.fam h3{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:600}
+.fam{display:block;margin-top:12px;border:1px solid #145214;background:#010401}
+.fam-title{display:flex;align-items:center;gap:9px;padding:10px 12px;color:#46bf46;font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;list-style:none}
+.fam-title::-webkit-details-marker{display:none}
+.fam-title::before{content:"+";color:#27F5F5;font-weight:700}
+.fam[open]>.fam-title::before{content:"−"}
+.fam-title:hover{color:#a7ffbb;background:#030803}
 .brow{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:14px}
+.fam .brow{margin-inline:12px}
+.fam .brow:last-child{border-bottom:0}
 .brow small{display:block;color:var(--muted);font-size:13px}
 .brow .pts{font-family:var(--mono);font-size:12px;color:var(--ep)}
 .brow .ck{color:var(--t-uncommon);font-weight:700}
@@ -178,6 +184,11 @@ button:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset
   background:rgb(28,12,12);color:#fff}
 .dyn[hidden]{display:none}
 .dyn-top{display:flex;align-items:center;gap:12px}
+.mini-close{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;padding:0;border:1px solid green;border-radius:0;background:#000;color:#46bf46;font:700 22px/1 var(--mono);cursor:pointer}
+.mini-close:hover{border-color:#39ff78;background:#071208;color:#a7ffbb}
+.mini-close:focus-visible{outline:2px solid #46bf46;outline-offset:2px}
+.mini-close[hidden]{display:none!important}
+.wire-head .mini-close,.vy-head .mini-close{align-self:center}
 .stick{position:relative;width:54px;height:20px;border-radius:5px;background:linear-gradient(180deg,#ef4444,#991b1b);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);flex:none}
 .fuse{position:absolute;left:100%;top:6px;width:16px;height:2px;background:#d6c7a1}
 .fuse::after{content:"";position:absolute;right:-5px;top:-4px;width:9px;height:9px;border-radius:50%;background:#fbbf24;box-shadow:0 0 10px 3px #f59e0b;animation:spark .25s steps(2) infinite}
@@ -219,7 +230,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid #fff;outline-offset
 .vy[hidden]{display:none}
 .vy-panel{width:min(480px,100%);display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:12px;background:linear-gradient(180deg,#1b1d22,#0f1013);border:2px solid #000;color:#fff}
 .vy-head{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--display);font-weight:900;font-size:22px;text-transform:uppercase;letter-spacing:.08em}
-.vy-head>span:last-child{font-family:var(--mono);font-size:15px;font-weight:700}
+.vy-head>span:nth-child(2){font-family:var(--mono);font-size:15px;font-weight:700}
 .vy-label{margin:6px 0 0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 .vy-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .vy-stat,.vy-room{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 8px;border-radius:8px;background:linear-gradient(180deg,#34373d,#202226);border:2px solid #4a4e55;color:#fff;font:inherit}
@@ -345,7 +356,7 @@ body::before{display:none}.top{border-bottom:1px dotted green}.brand,h2,.book su
 .bar{border-radius:0;background:#050b05}.bar i{background:green}.mine{border-radius:0;border-color:green}
 button:focus-visible,summary:focus-visible{outline-color:#46bf46}.foot a{color:green}.eppill,.life b{font-family:var(--display);font-variant-numeric:normal;letter-spacing:0}.numbox{justify-content:center;align-items:center}.numbox .d{flex:0 0 .62em;width:.62em;text-align:center}.numbox .d,.eppill,.life b{filter:blur(.16px);text-shadow:0 0 .45px currentColor,0 0 2px rgba(70,191,70,.48)}.numbox{line-height:1;justify-content:center;align-items:center}.numbox .d{display:flex;flex:0 0 .62em;width:.62em;height:1em;align-items:center;justify-content:center;text-align:center;line-height:1}.numbox .d{position:relative;top:-.08em}.hero.rolling .numbox{background:#000!important;border-color:green;box-shadow:0 0 18px rgba(57,255,120,.12)}@media(min-width:1000px){.wrap{max-width:1500px;padding-left:clamp(24px,4vw,64px);padding-right:clamp(24px,4vw,64px)}body.has-roll .wrap main{display:grid;grid-template-columns:minmax(380px,.82fr) minmax(0,1.18fr);column-gap:clamp(24px,4vw,64px);row-gap:12px;align-items:start}body.has-roll .wrap main>.hero{grid-column:1;grid-row:1;width:100%;padding-top:28px}body.has-roll .wrap main>.bd{grid-column:1;grid-row:2;margin-top:24px}body.has-roll .wrap main>.mine-sec{grid-column:2;grid-row:1 / span 2;align-self:start;margin-top:36px;min-width:0}body.has-roll .wrap main>:not(.hero):not(.bd):not(.mine-sec){grid-column:1 / -1}body.rolling .mine-sec{display:none}}/* Terminal styling for timed minigames */
 .dyn{background:#000;color:#46bf46;border:1px solid green;box-shadow:0 0 24px rgba(0,128,0,.2)}
-.dyn-title,.dyn-time,.dyn-q,.dyn-step{color:#46bf46}.dyn-step,.vy-label,.vy-hint,.vy-head,.vy-head>span:last-child,.wire-head,.wire-meta,.db-legend,.db-need{color:green}
+.dyn-title,.dyn-time,.dyn-q,.dyn-step{color:#46bf46}.dyn-step,.vy-label,.vy-hint,.vy-head,.vy-head>span:nth-child(2),.wire-head,.wire-meta,.db-legend,.db-need{color:green}
 .stick{border-radius:0;background:#10210f;border:1px solid green;box-shadow:none}.fuse{background:#46bf46}.fuse::after{border-radius:0;background:#39ff78;box-shadow:0 0 8px 2px #39ff78;animation:spark .25s steps(2) infinite}
 .dyn-bar,.wire-bar{height:8px;border-radius:0;background:#0b180d;border:1px solid #145214}.dyn-bar i,.wire-bar i{background:linear-gradient(90deg,#16812d,#39ff78)}
 #dynIn,.db-in{border:1px solid green;border-radius:0;background:#000;color:#a7ffbb;caret-color:#39ff78}#dynIn:focus-visible,.db-in:focus{outline:2px solid #46bf46;outline-offset:2px;border-color:#46bf46}
@@ -375,8 +386,8 @@ html.first-visit body{min-height:100vh;min-height:100dvh}
 html.first-visit body .wrap{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding-top:0;padding-bottom:0}
 html.first-visit body main>.bd,
 html.first-visit body main>.mine-sec,
-html.first-visit body main>.hist,
-html.first-visit body .book{display:none!important}
+html.first-visit body .rolls-panel,
+html.first-visit body .badges-panel{display:none!important}
 html.first-visit body .top{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;z-index:20;display:flex!important;justify-content:space-between;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border:0}
 html.first-visit body .top .top-tabs,
 html.first-visit body .top .rolls,
@@ -396,11 +407,25 @@ html.first-visit body main>.bd.first-roll-reveal{display:block!important;width:1
 
 /* Keep the reveal focused until Continue Mining returns to the full layout. */
 body.rolling .wrap main>.mine-sec,
-body.rolling .wrap main>.hist,
 body.awaiting-continue .wrap main>.mine-sec,
-body.awaiting-continue .wrap main>.hist,
-body.rolling .wrap>.book,
-body.awaiting-continue .wrap>.book{display:none!important}
+body.rolling .wrap>.rolls-panel,
+body.rolling .wrap>.badges-panel{display:none!important}
+.badges-panel .book{margin-top:26px}
+.book .fam-title{font:12px var(--mono);letter-spacing:.12em}
+.rolls-panel,.badges-panel{width:min(100%,1350px);margin-left:auto;margin-right:auto}
+.book-title{margin:0;color:#46bf46;font:22px var(--display);letter-spacing:.06em;text-align:center;text-transform:uppercase}
+.puzzle-info-panel{margin:26px 0 34px;padding:clamp(16px,3vw,26px);border:1px solid #145214;background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);font-family:var(--mono);text-align:left}
+.puzzle-info-head{padding-bottom:14px;border-bottom:1px dotted #145214;text-align:center}
+.puzzle-info-head h1{margin:0;color:#46bf46;font:22px var(--display);letter-spacing:.06em;text-transform:uppercase}
+.puzzle-info-head p{margin:7px 0 0;color:#679477;font-size:11px;letter-spacing:.04em}
+.puzzle-info-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;margin-top:16px}
+.puzzle-info-card{padding:14px;border:1px solid #145214;background:#020803}
+.puzzle-info-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.puzzle-info-card h2{margin:0;color:#46bf46;font:16px var(--display);letter-spacing:.05em;text-transform:uppercase}
+.puzzle-info-odds{flex:none;color:#27F5F5;font-size:10px;letter-spacing:.04em;text-align:right}
+.puzzle-info-label{display:block;margin-top:11px;color:#679477;font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.puzzle-info-solution{margin:10px 0 0;color:#a7ffbb;font-size:12px;line-height:1.65;white-space:pre-line}
+@media(max-width:480px){.puzzle-info-card-head{align-items:flex-start;flex-direction:column;gap:5px}.puzzle-info-odds{text-align:left}}
 .continue{display:inline-flex;align-items:center;justify-content:center}
 
 /* Manually provisioned cross-device accounts. */
@@ -442,7 +467,7 @@ body.awaiting-continue .wrap>.book{display:none!important}
 .profile-message.error{color:#d85a5a}
 html.auth-check body .wrap{visibility:hidden}
 @media(max-width:700px){.top{flex-wrap:wrap}.top-tabs{order:3;flex:0 0 100%;justify-content:center;margin:0}.top-actions{margin-left:auto}}
-@media(max-width:560px){.top-actions{gap:8px}.account-bar{gap:5px}.account-user{max-width:10ch}.account-btn{padding-inline:7px;font-size:10px}.rolls{font-size:11px}}
+@media(max-width:560px){.top-actions{gap:8px}.account-bar{gap:5px}.account-user{max-width:10ch}.account-btn{padding-inline:7px;font-size:10px}.rolls{font-size:11px}.top-tabs{gap:2px}.top-tab{padding-inline:6px;font-size:10px}}
 
 /* Public account leaderboard, in the same terminal green palette. */
 .leaderboard-panel{margin:26px 0 34px;padding:clamp(16px,3vw,26px);border:1px solid #145214;background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);font-family:var(--mono)}
