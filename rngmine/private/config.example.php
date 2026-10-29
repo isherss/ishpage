@@ -1,8 +1,8 @@
 <?php
 return [
     'host' => 'localhost',
-    'database' => 'u762239037_RNGmineUsers',
-    'username' => 'u762239037_ishAdmin',
-    'password' => 'Fghib!@#456',
+    'database' => 'YOUR_HOSTINGER_DATABASE_NAME',
+    'username' => 'YOUR_HOSTINGER_DATABASE_USER',
+    'password' => 'SET_THIS_IN_PRIVATE_CONFIG_PHP',
     'charset' => 'utf8mb4',
 ];

@@ -53,11 +53,32 @@ try {
         }
         $_SESSION['login_attempts'] = (int) ($_SESSION['login_attempts'] ?? 0) + 1;
 
-        $query = $pdo->prepare('SELECT id, username, password_hash FROM rngmine_users WHERE username_key = ?');
-        $query->execute([strtolower($username)]);
-        $user = $query->fetch();
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            rng_json(['error' => 'Invalid username or password.'], 401);
+        $fileAccounts = rng_manual_accounts();
+        if ($fileAccounts !== null) {
+            $manualAccount = $fileAccounts[strtolower($username)] ?? null;
+            if (!$manualAccount || !hash_equals($manualAccount['password'], $password)) {
+                rng_json(['error' => 'Invalid username or password.'], 401);
+            }
+            $username = $manualAccount['username'];
+            $query = $pdo->prepare('SELECT id, username, password_hash FROM rngmine_users WHERE username_key = ?');
+            $query->execute([strtolower($username)]);
+            $user = $query->fetch();
+            if (!$user) {
+                $insert = $pdo->prepare('INSERT INTO rngmine_users (username, username_key, password_hash) VALUES (?, ?, ?)');
+                $insert->execute([$username, strtolower($username), password_hash($password, PASSWORD_DEFAULT)]);
+                $query->execute([strtolower($username)]);
+                $user = $query->fetch();
+            } elseif (!password_verify($password, $user['password_hash'])) {
+                $update = $pdo->prepare('UPDATE rngmine_users SET password_hash = ? WHERE id = ?');
+                $update->execute([password_hash($password, PASSWORD_DEFAULT), (int) $user['id']]);
+            }
+        } else {
+            $query = $pdo->prepare('SELECT id, username, password_hash FROM rngmine_users WHERE username_key = ?');
+            $query->execute([strtolower($username)]);
+            $user = $query->fetch();
+            if (!$user || !password_verify($password, $user['password_hash'])) {
+                rng_json(['error' => 'Invalid username or password.'], 401);
+            }
         }
 
         session_regenerate_id(true);

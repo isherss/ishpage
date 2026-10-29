@@ -45,6 +45,34 @@ function rng_db(): PDO
     return $pdo;
 }
 
+/** Return manually maintained username/password pairs, or null when DB accounts are used. */
+function rng_manual_accounts(): ?array
+{
+    $accountsFile = __DIR__ . '/../private/accounts.php';
+    if (!is_file($accountsFile)) {
+        return null;
+    }
+
+    $accounts = require $accountsFile;
+    if (!is_array($accounts)) {
+        throw new RuntimeException('Manual account file must return an array.');
+    }
+
+    $normalized = [];
+    foreach ($accounts as $username => $password) {
+        $username = (string) $username;
+        if (!preg_match('/^[A-Za-z0-9_.-]{3,32}$/', $username)
+            || !is_string($password)
+            || $password === ''
+            || strlen($password) > 1024) {
+            throw new RuntimeException('Manual account file contains an invalid entry.');
+        }
+        $normalized[strtolower($username)] = ['username' => $username, 'password' => $password];
+    }
+
+    return $normalized;
+}
+
 function rng_json(array $data, int $status = 200): never
 {
     http_response_code($status);

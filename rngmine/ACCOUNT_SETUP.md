@@ -17,15 +17,24 @@ The account service uses PHP sessions and a Hostinger MySQL database. It has no 
 
 The example config is at `private/config.example.php`. Do not put database credentials in `index.html`, JavaScript, or a committed file.
 
-## Add accounts manually
+## Configure accounts without SSH
 
-Connect to the Hostinger account with SSH or its terminal, change to the deployed RNGmine directory, and run:
+You can manage the account list with Hostinger File Manager:
 
-```sh
-php tools/provision-account.php username
+1. In `rngmine/private`, copy `config.example.php` to `config.php` and enter the database connection details in `config.php`.
+2. In the same directory, copy `accounts.example.php` to `accounts.php`.
+3. Edit `accounts.php` and add one entry for each friend, using a unique site-only password:
+
+```php
+return [
+    'friendname' => 'a-unique-password-for-this-site',
+    'anotherfriend' => 'another-unique-password',
+];
 ```
 
-The tool asks for the password twice and stores a PHP password hash in MySQL. It cannot be run through the website; the `tools` directory is blocked from web requests. Do not send passwords to the browser or add a signup page.
+The account file is under `private/`, which is blocked from web requests and excluded from Git. Passwords in this manually edited file are plain text, so use passwords that are not used anywhere else. On successful login, the PHP backend also stores a password hash in MySQL. Keep `accounts.php` present: while it exists, it is the allowed-account list, and removing an entry disables that login. No signup page is available.
+
+The CLI tool `tools/provision-account.php` is an alternative for hosts with SSH access; it is not needed for the File Manager setup.
 
 ## Saved data and security notes
 
