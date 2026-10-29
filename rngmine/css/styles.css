@@ -323,7 +323,7 @@ body::before{content:"";position:fixed;inset:0;z-index:20;pointer-events:none;op
 .hist ol,.hist li,.book{border-color:var(--line)}.h-n,.life b,.eppill{color:#a7ffbb;text-shadow:0 0 10px rgba(57,255,120,.18)}.brow{border-color:var(--line)}
 button:focus-visible,summary:focus-visible{outline-color:#39ff78}
 @media(prefers-reduced-motion:reduce){body::before{opacity:.08}}/* Match the local ishpage site's black/green, pixel-terminal visual language. */
-@font-face{font-family:IshBlueScreen;src:url("../../files/fonts/BlueScreen/bluescreen-v1.ttf") format("truetype");font-display:swap}
+@font-face{font-family:IshBlueScreen;src:url("../../files/fonts/BlueScreen/bluescreen-v1.ttf?v=20261029-question-glyph") format("truetype");font-display:swap}
 @font-face{font-family:IshBasicManual;src:url("../../files/fonts/BasicManual/BasicManual.ttf") format("truetype");font-display:swap}
 :root{--bg:#000;--surface:#050b05;--surface2:#0b130b;--line:#145214;--fg:green;--muted:#4c8a4c;--a1:green;--a2:#46bf46;--ep:#8bd68b;--ep-bg:#081408;--ep-line:#286628;--red:#d85a5a;--mono:"Lucida Console",Consolas,monospace;--body:IshBasicManual,"Lucida Console",Consolas,monospace;--display:IshBlueScreen,"Lucida Console",monospace}
 html,body{background:#000!important;color:green}body{font-family:var(--body);text-align:center}a,a:link,a:visited{color:green}a:hover{color:#074c0a}a:active{color:green}
