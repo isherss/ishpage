@@ -39,6 +39,7 @@ The CLI tool `tools/provision-account.php` is an alternative for hosts with SSH 
 ## Saved data and security notes
 
 - A logged-in user's rolls, coal, progress, history, and badges are saved to that account and loaded on another device after login.
-- Guest progress stays in that browser. If the user logs in, it is copied to the account only when that account does not already have a cloud save. Existing cloud data takes precedence; the guest save is kept locally to restore after logout.
+- Guest progress stays in that browser until login. A successful login deletes the browser's guest save and loads only the account's cloud save; it never merges guest rolls, coal, badges, or history into the account. If that account has roll history, login opens on its latest roll with the coal mine visible.
+- Logging out clears the account's cached data from that browser. The account's cloud save remains available the next time the user logs in.
 - Passwords are hashed with `password_hash`; sessions use `HttpOnly`, `Secure` (on HTTPS), `SameSite=Strict` cookies and CSRF tokens.
 - The game rules currently run in the browser. Cloud saves provide persistence, but they are not an anti-cheat boundary: a user who edits browser code can tamper with a client-generated save. Preventing that requires moving roll and mining validation to the server.

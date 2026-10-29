@@ -1,7 +1,7 @@
 (function(){
   "use strict";
   var R=window.RNGU;
-  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", DYN_ODDS=15, WIRE_ODDS=10, VERITY_ODDS=30, DBL_ODDS=25, CZ_ODDS=10, CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=30000, DYN_PROBLEMS=3;
+  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", DYN_ODDS=15, WIRE_ODDS=10, VERITY_ODDS=30, DBL_ODDS=25, CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=30000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function $(id){return document.getElementById(id);}
   function fmt(n){return Number(n).toLocaleString("en-US");}
@@ -87,11 +87,9 @@
   }
   function clearAccountCache(){
     try{
-      var guest=localStorage.getItem(GUEST_KEY);
-      localStorage.removeItem(OWNER_KEY);localStorage.removeItem(GUEST_KEY);
-      if(guest) localStorage.setItem(KEY,guest); else localStorage.removeItem(KEY);
+      localStorage.removeItem(KEY);localStorage.removeItem(OWNER_KEY);localStorage.removeItem(GUEST_KEY);
     }catch(e){}
-    state=load();
+    state=fresh();
   }
   function restoreAccountState(remoteState){
     var owner="";
@@ -101,7 +99,7 @@
       saveLocalForUser(authUser);
       return Promise.resolve();
     }
-    if(owner&&owner.toLowerCase()!==authUser.toLowerCase()) state=fresh();
+    state=owner&&owner.toLowerCase()===authUser.toLowerCase()?load():fresh();
     saveLocalForUser(authUser);
     return remoteSaveNow();
   }
@@ -839,10 +837,10 @@
     button.disabled=true; message.textContent="Connecting...";
     apiRequest("login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:$("loginUsername").value,password:$("loginPassword").value})}).then(function(){
       try{
-        if(!localStorage.getItem(OWNER_KEY)){
-          var guest=localStorage.getItem(KEY);
-          if(guest) localStorage.setItem(GUEST_KEY,guest);
-        }
+        localStorage.removeItem(KEY);
+        localStorage.removeItem(OWNER_KEY);
+        localStorage.removeItem(GUEST_KEY);
+        sessionStorage.setItem(LOGIN_LAYOUT_KEY,"1");
       }catch(err){}
       location.reload();
     }).catch(function(error){ message.textContent=error.message||"Unable to log in."; button.disabled=false; });
@@ -853,8 +851,7 @@
       clearTimeout(remoteSaveTimer); remoteSaveTimer=0;
       await remoteSaveNow();
       await apiRequest("logout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf})});
-      var guest=null;
-      try{guest=localStorage.getItem(GUEST_KEY);localStorage.removeItem(GUEST_KEY);localStorage.removeItem(OWNER_KEY);if(guest)localStorage.setItem(KEY,guest);else localStorage.removeItem(KEY);}catch(err){}
+      try{localStorage.removeItem(KEY);localStorage.removeItem(GUEST_KEY);localStorage.removeItem(OWNER_KEY);}catch(err){}
       authUser=null; authCsrf="";
       accountStateReady=false;
       location.reload();
@@ -873,9 +870,17 @@
 
   /* ---------- boot after the server account state has been restored ---------- */
   function boot(){
+    var showMineOnLogin=false;
+    try{showMineOnLogin=sessionStorage.getItem(LOGIN_LAYOUT_KEY)==="1";sessionStorage.removeItem(LOGIN_LAYOUT_KEY);}catch(e){}
     if(!state.starterRollGranted) document.documentElement.classList.add("first-visit");
     else document.documentElement.classList.remove("first-visit");
-    ensureDay(); showLatest(); renderBook(); ensureHits(); showHits();
+    ensureDay(); showLatest();
+    if(showMineOnLogin&&state.history.length){
+      document.body.classList.remove("awaiting-continue","rolling");
+      document.body.classList.add("has-roll");
+      $("continueBtn").hidden=true;
+    }
+    renderBook(); ensureHits(); showHits();
     pos={fx:Math.random(),fy:Math.random()}; layoutCoal();
     if(state.dyn){
       if(Date.now()>=state.dyn.end){ state.dyn=null; var testFailed=!!state.testMinigame; clearFailedGameProgress(); msg=testFailed?"BOOM. Test game failed; coal progress was kept.":"BOOM. The dynamite went off while you were away and your coal progress reset to 0."; save(); updateUI(); }
