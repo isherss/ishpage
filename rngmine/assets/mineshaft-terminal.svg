@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" shape-rendering="crispEdges">
+<defs>
+  <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#07120a"/><stop offset="1" stop-color="#010301"/></linearGradient>
+  <radialGradient id="core"><stop stop-color="#16451d" stop-opacity=".65"/><stop offset=".55" stop-color="#0b2410" stop-opacity=".38"/><stop offset="1" stop-color="#010301" stop-opacity="0"/></radialGradient>
+  <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 3.5H4" stroke="#39ff78" stroke-opacity=".06"/></pattern>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="400" height="300" fill="url(#wall)"/>
+<rect width="400" height="300" fill="url(#core)"/>
+<path d="M0 0H400V300H0Z M104 32H296V216H104Z" fill="#020503" fill-rule="evenodd"/>
+<path d="M0 0H400V46L296 78H104L0 46Z" fill="#061009"/>
+<path d="M0 46L104 78V216L0 300Z" fill="#07100a"/>
+<path d="M400 46L296 78V216L400 300Z" fill="#07100a"/>
+<path d="M0 300L104 216H296L400 300Z" fill="#040906"/>
+<g fill="none" stroke="#145a25" stroke-width="2">
+  <path d="M0 0H400V300H0Z"/>
+  <path d="M18 18H382V270L286 204H114L18 270Z"/>
+  <path d="M42 36H358V242L278 190H122L42 242Z"/>
+  <path d="M104 78H296V216H104Z"/>
+  <path d="M0 46L104 78M400 46L296 78M0 300L104 216M400 300L296 216"/>
+</g>
+<g fill="#0b2611" stroke="#1d7b32" stroke-width="2">
+  <path d="M26 22H48V278H26Z"/><path d="M352 22H374V278H352Z"/>
+  <path d="M26 22H374V40H26Z"/>
+  <path d="M38 62H54V82H38ZM38 118H54V138H38ZM38 174H54V194H38ZM346 62H362V82H346ZM346 118H362V138H346ZM346 174H362V194H346Z"/>
+</g>
+<g fill="none" stroke="#39ff78" stroke-width="1" opacity=".72" filter="url(#glow)">
+  <path d="M48 24V276M352 24V276M28 42H372"/>
+  <path d="M104 78H296V216"/>
+</g>
+<g fill="#27f549" opacity=".68">
+  <path d="M70 54H80V58H70ZM320 54H330V58H320ZM84 92H90V96H84ZM306 92H312V96H306Z"/>
+  <path d="M66 220H74V224H66ZM326 220H334V224H326ZM190 52H210V56H190Z"/>
+</g>
+<g fill="none" stroke="#145a25" stroke-width="2" opacity=".85">
+  <path d="M112 292L184 218M288 292L216 218M148 292H252M158 270H242M170 248H230"/>
+  <path d="M122 84H278M122 100H278M122 116H278M122 132H278M122 148H278M122 164H278"/>
+</g>
+<g fill="#39ff78" opacity=".65" filter="url(#glow)">
+  <rect x="196" y="18" width="8" height="5"/><rect x="190" y="28" width="20" height="2"/>
+</g>
+<rect width="400" height="300" fill="url(#scan)"/>
+<path d="M18 18H382V282H18Z" fill="none" stroke="#27f549" stroke-opacity=".22"/>
+</svg>
