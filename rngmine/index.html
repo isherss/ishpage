@@ -15,18 +15,39 @@
 <div class="wrap">
   <header class="top dimmable">
     <div class="brand">RNGmine</div>
+    <nav class="top-tabs" role="tablist" aria-label="Main navigation">
+      <button class="top-tab active" id="mineTab" type="button" role="tab" aria-selected="true" aria-controls="gameMain">Mining</button>
+      <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
+    </nav>
     <div class="top-actions">
       <div class="rolls" id="rollsBox" aria-live="polite"><b id="rollsLeft">1</b> <span id="rollsLabel">roll left</span></div>
       <div class="account-bar" id="accountBar" aria-live="polite">
-        <span class="account-user" id="accountUser" hidden></span>
+        <button class="account-user" id="accountUser" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="profileMenu"></button>
         <span class="account-sync" id="accountSync" hidden></span>
+        <div class="profile-menu" id="profileMenu" role="dialog" aria-label="Player profile" hidden>
+          <form id="profileForm">
+            <h2>Player profile</h2>
+            <label for="profileDisplayName">Display name</label>
+            <input id="profileDisplayName" name="displayName" type="text" maxlength="24" autocomplete="nickname" required>
+            <label for="profileColorHex">Leaderboard name color</label>
+            <div class="profile-color-row">
+              <input id="profileColorPicker" type="color" value="#27f549" aria-label="Choose leaderboard name color">
+              <input id="profileColorHex" name="nameColor" type="text" value="#27F549" maxlength="7" pattern="#[0-9a-fA-F]{6}" spellcheck="false" aria-label="Hex color code" required>
+            </div>
+            <p class="profile-message" id="profileMessage" role="status" aria-live="polite"></p>
+            <div class="account-form-actions">
+              <button class="account-btn account-submit" id="profileSave" type="submit">Save profile</button>
+              <button class="account-btn" id="profileCancel" type="button">Close</button>
+            </div>
+          </form>
+        </div>
         <button class="account-btn" id="loginBtn" type="button">Login</button>
         <button class="account-btn" id="logoutBtn" type="button" hidden>Log out</button>
       </div>
     </div>
   </header>
 
-  <main>
+  <main id="gameMain" role="tabpanel" aria-labelledby="mineTab">
     <section class="hero" id="hero" data-tier="none" aria-labelledby="rollH">
       <h2 class="sr" id="rollH">Your roll</h2>
       <div class="display" id="display"></div>
@@ -93,6 +114,28 @@
       <p class="none" id="histNone">No rolls yet.</p>
     </section>
   </main>
+
+  <section class="leaderboard-panel" id="leaderboardPanel" role="tabpanel" aria-labelledby="leaderboardTab" hidden>
+    <div class="leaderboard-head">
+      <div>
+        <h1>Leaderboard</h1>
+        <p>ACCOUNT RANKINGS</p>
+      </div>
+      <button class="account-btn" id="leaderboardRefresh" type="button">Refresh</button>
+    </div>
+    <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard category">
+      <button class="leaderboard-tab active" id="leaderboardBestTab" type="button" role="tab" aria-selected="true" aria-controls="leaderboardTableWrap" data-metric="bestRoll">Best roll</button>
+      <button class="leaderboard-tab" id="leaderboardEpTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="totalEp">Total EP</button>
+      <button class="leaderboard-tab" id="leaderboardCoalTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="coalMined">Coal mined</button>
+    </div>
+    <p class="leaderboard-status" id="leaderboardStatus" role="status" aria-live="polite">Open the tab to load the leaderboard.</p>
+    <div class="leaderboard-table-wrap" id="leaderboardTableWrap" role="tabpanel" aria-labelledby="leaderboardBestTab" tabindex="0">
+      <table class="leaderboard-table">
+        <thead><tr><th scope="col">Rank</th><th scope="col">Miner</th><th scope="col" id="leaderboardValueHeading">Best roll</th></tr></thead>
+        <tbody id="leaderboardRows"></tbody>
+      </table>
+    </div>
+  </section>
 
   <details class="book dimmable">
     <summary>Badge book</summary>

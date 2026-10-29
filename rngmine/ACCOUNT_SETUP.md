@@ -13,7 +13,7 @@ The account service uses PHP sessions and a Hostinger MySQL database. It has no 
 1. In hPanel, create a MySQL database and a database user, then grant that user access to the database.
 2. In the deployed `rngmine/private` directory, copy `config.example.php` to `config.php`.
 3. Fill in the database host, database name, username, and password from hPanel. Keep `config.php` private; it is excluded from Git and the `private/.htaccess` file blocks web access.
-4. Load `rngmine/` over HTTPS. The API creates the two required tables on its first request.
+4. Load `rngmine/` over HTTPS. The API creates the account, save, and profile tables on its first request.
 
 The example config is at `private/config.example.php`. Do not put database credentials in `index.html`, JavaScript, or a committed file.
 
@@ -39,6 +39,8 @@ The CLI tool `tools/provision-account.php` is an alternative for hosts with SSH 
 ## Saved data and security notes
 
 - A logged-in user's rolls, coal, progress, history, and badges are saved to that account and loaded on another device after login.
+- The public Leaderboard has separate Best roll, Total EP, and Coal mined tabs. Each ranks active accounts by the selected statistic and shows the user's chosen public display name and color; guest-only browser data is not listed.
+- Users can edit their public display name and leaderboard color from the dropdown opened by clicking their name in the top bar. These profile settings are saved with the account and appear publicly on the leaderboard.
 - Guest progress stays in that browser until login. A successful login deletes the browser's guest save and loads only the account's cloud save; it never merges guest rolls, coal, badges, or history into the account. If that account has roll history, login opens on its latest roll with the coal mine visible.
 - Logging out clears the account's cached data from that browser. The account's cloud save remains available the next time the user logs in.
 - Passwords are hashed with `password_hash`; sessions use `HttpOnly`, `Secure` (on HTTPS), `SameSite=Strict` cookies and CSRF tokens.

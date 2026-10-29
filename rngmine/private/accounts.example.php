@@ -3,4 +3,5 @@
 // Use unique passwords for RNGmine; these values are stored in a private server file.
 return [
     // 'friendname' => 'replace-with-a-unique-password',
+'ish' => '44874342'
 ];

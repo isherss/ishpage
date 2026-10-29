@@ -41,6 +41,13 @@ function rng_db(): PDO
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT rngmine_saves_user_fk FOREIGN KEY (user_id) REFERENCES rngmine_users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS rngmine_profiles (
+        user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+        display_name VARCHAR(96) NOT NULL,
+        name_color CHAR(7) CHARACTER SET ascii COLLATE ascii_bin NOT NULL DEFAULT '#27F549',
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT rngmine_profiles_user_fk FOREIGN KEY (user_id) REFERENCES rngmine_users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
     return $pdo;
 }

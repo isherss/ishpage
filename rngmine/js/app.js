@@ -44,7 +44,7 @@
     return fresh();
   }
   var state=load();
-  var authUser=null, authCsrf="", accountStateReady=false, remoteSaveTimer=0, remoteSaveChain=Promise.resolve(), accountServiceAvailable=true;
+  var authUser=null, authDisplayName="", authNameColor="#27F549", authCsrf="", accountStateReady=false, remoteSaveTimer=0, remoteSaveChain=Promise.resolve(), accountServiceAvailable=true;
   function setSyncStatus(text,error){ var el=$("accountSync"); if(!el) return; el.textContent=text; el.hidden=!text; el.classList.toggle("error",!!error); }
   function apiRequest(action,options){
     options=options||{}; options.credentials="same-origin";
@@ -81,7 +81,8 @@
     $("loginBtn").hidden=!!authUser;
     $("logoutBtn").hidden=!authUser;
     $("accountUser").hidden=!authUser;
-    $("accountUser").textContent=authUser?"@"+authUser:"";
+    $("accountUser").textContent=authUser?authDisplayName:"";
+    $("accountUser").style.color=authUser?authNameColor:"";
     if(!authUser) setSyncStatus(accountServiceAvailable?"":"Unavailable",!accountServiceAvailable);
     else setSyncStatus(accountServiceAvailable?"Cloud save":"Offline cache",!accountServiceAvailable);
   }
@@ -113,7 +114,7 @@
         if(owner) clearAccountCache();
         return;
       }
-      authUser=session.username; authCsrf=session.csrf;
+      authUser=session.username; authDisplayName=session.displayName||session.username; authNameColor=session.nameColor||"#27F549"; authCsrf=session.csrf;
       return apiRequest("state",{method:"GET"}).then(function(result){
         accountStateReady=true;
         return restoreAccountState(result.state);
@@ -822,15 +823,112 @@
   });
   function jumpTo(el,block){ try{ el.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:block}); }catch(e){ el.scrollIntoView(); } }
 
+  var leaderboardData=null, leaderboardMetric="bestRoll";
+  var leaderboardLabels={bestRoll:"Best roll",totalEp:"Total EP",coalMined:"Coal mined"};
+  function renderLeaderboard(){
+    var status=$("leaderboardStatus"), rows=$("leaderboardRows"), metric=leaderboardMetric;
+    rows.innerHTML="";
+    if(leaderboardData===null){status.textContent="Loading leaderboard...";return;}
+    if(!leaderboardData.length){status.textContent="No account scores yet.";return;}
+    var leaders=leaderboardData.slice().sort(function(a,b){
+      var primary=metric==="bestRoll"?(b.bestRollEp-a.bestRollEp):metric==="coalMined"?(b.coalMined-a.coalMined):(b.totalEp-a.totalEp);
+      return primary||(b.totalEp-a.totalEp)||(b.bestRollEp-a.bestRollEp)||(b.coalMined-a.coalMined)||String(a.username).localeCompare(String(b.username));
+    }).slice(0,100);
+    leaders.forEach(function(leader,index){
+      var tr=document.createElement("tr");
+      function cell(className,text){var td=document.createElement("td");td.className=className;td.textContent=text;tr.appendChild(td);return td;}
+      cell("leaderboard-rank","#"+(index+1));
+      var miner=cell("leaderboard-miner",leader.displayName||leader.username);miner.style.setProperty("--leader-name-color",leader.nameColor||"#27F549");
+      var score=cell(metric==="bestRoll"?"leaderboard-best":"leaderboard-score","");
+      if(metric==="bestRoll"){
+        if(leader.bestRoll===null||leader.bestRoll===undefined){score.textContent="—";}
+        else{
+          var number=document.createElement("b"), meta=document.createElement("small"), rarity=tierOf(leader.bestRollEp);
+          number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=fmt(leader.bestRoll);
+          meta.className="leaderboard-best-meta";
+          meta.textContent=(LABELS[rarity]||rarity)+" · "+fmt(leader.bestRollEp)+" EP · "+pctLine(leader.bestRollEp).txt;
+          score.appendChild(number);score.appendChild(meta);
+        }
+      }else if(metric==="totalEp") score.textContent=fmt(leader.totalEp)+" EP";
+      else score.textContent=fmt(leader.coalMined);
+      rows.appendChild(tr);
+    });
+    status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
+  }
+  function loadLeaderboard(force){
+    var status=$("leaderboardStatus");
+    if(leaderboardData&&!force){renderLeaderboard();return;}
+    status.textContent="Loading leaderboard..."; $("leaderboardRows").innerHTML="";
+    apiRequest("leaderboard",{method:"GET"}).then(function(result){
+      leaderboardData=Array.isArray(result.leaders)?result.leaders:[];
+      renderLeaderboard();
+    }).catch(function(error){status.textContent=error.message||"Leaderboard unavailable.";});
+  }
+  function selectLeaderboardMetric(metric){
+    if(!leaderboardLabels[metric]) return;
+    leaderboardMetric=metric;
+    document.querySelectorAll(".leaderboard-tab[data-metric]").forEach(function(tab){
+      var active=tab.dataset.metric===metric;
+      tab.classList.toggle("active",active);tab.setAttribute("aria-selected",active?"true":"false");
+      if(active) $("leaderboardTableWrap").setAttribute("aria-labelledby",tab.id);
+    });
+    $("leaderboardValueHeading").textContent=leaderboardLabels[metric];
+    renderLeaderboard();
+  }
+  function selectTopTab(leaderboard){
+    $("gameMain").hidden=leaderboard;
+    $("leaderboardPanel").hidden=!leaderboard;
+    document.querySelector(".book").hidden=leaderboard;
+    $("mineTab").classList.toggle("active",!leaderboard);
+    $("mineTab").setAttribute("aria-selected",leaderboard?"false":"true");
+    $("leaderboardTab").classList.toggle("active",leaderboard);
+    $("leaderboardTab").setAttribute("aria-selected",leaderboard?"true":"false");
+    if(leaderboard){
+      if(authUser&&accountStateReady) remoteSaveNow().catch(function(){}).then(function(){loadLeaderboard(true);});
+      else loadLeaderboard();
+    }
+  }
+  $("mineTab").addEventListener("click",function(){selectTopTab(false);});
+  $("leaderboardTab").addEventListener("click",function(){selectTopTab(true);});
+  document.querySelectorAll(".leaderboard-tab[data-metric]").forEach(function(tab){
+    tab.addEventListener("click",function(){selectLeaderboardMetric(tab.dataset.metric);});
+  });
+  $("leaderboardRefresh").addEventListener("click",function(){loadLeaderboard(true);});
 
+
+  function closeProfile(){ $("profileMenu").hidden=true; $("accountUser").setAttribute("aria-expanded","false"); }
+  function openProfile(){
+    if(!authUser) return;
+    $("profileDisplayName").value=authDisplayName||authUser;
+    $("profileColorPicker").value=authNameColor;
+    $("profileColorHex").value=authNameColor;
+    $("profileMessage").textContent=""; $("profileMessage").classList.remove("error");
+    $("profileMenu").hidden=false; $("accountUser").setAttribute("aria-expanded","true");
+    setTimeout(function(){$("profileDisplayName").focus();},0);
+  }
   function closeLogin(){ $("loginOverlay").hidden=true; $("loginForm").reset(); $("loginMessage").textContent=""; }
+  $("accountUser").addEventListener("click",function(){if($("profileMenu").hidden) openProfile();else closeProfile();});
+  $("profileCancel").addEventListener("click",closeProfile);
+  document.addEventListener("click",function(e){if(!e.target.closest("#accountBar")) closeProfile();});
+  $("profileColorPicker").addEventListener("input",function(){$("profileColorHex").value=this.value.toUpperCase();});
+  $("profileColorHex").addEventListener("input",function(){if(/^#[0-9a-fA-F]{6}$/.test(this.value)) $("profileColorPicker").value=this.value;});
+  $("profileForm").addEventListener("submit",function(e){
+    e.preventDefault();
+    var button=$("profileSave"), message=$("profileMessage");
+    button.disabled=true; message.classList.remove("error"); message.textContent="Saving profile...";
+    apiRequest("profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf,displayName:$("profileDisplayName").value,nameColor:$("profileColorHex").value})}).then(function(profile){
+      authDisplayName=profile.displayName; authNameColor=profile.nameColor; setAccountUI();
+      message.textContent="Profile saved."; leaderboardData=null;
+      if(!$('leaderboardPanel').hidden) loadLeaderboard(true);
+    }).catch(function(error){message.classList.add("error");message.textContent=error.message||"Profile could not be saved.";}).finally(function(){button.disabled=false;});
+  });
   $("loginBtn").addEventListener("click",function(){
     $("loginMessage").textContent=""; $("loginOverlay").hidden=false;
     setTimeout(function(){ $("loginUsername").focus(); },0);
   });
   $("loginCancel").addEventListener("click",closeLogin);
   $("loginOverlay").addEventListener("click",function(e){ if(e.target===$("loginOverlay")) closeLogin(); });
-  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!$("loginOverlay").hidden) closeLogin(); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"){if(!$("loginOverlay").hidden) closeLogin();closeProfile();} });
   $("loginForm").addEventListener("submit",function(e){
     e.preventDefault();
     var button=$("loginSubmit"), message=$("loginMessage");

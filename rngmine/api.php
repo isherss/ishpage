@@ -13,12 +13,54 @@ $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 try {
     $pdo = rng_db();
 
+    if ($action === 'leaderboard' && $method === 'GET') {
+        $manualAccounts = rng_manual_accounts();
+        $query = $pdo->query('SELECT u.username, p.display_name, p.name_color, s.state_json FROM rngmine_users u LEFT JOIN rngmine_profiles p ON p.user_id = u.id LEFT JOIN rngmine_saves s ON s.user_id = u.id');
+        $leaders = [];
+        foreach ($query->fetchAll() as $row) {
+            if ($manualAccounts !== null && !isset($manualAccounts[strtolower($row['username'])])) {
+                continue;
+            }
+            $state = json_decode((string) ($row['state_json'] ?? ''), true);
+            if (!is_array($state)) {
+                $state = [];
+            }
+
+            $best = is_array($state['best'] ?? null) ? $state['best'] : null;
+            if ($best === null && is_array($state['history'] ?? null)) {
+                foreach ($state['history'] as $entry) {
+                    if (is_array($entry) && is_numeric($entry['total'] ?? null)
+                        && ($best === null || (int) $entry['total'] > (int) ($best['total'] ?? 0))) {
+                        $best = ['n' => $entry['n'] ?? null, 'total' => $entry['total']];
+                    }
+                }
+            }
+            $bestRoll = is_array($best) && is_numeric($best['n'] ?? null) ? (int) $best['n'] : null;
+            $bestRollEp = is_array($best) && is_numeric($best['total'] ?? null) ? max(0, (int) $best['total']) : 0;
+            $leaders[] = [
+                'displayName' => is_string($row['display_name'] ?? null) && trim($row['display_name']) !== '' ? $row['display_name'] : (string) $row['username'],
+                'nameColor' => is_string($row['name_color'] ?? null) && preg_match('/^#[0-9A-Fa-f]{6}$/', $row['name_color']) ? strtoupper($row['name_color']) : '#27F549',
+                'bestRoll' => $bestRoll,
+                'bestRollEp' => $bestRollEp,
+                'coalMined' => max(0, (int) ($state['coalTotal'] ?? 0)),
+                'totalEp' => max(0, (int) ($state['lifetime'] ?? 0)),
+            ];
+        }
+        usort($leaders, static function (array $a, array $b): int {
+            return ($b['totalEp'] <=> $a['totalEp'])
+                ?: ($b['bestRollEp'] <=> $a['bestRollEp'])
+                ?: ($b['coalMined'] <=> $a['coalMined'])
+                ?: strcasecmp($a['displayName'], $b['displayName']);
+        });
+        rng_json(['leaders' => $leaders]);
+    }
+
     if ($action === 'session' && $method === 'GET') {
         $id = $_SESSION['user_id'] ?? null;
         if (!is_int($id) && !ctype_digit((string) $id)) {
             rng_json(['authenticated' => false]);
         }
-        $query = $pdo->prepare('SELECT id, username FROM rngmine_users WHERE id = ?');
+        $query = $pdo->prepare('SELECT u.id, u.username, p.display_name, p.name_color FROM rngmine_users u LEFT JOIN rngmine_profiles p ON p.user_id = u.id WHERE u.id = ?');
         $query->execute([(int) $id]);
         $user = $query->fetch();
         if (!$user) {
@@ -29,7 +71,47 @@ try {
         if (!isset($_SESSION['csrf'])) {
             $_SESSION['csrf'] = bin2hex(random_bytes(32));
         }
-        rng_json(['authenticated' => true, 'username' => $user['username'], 'csrf' => $_SESSION['csrf']]);
+        rng_json([
+            'authenticated' => true,
+            'username' => $user['username'],
+            'displayName' => is_string($user['display_name'] ?? null) && trim($user['display_name']) !== '' ? $user['display_name'] : $user['username'],
+            'nameColor' => is_string($user['name_color'] ?? null) && preg_match('/^#[0-9A-Fa-f]{6}$/', $user['name_color']) ? strtoupper($user['name_color']) : '#27F549',
+            'csrf' => $_SESSION['csrf'],
+        ]);
+    }
+
+    if ($action === 'profile' && $method === 'GET') {
+        $user = rng_require_user($pdo);
+        $query = $pdo->prepare('SELECT display_name, name_color FROM rngmine_profiles WHERE user_id = ?');
+        $query->execute([(int) $user['id']]);
+        $profile = $query->fetch();
+        rng_json([
+            'displayName' => $profile && trim($profile['display_name']) !== '' ? $profile['display_name'] : $user['username'],
+            'nameColor' => $profile && preg_match('/^#[0-9A-Fa-f]{6}$/', $profile['name_color']) ? strtoupper($profile['name_color']) : '#27F549',
+        ]);
+    }
+
+    if ($action === 'profile' && in_array($method, ['PUT', 'POST'], true)) {
+        if (!rng_same_origin()) {
+            rng_json(['error' => 'Request rejected.'], 403);
+        }
+        $data = rng_request_json();
+        $user = rng_require_user($pdo);
+        rng_require_csrf($data);
+        if (!is_string($data['displayName'] ?? null) || !is_string($data['nameColor'] ?? null)) {
+            rng_json(['error' => 'Enter a display name and choose a valid hex color.'], 400);
+        }
+        $displayName = trim($data['displayName']);
+        $nameColor = strtoupper(trim($data['nameColor']));
+        if (!preg_match('/^[^\x00-\x1F\x7F]{1,24}$/u', $displayName)) {
+            rng_json(['error' => 'Display name must be 1 to 24 characters.'], 400);
+        }
+        if (!preg_match('/^#[0-9A-F]{6}$/', $nameColor)) {
+            rng_json(['error' => 'Choose a valid six-digit hex color.'], 400);
+        }
+        $save = $pdo->prepare('INSERT INTO rngmine_profiles (user_id, display_name, name_color) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE display_name = VALUES(display_name), name_color = VALUES(name_color), updated_at = CURRENT_TIMESTAMP');
+        $save->execute([(int) $user['id'], $displayName, $nameColor]);
+        rng_json(['displayName' => $displayName, 'nameColor' => $nameColor]);
     }
 
     if ($action === 'login' && $method === 'POST') {
