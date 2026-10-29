@@ -8,13 +8,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-question-glyph">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-home-icon">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
 <div class="wrap">
   <header class="top dimmable">
-    <div class="brand">RNGmine</div>
+    <div class="brand-group">
+      <div class="brand">RNGmine</div>
+      <a class="brand-home" href="/" aria-label="Home" title="Home">
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M1 7h2V5h2V3h2V1h2v2h2v2h2v2h2v2h-2v6H3V9H1z" />
+          <path class="home-door" d="M7 15v-4h3v4z" />
+          <path class="home-window" d="M4 8h2v2H4zM11 8h2v2h-2z" />
+        </svg>
+      </a>
+    </div>
     <nav class="top-tabs" role="tablist" aria-label="Main navigation">
       <button class="top-tab active" id="mineTab" type="button" role="tab" aria-selected="true" aria-controls="gameMain">Mining</button>
       <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
