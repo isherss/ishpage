@@ -424,7 +424,9 @@
       updateUI();
     }
     save(); showHits();
-    pending=[]; if(wired) pending.push("wires"); if(vyd) pending.push("verity"); if(dbd) pending.push("double"); if(czd) pending.push("captcha"); if(lit) pending.push("dyn");
+    var triggered=[]; if(wired) triggered.push("wires"); if(vyd) triggered.push("verity"); if(dbd) triggered.push("double"); if(czd) triggered.push("captcha"); if(lit) triggered.push("dyn");
+    for(var i=triggered.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), temp=triggered[i]; triggered[i]=triggered[j]; triggered[j]=temp; }
+    pending=triggered.slice(0,2);
     runNext();
   });
 
