@@ -623,3 +623,7 @@ html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(s
 @media(max-width:700px){html.first-visit body #routePanels>#blurbPanel{margin-top:calc(112px + env(safe-area-inset-top,0px))}}
 
 .dyn-go:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+/* Keep roll history roll and rarity/EP centered, with the date on the right. */
+.hist li{align-items:center}
+.hist li .h-n,.hist li .h-t{justify-self:stretch;text-align:center}
+.hist li .h-d{justify-self:end;text-align:right;white-space:nowrap}
