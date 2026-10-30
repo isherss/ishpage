@@ -1,100 +1,211 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <!-- Required meta tags -->
-    <meta charset="UTF-8">
-
-    <!-- Stylesheet link -->
-    <link rel="stylesheet" type="text/css" href="/files/default.css?v=20261029-typography">
-
-    <title>Ish ThoughtsOn</title>
-
-    <!-- unique page styles -->
-    <style>
-
-    </style>
-
-    <link rel="icon" href="/files/favicon.ico">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Album recommendations from Ish.">
+  <link rel="stylesheet" type="text/css" href="/files/default.css?v=20261029-typography">
+  <title>Ish Music</title>
+  <link rel="icon" href="/files/favicon.ico">
+  <style>
+    body { background: #000; color: #46bf46; text-align: center; }
+    .music-content {
+      width: min(1100px, 90vw);
+      margin: 2rem auto 4rem;
+      color: #a7ffbb;
+      font: 13px/1.6 "Lucida Console", "Courier New", monospace;
+      text-align: left;
+    }
+    .album-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .album-status { color: #679477; font-size: 11px; }
+    .album-search {
+      width: min(320px, 55vw);
+      padding: 9px 11px;
+      border: 1px solid #145214;
+      border-radius: 0;
+      background: #020803;
+      color: #a7ffbb;
+      font: inherit;
+    }
+    .album-search:focus { border-color: #27f549; outline: 1px solid #145214; }
+    .table-frame { overflow-x: auto; border: 1px solid #145214; background: #010401; box-shadow: 0 0 18px rgba(39,245,73,.06); }
+    .album-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .album-table th { padding: 12px 14px; border-bottom: 1px dotted #27f549; background: #041006; color: #46bf46; font: 16px "BlueScreenV1", "Lucida Console", monospace; letter-spacing: .04em; text-transform: uppercase; }
+    .album-table td { padding: 11px 14px; border-bottom: 1px dotted #145214; vertical-align: top; }
+    .album-table tbody tr:hover { background: #041006; }
+    .album-table tbody tr:last-child td { border-bottom: 0; }
+    .album-table td:first-child { color: #a7ffbb; font-weight: bold; min-width: 190px; }
+    .album-table td:nth-child(2) { color: #46bf46; min-width: 150px; }
+    .album-table td:nth-child(3) { color: #9db8a3; min-width: 260px; }
+    .empty-state { padding: 24px; color: #679477; text-align: center; }
+    @media (max-width: 640px) {
+      .music-content { width: 94vw; font-size: 12px; }
+      .album-tools { align-items: stretch; flex-direction: column-reverse; }
+      .album-search { width: auto; }
+      .album-table th, .album-table td { padding: 9px; }
+    }
+  </style>
 </head>
-<!-- <div> -->
-<!-- sword inactive state -->
-<!-- <a href="/creechpage"><img id = "sword" class="inactive" src="/images/sword.png" alt="box"></img></a>
-</div> -->
-<!-- header -->
-<body style="background-color:#000000; color: green;  text-align: center;">
-    <span class="page-title" style="font-family: 'BlueScreenV1'; line-height: 80%; font-size: 10vw; display: inline-block;">
-ishMusic
-    </span>
-    <br><br>
-    <span>
-        <!-- home button -->
-        <a href="/">
-            <span style='font-family: "Lucida Console";line-height: 1vw;font-size: 1vw;display: inline-block;'>
-                <img src="/images/house.png" style="height:3vw;width:3vw;"
-                    onmouseover="this.src='/images/househover.png'" onmouseout="this.src='/images/house.png'">
-            </span>
-        </a>
-        <!-- top row button links -->
-        <p class="page-navigation" style="color: green;">
-          <a href="/ishabout">
-            <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;margin-right:2vw;'>
-about
-            </span>
-          </a>
-          <a href="/ishthoughtson">
-                <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;margin-right:2vw;'>
-thoughtson
-                </span>
-                </a>
+<body>
+  <span class="page-title" style="font-family:'BlueScreenV1';line-height:80%;font-size:10vw;display:inline-block;">ishMusic</span>
+  <br><br>
+  <span>
+    <a href="/" aria-label="Home"><img src="/images/house.png" alt="Home" style="height:3vw;width:3vw;" onmouseover="this.src='/images/househover.png'" onmouseout="this.src='/images/house.png'"></a>
+    <p class="page-navigation" style="color:green;">
+      <a href="/ishabout"><span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;margin-right:2vw;'>about</span></a>
+      <a href="/ishthoughtson"><span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;margin-right:2vw;'>thoughtson</span></a>
+      <span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;margin-right:2vw;color:#46bf46;'>music</span>
+      <a href="/ishproject"><span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;'>projects</span></a>
+    </p>
+  </span>
+  <br>
+  <span style="border-top-style:dotted;border-color:green;padding-right:20vw;padding-left:20vw;"></span>
 
-                <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;margin-right:2vw;color:#46bf46;'>
-music
-                </span>
-
-            <a href="/ishproject">
-                <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;'>
-projects
-                </span>
-            </a>
-        </p>
-    </span>
-    <br>
-    <span style="border-top-style: dotted;border-color: green;padding-right: 20vw;padding-left: 20vw;">
-
-    </span>
-    <!-- end button links -->
-
-    <!-- Text -->
-        <div class="column">
-            <span style='font-family: "BlueScreenV1";font-size: 3vw; display: inline-block; text-align: center;'>
-              observe my listening habits at:
-              <br>
-              <a href="http://www.last.fm/user/isherss" target="_blank" rel="noopener noreferrer">
-                <strong> last.fm </strong>
-              </a>
-              <br>
-              <a href="https://open.spotify.com/user/nat_lyish" target="_blank" rel="noopener noreferrer">
-                <strong> spotify </strong>
-              </a>
-              <br>
-            </span>
-            <br><br>
-            <span style='font-family: "BlueScreenV1";font-size: 1vw; display: inline-block; text-align: center;'>
-
-                some song blogging may appear here soon...
-            </span>
-
+  <main class="music-content">
+<div class="album-tools">
+      <span class="album-status" id="albumStatus" role="status">[ LOADING ALBUM RECOMMENDATIONS… ]</span>
+      <input class="album-search" id="albumSearch" type="search" placeholder="Filter albums, artists, notes…" aria-label="Filter album recommendations" disabled>
     </div>
+    <div class="table-frame">
+      <table class="album-table" aria-label="Album recommendations">
+        <thead><tr id="albumHeaders"></tr></thead>
+        <tbody id="albumRows"><tr><td class="empty-state">Reading album recs.xlsx…</td></tr></tbody>
+      </table>
+    </div>
+  </main>
+  <script src="/ishScript.js"></script>
+  <script>
+    // Source of truth: /files/IshMusic/album recs.xlsx. Save the workbook and reload this page to refresh the table.
+    const WORKBOOK_URL = "/files/IshMusic/album%20recs.xlsx";
+    const statusEl = document.getElementById("albumStatus");
+    const headersEl = document.getElementById("albumHeaders");
+    const rowsEl = document.getElementById("albumRows");
+    const searchEl = document.getElementById("albumSearch");
+    let albumData = { headers: [], rows: [] };
+    let lastWorkbookBytes = null;
 
-    <!-- script src attribute -->
-<script src="/ishScript.js"></script>
+    async function readZipEntry(zipBytes, entry) {
+      const view = new DataView(zipBytes);
+      const local = entry.localOffset;
+      const nameLength = view.getUint16(local + 26, true);
+      const extraLength = view.getUint16(local + 28, true);
+      const start = local + 30 + nameLength + extraLength;
+      const compressed = zipBytes.slice(start, start + entry.compressedSize);
+      if (entry.method === 0) return new TextDecoder().decode(compressed);
+      if (entry.method !== 8) throw new Error("Unsupported workbook compression method.");
+      const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+    }
 
-<!-- unique page scripts -->
-<script>
+    function findZipEntries(bytes) {
+      const view = new DataView(bytes);
+      let end = bytes.length - 22;
+      const min = Math.max(0, bytes.length - 65557);
+      while (end >= min && view.getUint32(end, true) !== 0x06054b50) end--;
+      if (end < min) throw new Error("This file is not a readable Excel workbook.");
+      const count = view.getUint16(end + 10, true);
+      let cursor = view.getUint32(end + 16, true);
+      const entries = {};
+      for (let i = 0; i < count; i++) {
+        if (view.getUint32(cursor, true) !== 0x02014b50) throw new Error("Could not read workbook file list.");
+        const method = view.getUint16(cursor + 10, true);
+        const compressedSize = view.getUint32(cursor + 20, true);
+        const nameLength = view.getUint16(cursor + 28, true);
+        const extraLength = view.getUint16(cursor + 30, true);
+        const commentLength = view.getUint16(cursor + 32, true);
+        const localOffset = view.getUint32(cursor + 42, true);
+        const name = new TextDecoder().decode(bytes.slice(cursor + 46, cursor + 46 + nameLength));
+        entries[name] = { method, compressedSize, localOffset };
+        cursor += 46 + nameLength + extraLength + commentLength;
+      }
+      return entries;
+    }
 
-</script>
+    function cellColumn(cellRef) {
+      return cellRef.replace(/[0-9]/g, "");
+    }
 
+    async function loadWorkbook(silent = false) {
+      if (!silent) statusEl.textContent = "[ READING ALBUM RECS.XLSX… ]";
+      const response = await fetch(WORKBOOK_URL + "?updated=" + Date.now(), { cache: "no-store" });
+      if (!response.ok) throw new Error("Could not load /files/IshMusic/album recs.xlsx (" + response.status + ").");
+      const bytes = await response.arrayBuffer();
+      const currentBytes = new Uint8Array(bytes);
+      if (lastWorkbookBytes && currentBytes.length === lastWorkbookBytes.length && currentBytes.every((byte, index) => byte === lastWorkbookBytes[index])) return;
+      lastWorkbookBytes = currentBytes;
+      const entries = findZipEntries(bytes);
+      const sharedXml = new DOMParser().parseFromString(await readZipEntry(bytes, entries["xl/sharedStrings.xml"]), "application/xml");
+      const sheetXml = new DOMParser().parseFromString(await readZipEntry(bytes, entries["xl/worksheets/sheet1.xml"]), "application/xml");
+      const shared = Array.from(sharedXml.getElementsByTagName("si"), item => Array.from(item.getElementsByTagName("t"), t => t.textContent).join(""));
+      const sharedIndex = sharedXml.documentElement.namespaceURI;
+      const ns = sharedIndex;
+      const sheetData = Array.from(sheetXml.getElementsByTagNameNS(ns, "row"));
+      const parsed = [];
+      for (const row of sheetData) {
+        const values = {};
+        for (const cell of Array.from(row.children).filter(node => node.localName === "c")) {
+          const valueNode = Array.from(cell.children).find(node => node.localName === "v");
+          const inlineNode = Array.from(cell.children).find(node => node.localName === "is");
+          let value = valueNode ? valueNode.textContent : inlineNode ? Array.from(inlineNode.getElementsByTagNameNS(ns, "t"), t => t.textContent).join("") : "";
+          if (cell.getAttribute("t") === "s" && value !== "") value = shared[Number(value)] || "";
+          const column = cellColumn(cell.getAttribute("r"));
+          if (["B", "C", "D"].includes(column)) values[column] = value;
+        }
+        if (Object.values(values).some(value => String(value).trim())) parsed.push({ rowNumber: Number(row.getAttribute("r")), values });
+      }
+      const header = parsed.find(row => row.values.B === "Album Name" && row.values.C === "Artist Name");
+      if (!header) throw new Error("Expected Album Name, Artist Name, and Vibe Notes columns were not found.");
+      const headerRow = header.rowNumber;
+      const headers = ["B", "C", "D"].map(col => header.values[col] || "");
+      const rows = parsed.filter(row => row.rowNumber > headerRow).map(row => [row.values.B || "", row.values.C || "", row.values.D || ""]).filter(row => row.some(cell => String(cell).trim()));
+      albumData = { headers, rows };
+      renderTable();
+      searchEl.disabled = false;
+      statusEl.textContent = `[ ${rows.length} ALBUM RECS // FROM ALBUM RECS.XLSX ]`;
+    }
+
+    function renderTable() {
+      headersEl.replaceChildren(...albumData.headers.map(label => {
+        const th = document.createElement("th");
+        th.scope = "col";
+        th.textContent = label;
+        return th;
+      }));
+      const query = searchEl.value.trim().toLocaleLowerCase();
+      const filtered = albumData.rows.filter(row => row.join(" ").toLocaleLowerCase().includes(query));
+      if (!filtered.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.className = "empty-state";
+        td.colSpan = Math.max(1, albumData.headers.length);
+        td.textContent = "No album recommendations match that filter.";
+        rowsEl.replaceChildren(tr.appendChild(td).parentElement);
+        return;
+      }
+      rowsEl.replaceChildren(...filtered.map(row => {
+        const tr = document.createElement("tr");
+        row.forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          tr.append(td);
+        });
+        return tr;
+      }));
+    }
+
+    searchEl.addEventListener("input", renderTable);
+    loadWorkbook().catch(error => {
+      statusEl.textContent = "[ ALBUM LIST UNAVAILABLE ]";
+      rowsEl.innerHTML = "<tr><td class=\"empty-state\" colspan=\"3\"></td></tr>";
+      rowsEl.querySelector("td").textContent = error.message + " Reload the page after saving the workbook.";
+      console.error(error);
+    });
+    // Refresh the table soon after a saved workbook change.
+    window.setInterval(() => loadWorkbook(true).catch(error => console.error(error)), 30000);
+  </script>
 </body>
-
 </html>
+
+
+
+

@@ -12,30 +12,42 @@
 
   <!-- unique page styles -->
   <style>
-    .column-arrow {
-      float: left;
-      width: 10%;
-      margin-left: 5%;
-      text-align: center;
+    /* Project descriptions: edit the PROJECT_CARDS array below. */
+    .project-card-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+      gap: 12px;
+      width: min(1000px, 88vw);
+      font-family: "Lucida Console", monospace;
+      text-align: left;
+      margin: 1rem auto 4rem;
     }
-
-    .column-side {
-      float: left;
-      text-align: center;
-      width: 23%;
-      margin-right: 8%;
-      margin-left: 8%;
-      text-align: center;
+    .project-card {
+      display: block;
+      text-align: left;
+      min-height: 110px;
+      padding: 16px;
+      border: 1px solid #145214;
+      background: #020803;
+      color: #a7ffbb;
+      text-decoration: none;
+      transition: border-color .15s ease, background .15s ease, transform .15s ease;
     }
-
-    .column-middle {
-      float: left;
-      width: 67%;
-      text-align: center;
-      margin-right: 8%;
-      margin-left: 8%;
-      margin-top: 1%
+    .project-card:hover, .project-card:focus-visible {
+      border-color: #27f549;
+      background: #041006;
+      transform: translateY(-2px);
+      outline: none;
     }
+    .project-card h2 {
+      margin: 0;
+      color: #46bf46;
+      font: 18px "BlueScreenV1", monospace;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    .project-card p { margin: 11px 0 0; font-size: 13px; line-height: 1.65; }
+    .project-card-hint { display: block; margin-top: 12px; color: #679477; font-size: 10px; }
   </style>
   <link rel="icon" href="/files/favicon.ico">
 </head>
@@ -83,89 +95,53 @@ projects
 
   <!-- text -->
 
-  <div class="row">
-    <div class="column-arrow">
-      <span id="arrow-keyboard" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;">
-      </span>
-      <span style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;">
-        <br>
-      </span>
-      <span id="arrow-coding" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;">
-      </span>
-      <span style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;">
-        <br><br><br>
-      </span>
-      <span id="arrow-photography" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;">
-      </span>
-    </div>
-
-    <div class="column-side">
-      <a>
-        <span id="keyboard-dropdown" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;text-align: center;">
-          <strong> keyboards </strong>
-        </span>
-      </a>
-      <a>
-        <span id="coding-dropdown" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;text-align: center;">
-          <br> <br>
-          <strong> coding </strong>
-        </span>
-      </a>
-      <a href="/ishproject/photography">
-        <span id="photography-dropdown" style="font-family: 'BlueScreenV1'; line-height: 100%; font-size: 3.5vw;text-align: center;">
-          <br> <br>
-          <strong>photography</strong>
-        </span>
-      </a>
-    </div>
-
-    <div class="column-middle">
-      <span id="info" , style="font-size: 1.4vw;">
-        Info will appear here upon hover!
-      </span>
-
-    </div>
-  </div>
+  <div class="project-card-list" id="projectCardList"></div>
 
 <!-- script src attribute -->
 <script src="/ishScript.js"></script>
 
-<!-- unique page scripts -->
+<!-- Edit project titles, descriptions, and links here. Set href to null for a non-clickable card. -->
 <script>
-  document.getElementById('keyboard-dropdown').addEventListener("mouseover", keyboardDrop);
-  document.getElementById('keyboard-dropdown').addEventListener("mouseout", mouseOuters);
-  document.getElementById('coding-dropdown').addEventListener("mouseover", codingDrop);
-  document.getElementById('coding-dropdown').addEventListener("mouseout", mouseOuters);
-  document.getElementById('photography-dropdown').addEventListener("mouseover", photographyDrop);
-  document.getElementById('photography-dropdown').addEventListener("mouseout", mouseOuters);
-  async function keyboardDrop() {
-    let file = "/files/projects/keyboards.txt"
-    let myObject = await fetch(file);
-    let myText = await myObject.text();
-    document.getElementById("info").innerHTML = myText;
-    document.getElementById("arrow-keyboard").innerHTML = "<strong>  -> </strong>";
+  const PROJECT_CARDS = [
+    {
+      title: "RNGMine",
+      description: "Ever wanted to mine coal for more rolls from rngdle.com?",
+      href: "/rngmine/",
+      linkText: "Open RNGMine"
+    },
+    {
+      title: "Mechanical Keyboards",
+      description: "I like making mechanical keyboard designs and firmware, specfically for 40% or smaller. Check them out!",
+      href: null,
+      linkText: "See some keyboards"
+    },
+    {
+      title: "Destiny 2 Raid Farming",
+      description: "All I do in Destiny 2 is play raids over and over, check out which ones I've done recently...",
+      href: null,
+      linkText: "Check my raid activity"
+    }
+  ];
 
-  }
+  const cardList = document.getElementById("projectCardList");
+  PROJECT_CARDS.forEach(({ title, description, href, linkText }) => {
+    const card = document.createElement(href ? "a" : "article");
+    card.className = "project-card";
+    if (href) card.href = href;
 
-  function codingDrop() {
-    document.getElementById('info').innerHTML = "blah blah blah i coded this site and it sucked";
-    document.getElementById("arrow-coding").innerHTML = "<br> <strong>  -> </strong>";
-  }
-
-  async function photographyDrop() {
-    let file = "/files/projects/photography.txt"
-    let myObject = await fetch(file);
-    let myText = await myObject.text();
-    document.getElementById("info").innerHTML = myText;
-    document.getElementById("arrow-photography").innerHTML = "<strong>  -> </strong>";
-
-  }
-  function mouseOuters() {
-    document.getElementById('info').innerHTML = "Info will appear here upon hover!"
-    document.getElementById("arrow-keyboard").innerHTML = "  ";
-    document.getElementById("arrow-coding").innerHTML = "";
-    document.getElementById("arrow-photography").innerHTML = "";
-  }
+    const heading = document.createElement("h2");
+    heading.textContent = title;
+    const body = document.createElement("p");
+    body.textContent = description;
+    card.append(heading, body);
+    if (href && linkText) {
+      const hint = document.createElement("span");
+      hint.className = "project-card-hint";
+      hint.textContent = linkText + " →";
+      card.append(hint);
+    }
+    cardList.append(card);
+  });
 </script>
 
 </body>
