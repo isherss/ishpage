@@ -182,7 +182,22 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     overflow-x: auto;
     font-size: clamp(6px, 1.9vw, 10px) !important;
   }
+  body.ish-subpage .page-navigation {
+    flex-wrap: nowrap;
+    gap: 0 clamp(4px, 1.2vw, 10px);
+    width: 98vw;
+  }
+  body.ish-subpage .page-navigation span {
+    font-size: clamp(15px, 4.2vw, 22px) !important;
+    white-space: nowrap !important;
+  }
+  body.ish-subpage a[href="/"] img {
+    width: clamp(22px, 6vw, 30px) !important;
+    height: clamp(22px, 6vw, 30px) !important;
+  }
 }
+
+
 
 
 
