@@ -4,7 +4,7 @@
   var PUZZLE_INFO=window.RNGMINE_PUZZLE_INFO||[];
   var BLURB_QUESTIONS=window.RNGMINE_BLURB_QUESTIONS||[];
   function puzzleOdds(id,fallback){ var puzzle=PUZZLE_INFO.find?PUZZLE_INFO.find(function(item){return item.id===id;}):null; return puzzle&&Number.isFinite(puzzle.oddsDenominator)&&puzzle.oddsDenominator>0?puzzle.oddsDenominator:fallback; }
-  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=8000, DB_MS=20000, WIRE_MS=6000, VY_MS=15000, DYN_MS=18000, DYN_PROBLEMS=3;
+  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=8000, DB_MS=20000, WIRE_MS=8000, VY_MS=20000, DYN_MS=20000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function syncVisualViewport(){
     var viewport=window.visualViewport,root=document.documentElement;
