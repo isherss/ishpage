@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-mobile-nav">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-header-controls-mobile-fix">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -90,45 +90,20 @@
           <h2 id="bdH">Badge breakdown</h2>
           <p class="count" id="bdCount"></p>
         </div>
-        <button class="share" id="shareBtn" type="button" aria-label="Share result" title="Share result">
-          <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m0 0L7 8m5-5 5 5M5 12v8h14v-8"/></svg>
-        </button>
       </div>
       <div class="bd-list" id="bdList"></div>
     </section>
 
     <section class="section dimmable mine-sec" aria-labelledby="mineH">
-      <div class="panel-head"><h2 id="mineH">Coal mine</h2><span id="coalCount" class="coal-count"></span></div>
+      <div class="panel-head mine-panel-head"><div class="mine-heading"><h2 id="mineH">Coal mine</h2><button class="account-btn guest-boost mine-god-mode" id="guestBoostMineBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button><span id="coalCount" class="coal-count"></span></div>
+      </div>
       <div class="mine" id="mine">
         <button class="coal" id="coal" type="button" aria-label="Mine coal"><span id="coalHits" aria-hidden="true"></span></button>
         <div class="empty-note" id="mineNote"></div>
-        <div class="dyn" id="dyn" hidden role="alertdialog" aria-labelledby="dynTitle">
-          <div class="dyn-top">
-            <span class="stick" aria-hidden="true"><i class="fuse"></i></span>
-            <span class="dyn-title" id="dynTitle">Dynamite!</span>
-            <span class="dyn-time" id="dynTime" aria-live="off">15s</span>
-            <button class="mini-close" id="dynClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button>
-          </div>
-          <div class="dyn-bar" aria-hidden="true"><i id="dynBar"></i></div>
-          <p class="dyn-step" id="dynStep"></p>
-          <form class="dyn-form" id="dynForm" autocomplete="off">
-            <label class="dyn-q" id="dynQ" for="dynIn"></label>
-            <input id="dynIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Answer">
-            <button type="submit" class="dyn-go">Defuse</button>
-          </form>
-        </div>
       </div>
       <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
       <p class="prog" id="progText"></p>
       <p class="prog2" id="progText2"></p>
-      <div class="testbar" id="testBar" hidden>
-        <span>Practice</span>
-        <button type="button" data-t="dyn">Dynamite</button>
-        <button type="button" data-t="wires">Wires</button>
-        <button type="button" data-t="verity">Verity</button>
-        <button type="button" data-t="double">Double break</button>
-        <button type="button" data-t="captcha">Captcha</button>
-      </div>
     </section>
 
   </main>
@@ -180,9 +155,7 @@
 </div>
 
 <div class="account-overlay" id="loginOverlay" hidden>
-  <section class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
-    <h2 id="loginTitle">Account login</h2>
-    <p class="account-help">Accounts are provided by the site administrator.</p>
+  <section class="account-dialog" role="dialog" aria-modal="true" aria-label="Login">
     <form id="loginForm" autocomplete="on">
       <label for="loginUsername">Username</label>
       <input id="loginUsername" name="username" type="text" autocomplete="username" maxlength="32" required>
@@ -197,6 +170,23 @@
   </section>
 </div>
 
+  <div class="dyn" id="dyn" hidden role="alertdialog" aria-modal="true" aria-labelledby="dynTitle">
+    <div class="dyn-panel">
+      <div class="dyn-top">
+        <span class="stick" aria-hidden="true"><i class="fuse"></i></span>
+        <span class="dyn-title" id="dynTitle">Dynamite!</span>
+        <span class="dyn-time" id="dynTime" aria-live="off">15s</span>
+        <button class="mini-close" id="dynClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button>
+      </div>
+      <div class="dyn-bar" aria-hidden="true"><i id="dynBar"></i></div>
+      <p class="dyn-step" id="dynStep"></p>
+      <form class="dyn-form" id="dynForm" autocomplete="off">
+        <label class="dyn-q" id="dynQ" for="dynIn"></label>
+        <input id="dynIn" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Answer">
+        <button type="submit" class="dyn-go">Defuse</button>
+      </form>
+    </div>
+  </div>
 <div class="wires" id="wires" hidden role="dialog" aria-modal="true" aria-labelledby="wireTitle">
   <div class="wire-panel">
     <div class="wire-head"><span id="wireTitle">Match the wires</span><span class="wire-meta"><span id="wireTime">5.0s</span><span id="wireCount">0 / 4</span></span><button class="mini-close" id="wireClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
@@ -237,7 +227,7 @@
 </div>
   <script src="js/rng-calculator.js"></script>
   <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
-  <script src="js/app.js?v=20261029-dynamite-15s"></script>
+  <script src="js/app.js?v=20261029-remove-share"></script>
   <script>
     (function(){
       const menu=document.getElementById("mobileNavigation");
@@ -264,6 +254,9 @@
   </script>
 </body>
 </html>
+
+
+
 
 
 

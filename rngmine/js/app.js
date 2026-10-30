@@ -87,8 +87,11 @@
     $("accountUser").textContent=authUser?authDisplayName:"";
     $("accountUser").style.color=authUser?authNameColor:"";
     if(authUser){ guestBoostEnabled=false; try{sessionStorage.removeItem(GUEST_BOOST_KEY);}catch(e){} }
-    var guestBoostBtn=$("guestBoostBtn");
-    guestBoostBtn.hidden=!!authUser;
+    var guestBoostBtn=$("guestBoostBtn"), mineGuestBoostBtn=$("guestBoostMineBtn");
+    guestBoostBtn.hidden=!!authUser; mineGuestBoostBtn.hidden=!!authUser || window.matchMedia("(max-width:700px)").matches;
+    mineGuestBoostBtn.setAttribute("aria-pressed",guestBoostEnabled?"true":"false");
+    mineGuestBoostBtn.textContent="God mode: "+(guestBoostEnabled?"On":"Off");
+    mineGuestBoostBtn.title=guestBoostBtn.title;
     guestBoostBtn.setAttribute("aria-pressed",guestBoostEnabled?"true":"false");
     guestBoostBtn.textContent="God mode: "+(guestBoostEnabled?"On":"Off");
     guestBoostBtn.title=guestBoostEnabled?"Unlimited rolls and one-hit coal are on for this guest session":"Toggle unlimited rolls and one-hit coal for this guest session";
@@ -141,8 +144,8 @@
       boot();
     });
   }
-  function clearFailedGameProgress(){ if(state.testMinigame){ state.testMinigame=false; } else { state.progress=0; } }
-  function showPracticeClose(id){ $(id).hidden=!state.testMinigame; }
+  function clearFailedGameProgress(){ if(state.testMinigame){ state.testMinigame=false; document.body.classList.remove("practice-minigame"); } else { state.progress=0; } }
+  function showPracticeClose(id){ $(id).hidden=!state.testMinigame; document.body.classList.toggle("practice-minigame",!!state.testMinigame); }
   function closePracticeMinigame(kind){
     if(!state.testMinigame) return;
     pending=[];
@@ -151,7 +154,7 @@
     else if(kind==="verity") closeVerity();
     else if(kind==="double") closeDouble();
     else if(kind==="captcha") closeCaptcha();
-    state.testMinigame=false;
+    state.testMinigame=false; document.body.classList.remove("practice-minigame");
     save(); updateUI();
   }
   var busy=false, msg="", cancelReveal=null, lastShare="";
@@ -236,7 +239,7 @@
     state.history.slice(0,10).forEach(function(e){
       var t=tierOf(e.total), li=document.createElement("li");
       li.innerHTML='<span class="h-n"></span><span class="h-t"></span><span class="h-d"></span>';
-      li.children[0].textContent=String(e.n);
+      li.dataset.tier=t; li.children[0].textContent=String(e.n);
       li.children[1].textContent=LABELS[t]+" · "+fmt(e.total)+" EP"; li.children[1].style.color="var(--t-"+t+")";
       li.children[2].textContent=e.day===state.day?"Today":e.day;
       ol.appendChild(li);
@@ -376,16 +379,10 @@
     playReveal(n,a,done);
   }
   $("continueBtn").addEventListener("click",function(){ document.body.classList.remove("awaiting-continue","rolling"); hero.classList.remove("rolling"); document.body.classList.add("has-roll"); $("continueBtn").hidden=true; requestAnimationFrame(function(){ layoutCoal(); }); });
-  $("shareBtn").addEventListener("click",function(){
-    var b=$("shareBtn");
-    function ok(){ b.classList.add("copied"); b.setAttribute("aria-label","Copied"); b.title="Copied"; setTimeout(function(){b.classList.remove("copied"); b.setAttribute("aria-label","Share result"); b.title="Share result";},1500); }
-    function fail(){ msg=lastShare; updateUI(); }
-    try{ navigator.clipboard.writeText(lastShare).then(ok,fail); }catch(e){ fail(); }
-  });
 
-  /* ---------- coal: each piece takes 5 to 20 hits, and mining one can light a dynamite fuse ---------- */
+  /* ---------- coal: each piece takes 3 to 12 hits, and mining one can light a dynamite fuse ---------- */
   var coal=$("coal"), mine=$("mine"), coalHits=$("coalHits"), pos={fx:0.5,fy:0.5};
-  function rollHits(){ return !authUser&&guestBoostEnabled?1:5+Math.floor(Math.random()*16); }
+  function rollHits(){ return !authUser&&guestBoostEnabled?1:3+Math.floor(Math.random()*10); }
   function ensureHits(){ if(!(state.hitsLeft>0)) state.hitsLeft=rollHits(); }
   function showHits(){ ensureHits(); }
   function bounds(){ return {w:Math.max(mine.clientWidth-coal.offsetWidth,0),h:Math.max(mine.clientHeight-coal.offsetHeight,0)}; }
@@ -450,6 +447,7 @@
     dynIn.value="";
   }
   function dynTick(){
+    if(state.testMinigame){ dynBar.style.width="100%"; dynTime.textContent="Practice"; dynEl.classList.remove("urgent"); return; }
     var rem=dyn.end-Date.now();
     if(rem<=0){ explode(); return; }
     dynBar.style.width=(rem/DYN_MS*100)+"%";
@@ -458,9 +456,9 @@
   }
   function startDynamite(resume){
     if(resume){ dyn.probs=resume.probs.map(fixProb); dyn.idx=resume.idx; dyn.end=resume.end; }
-    else { dyn.probs=newProbs(); dyn.idx=0; dyn.end=Date.now()+DYN_MS; state.dyn={probs:dyn.probs,idx:0,end:dyn.end}; save(); }
+    else { dyn.probs=newProbs(); dyn.idx=0; dyn.end=state.testMinigame?8640000000000000:Date.now()+DYN_MS; state.dyn={probs:dyn.probs,idx:0,end:dyn.end}; save(); }
     dyn.active=true; document.body.classList.add("dyn-on"); dynEl.hidden=false; dynEl.classList.remove("urgent"); showPracticeClose("dynClose");
-    showProblem(); dynTick(); clearInterval(dyn.timer); dyn.timer=setInterval(dynTick,100);
+    showProblem(); dynTick(); clearInterval(dyn.timer); if(!state.testMinigame) dyn.timer=setInterval(dynTick,100);
     msg="Dynamite! Solve all "+DYN_PROBLEMS+" problems to defuse it."; updateUI();
     try{ dynIn.focus({preventScroll:true}); }catch(e){}
   }
@@ -546,10 +544,11 @@
     else { wire.left=shuffle([0,1,2,3]); wire.right=shuffle([0,1,2,3]); wire.done=[-1,-1,-1,-1]; wire.end=Date.now()+WIRE_MS; state.wire={left:wire.left,right:wire.right,done:wire.done,end:wire.end}; save(); }
     wire.active=true; wire.locked=false; wire.drag=null; showPracticeClose("wireClose");
     wiresEl.classList.remove("blast","ok"); wiresEl.hidden=false; drawWires(); updateUI();
-    wireTick(); clearInterval(wire.timer); wire.timer=setInterval(wireTick,50);
+    wireTick(); clearInterval(wire.timer); if(!state.testMinigame) wire.timer=setInterval(wireTick,50);
   }
   function wireTick(){
     if(!wire.active||wire.locked) return;
+    if(state.testMinigame){ $("wireTime").textContent="Practice"; $("wireBar").style.width="100%"; wiresEl.classList.remove("urgent"); return; }
     var rem=wire.end-Date.now();
     if(rem<=0){ $("wireTime").textContent="0.0s"; $("wireBar").style.width="0%"; wireBoom(); return; }
     $("wireTime").textContent=(rem/1000).toFixed(1)+"s";
@@ -606,7 +605,7 @@
   var vyEl=$("vy"), vyOut=$("vyOut"), vyIn=$("vyIn"), vyRound=$("vyRound");
   function runNext(){
     var e=pending.shift();
-    if(e==="wires") startWires(); else if(e==="verity") startVerity(); else if(e==="double") startDouble(); else if(e==="captcha") startCaptcha(); else if(e==="dyn") startDynamite(); else { state.testMinigame=false; save(); updateUI(); }
+    if(e==="wires") startWires(); else if(e==="verity") startVerity(); else if(e==="double") startDouble(); else if(e==="captcha") startCaptcha(); else if(e==="dyn") startDynamite(); else { state.testMinigame=false; document.body.classList.remove("practice-minigame"); save(); updateUI(); }
   }
   function glyph(k,s){
     var st='fill="'+VSH[k].c+'" stroke="rgba(0,0,0,.6)" stroke-width="3" stroke-linejoin="round"', body, hl='fill="rgba(255,255,255,.38)"';
@@ -663,10 +662,11 @@
     if(resume&&resume.room&&resume.out){ vy.round=resume.round; vy.room=resume.room; vy.out=resume.out; vy.end=resume.end||(Date.now()+VY_MS); vy.pend=null; vy.locked=false; }
     else { vy.round=0; newPuzzle(); }
     vy.active=true; vyEl.classList.remove("blast","ok","urgent"); vyEl.hidden=false; showPracticeClose("vyClose"); drawVy(); updateUI();
-    vyTick(); clearInterval(vy.timer); vy.timer=setInterval(vyTick,50);
+    vyTick(); clearInterval(vy.timer); if(!state.testMinigame) vy.timer=setInterval(vyTick,50);
   }
   function vyTick(){
     if(!vy.active||vy.locked) return;
+    if(state.testMinigame){ $("vyTime").textContent="Practice"; $("vyBar").style.width="100%"; vyEl.classList.remove("urgent"); return; }
     var rem=Math.max(0,vy.end-Date.now());
     $("vyTime").textContent=(rem/1000).toFixed(1)+"s"; $("vyBar").style.width=(rem/VY_MS*100)+"%";
     vyEl.classList.toggle("urgent",rem<=5000);
@@ -755,10 +755,11 @@
     if(resume&&resume.o){ db.o=resume.o; db.end=resume.end||(Date.now()+DB_MS); }
     else { db.o=dbRoll(); db.end=Date.now()+DB_MS; state.dbl={o:db.o,end:db.end}; save(); }
     $("dbIn").value=""; db.locked=false; db.active=true; dbEl.classList.remove("blast","ok","urgent"); dbEl.hidden=false; showPracticeClose("dbClose"); dbDraw(); updateUI(); try{ $("dbIn").focus({preventScroll:true}); }catch(_){}
-    dbTick(); clearInterval(db.timer); db.timer=setInterval(dbTick,50);
+    dbTick(); clearInterval(db.timer); if(!state.testMinigame) db.timer=setInterval(dbTick,50);
   }
   function dbTick(){
     if(!db.active||db.locked) return;
+    if(state.testMinigame){ $("dbTime").textContent="Practice"; $("dbBar").style.width="100%"; dbEl.classList.remove("urgent"); return; }
     var rem=Math.max(0,db.end-Date.now());
     $("dbTime").textContent=(rem/1000).toFixed(1)+"s"; $("dbBar").style.width=(rem/DB_MS*100)+"%";
     dbEl.classList.toggle("urgent",rem<=5000);
@@ -813,10 +814,11 @@
     else { cz.code=czCode(); cz.seed=Math.floor(Math.random()*1e9); cz.end=Date.now()+CZ_MS; state.cz={code:cz.code,seed:cz.seed,end:cz.end}; save(); }
     cz.locked=false; cz.active=true; $("czIn").value=""; czEl.classList.remove("blast","ok","urgent"); czEl.hidden=false; showPracticeClose("czClose"); czDraw(); updateUI();
     try{ $("czIn").focus({preventScroll:true}); }catch(_){}
-    czTick(); clearInterval(cz.timer); cz.timer=setInterval(czTick,50);
+    czTick(); clearInterval(cz.timer); if(!state.testMinigame) cz.timer=setInterval(czTick,50);
   }
   function czTick(){
     if(!cz.active||cz.locked) return;
+    if(state.testMinigame){ $("czTime").textContent="Practice"; $("czBar").style.width="100%"; czEl.classList.remove("urgent"); return; }
     var rem=Math.max(0,cz.end-Date.now());
     $("czTime").textContent=(rem/1000).toFixed(1)+"s"; $("czBar").style.width=(rem/CZ_MS*100)+"%";
     czEl.classList.toggle("urgent",rem<=2000);
@@ -845,16 +847,6 @@
     $(pair[0]).addEventListener("click",function(){ closePracticeMinigame(pair[1]); });
   });
 
-  /* TEMPORARY TEST SWITCH: set to false to hide the minigame test buttons */
-  var TEST_BUTTONS=true;
-  $("testBar").hidden=!TEST_BUTTONS;
-  $("testBar").addEventListener("click",function(e){
-    var b=e.target.closest("button[data-t]"); if(!b||!TEST_BUTTONS) return;
-    ensureDay();
-    if(busy||dyn.active||wire.active||vy.active||db.active||cz.active) return;
-    pending=[]; state.testMinigame=true; save();
-    if(b.dataset.t==="wires") startWires(); else if(b.dataset.t==="verity") startVerity(); else if(b.dataset.t==="double") startDouble(); else if(b.dataset.t==="captcha") startCaptcha(); else startDynamite();
-  });
   function jumpTo(el,block){ try{ el.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:block}); }catch(e){ el.scrollIntoView(); } }
 
   var leaderboardData=null, leaderboardMetric="bestRoll";
@@ -889,18 +881,25 @@
     });
     status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
   }
+  function launchPuzzlePractice(id){
+    if(busy||dyn.active||wire.active||vy.active||db.active||cz.active) return;
+    pending=[]; state.testMinigame=true; save();
+    if(id==="wires") startWires(); else if(id==="verity") startVerity(); else if(id==="double") startDouble(); else if(id==="captcha") startCaptcha(); else if(id==="dyn") startDynamite();
+  }
   function renderPuzzleInfo(){
     var list=$("puzzleInfoList");
     list.innerHTML="";
     PUZZLE_INFO.forEach(function(puzzle){
       var card=document.createElement("article"), head=document.createElement("div"), title=document.createElement("h2"), odds=document.createElement("span"), label=document.createElement("span"), text=document.createElement("p"), pct=100/puzzle.oddsDenominator;
-      card.className="puzzle-info-card";
+      card.className="puzzle-info-card"; card.setAttribute("role","button"); card.tabIndex=0; card.setAttribute("aria-label","Practice "+puzzle.name+" with unlimited time"); card.dataset.puzzleId=puzzle.id;
+      card.addEventListener("click",function(){launchPuzzlePractice(card.dataset.puzzleId);});
+      card.addEventListener("keydown",function(event){if(event.key==="Enter"||event.key===" "){event.preventDefault();launchPuzzlePractice(card.dataset.puzzleId);}});
       head.className="puzzle-info-card-head";
       title.textContent=puzzle.name;
       odds.className="puzzle-info-odds";
       odds.textContent="1 in "+puzzle.oddsDenominator+" · "+(pct<1?pct.toFixed(2):pct.toFixed(1))+"% per coal";
       label.className="puzzle-info-label";
-      label.textContent="How to solve";
+      label.textContent="Select to practice · unlimited time";
       text.className="puzzle-info-solution";
       text.textContent=puzzle.solution;
       head.appendChild(title);head.appendChild(odds);card.appendChild(head);card.appendChild(label);card.appendChild(text);list.appendChild(card);
@@ -1021,14 +1020,16 @@
   },true);
 
   $("genBtn").addEventListener("click",doRoll);
-  $("guestBoostBtn").addEventListener("click",function(){
+  function toggleGuestBoost(){
     if(authUser) return;
     guestBoostEnabled=!guestBoostEnabled;
     try{ if(guestBoostEnabled) sessionStorage.setItem(GUEST_BOOST_KEY,"1"); else sessionStorage.removeItem(GUEST_BOOST_KEY); }catch(e){}
     state.hitsLeft=rollHits();
     setAccountUI(); save(); updateUI();
-  });
-  window.addEventListener("resize",layoutCoal);
+  }
+  $("guestBoostBtn").addEventListener("click",toggleGuestBoost);
+  $("guestBoostMineBtn").addEventListener("click",toggleGuestBoost);
+  window.addEventListener("resize",function(){ layoutCoal(); setAccountUI(); });
   document.addEventListener("visibilitychange",function(){ if(!document.hidden&&ensureDay()) updateUI(); });
   setInterval(function(){ if(ensureDay()) updateUI(); },60000);
 
@@ -1057,3 +1058,6 @@
   }
   initializeAccounts();
 })();
+
+
+
