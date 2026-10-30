@@ -99,12 +99,16 @@
 
     function findZipEntries(bytes) {
       const view = new DataView(bytes);
-      let end = bytes.length - 22;
-      const min = Math.max(0, bytes.length - 65557);
+      let end = bytes.byteLength - 22;
+      const min = Math.max(0, bytes.byteLength - 65557);
       while (end >= min && view.getUint32(end, true) !== 0x06054b50) end--;
       if (end < min) throw new Error("This file is not a readable Excel workbook.");
       const count = view.getUint16(end + 10, true);
-      let cursor = view.getUint32(end + 16, true);
+      const centralSize = view.getUint32(end + 12, true);
+      const centralOffset = view.getUint32(end + 16, true);
+      const actualCentralStart = end - centralSize;
+      const archiveOffset = actualCentralStart - centralOffset;
+      let cursor = centralOffset + archiveOffset;
       const entries = {};
       for (let i = 0; i < count; i++) {
         if (view.getUint32(cursor, true) !== 0x02014b50) throw new Error("Could not read workbook file list.");
@@ -113,7 +117,7 @@
         const nameLength = view.getUint16(cursor + 28, true);
         const extraLength = view.getUint16(cursor + 30, true);
         const commentLength = view.getUint16(cursor + 32, true);
-        const localOffset = view.getUint32(cursor + 42, true);
+        const localOffset = view.getUint32(cursor + 42, true) + archiveOffset;
         const name = new TextDecoder().decode(bytes.slice(cursor + 46, cursor + 46 + nameLength));
         entries[name] = { method, compressedSize, localOffset };
         cursor += 46 + nameLength + extraLength + commentLength;
@@ -205,6 +209,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
