@@ -1020,14 +1020,18 @@
   function startMemory(resume){
     if(resume){mem.pattern=resume.pattern.slice();mem.selected=(resume.selected||[]).slice();mem.stage=resume.stage||"preview";mem.previewEnd=resume.previewEnd||Date.now();mem.end=resume.end||0;}
     else{var tiles=[];for(var i=0;i<16;i++)tiles.push(i);mem.pattern=shuffle(tiles).slice(0,MEM_TILES);mem.selected=[];mem.stage="preview";mem.previewEnd=Date.now()+MEM_PREVIEW_MS;mem.end=0;state.mem={pattern:mem.pattern,selected:[],stage:mem.stage,previewEnd:mem.previewEnd,end:0};save();}
-    mem.active=true;mem.locked=false;memEl.hidden=false;memEl.classList.remove("blast","ok","urgent");showPracticeClose("memoryClose");memoryDraw();memoryTick();clearInterval(mem.timer);mem.timer=setInterval(memoryTick,100);updateUI();
+    mem.active=true;mem.locked=false;memEl.hidden=false;$("memorySkip").hidden=mem.stage!=="preview";memEl.classList.remove("blast","ok","urgent");showPracticeClose("memoryClose");memoryDraw();memoryTick();clearInterval(mem.timer);mem.timer=setInterval(memoryTick,100);updateUI();
+  }
+  function memoryBeginSelection(){
+    if(mem.stage!=="preview")return;
+    mem.stage="select";mem.end=state.testMinigame?0:Date.now()+MEM_MS;state.mem={pattern:mem.pattern,selected:mem.selected,stage:mem.stage,previewEnd:0,end:mem.end};$("memorySkip").hidden=true;memoryDraw();save();
   }
   function memoryTick(){
     if(!mem.active||mem.locked)return;
     if(mem.stage==="preview"){
       var previewLeft=mem.previewEnd-Date.now();
-      if(previewLeft<=0){mem.stage="select";mem.end=state.testMinigame?0:Date.now()+MEM_MS;state.mem={pattern:mem.pattern,selected:mem.selected,stage:mem.stage,previewEnd:0,end:mem.end};memoryDraw();save();}
-      else{$("memoryTime").textContent=(previewLeft/1000).toFixed(1)+"s";$("memoryInstructions").textContent="Memorize the lit tiles.";$("memoryBar").style.width="100%";return;}
+      if(previewLeft<=0)memoryBeginSelection();
+      else{$("memoryTime").textContent="Memorize · "+(previewLeft/1000).toFixed(1)+"s";$("memoryInstructions").textContent="Memorize the lit tiles.";$("memoryBar").style.width="100%";return;}
     }
     $("memoryInstructions").textContent="Select all "+mem.pattern.length+" remembered tiles.";
     if(state.testMinigame){$("memoryTime").textContent="Practice";$("memoryBar").style.width="100%";memEl.classList.remove("urgent");return;}
@@ -1044,6 +1048,7 @@
     if(mem.selected.length===mem.pattern.length){mem.locked=true;memEl.classList.add("ok");setTimeout(function(){if(!mem.active)return;closeMemory();save();updateUI();runNext();},REDUCED?0:700);}
   }
   memGrid.addEventListener("click",memoryPick);
+  $("memorySkip").addEventListener("click",function(){if(!mem.active||mem.stage!=="preview")return;memoryBeginSelection();memoryTick();});
   function launchPuzzlePractice(id){
     if(busy||dyn.active||wire.active||vy.active||db.active||cz.active||mem.active) return;
     pending=[]; state.testMinigame=true; save();

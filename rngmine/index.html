@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261030-memory-grid">
+  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261030-memory-timer-skip">
   <script src="/rngmine/js/first-visit.js"></script>
 </head>
 <body>
@@ -135,7 +135,8 @@
 </div>
 <div class="vy memory" id="memory" hidden role="dialog" aria-modal="true" aria-labelledby="memoryTitle">
   <div class="vy-panel memory-panel">
-    <div class="vy-head"><span id="memoryTitle">Memory Grid</span><span id="memoryTime" aria-live="off">Memorize</span><button class="mini-close" id="memoryClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
+    <div class="vy-head"><span id="memoryTitle">Memory Grid</span><button class="mini-close" id="memoryClose" type="button" aria-label="Close practice minigame" title="Close practice minigame" hidden>&times;</button></div>
+    <div class="memory-controls"><span id="memoryTime" aria-live="off">Memorize</span><button id="memorySkip" type="button">Skip preview</button></div>
     <div class="wire-bar" aria-hidden="true"><i id="memoryBar"></i></div>
     <p class="memory-instructions" id="memoryInstructions">Memorize the lit tiles.</p>
     <div class="memory-grid" id="memoryGrid" role="group" aria-label="4 by 4 memory tile grid"></div>
@@ -164,7 +165,7 @@
       }));
       document.getElementById("routePanels").innerHTML=fragments.join("\n");
       const editableDataVersion=Date.now();
-      const scripts=["/rngmine/js/rng-calculator.js","/rngmine/js/blurb-questions.js?v=20261029-1","/rngmine/js/minigame-settings.js?v="+editableDataVersion,"/rngmine/js/puzzle-info.js?v="+editableDataVersion,"/rngmine/js/app.js?v=20261030-memory-grid"];
+      const scripts=["/rngmine/js/rng-calculator.js","/rngmine/js/blurb-questions.js?v=20261029-1","/rngmine/js/minigame-settings.js?v="+editableDataVersion,"/rngmine/js/puzzle-info.js?v="+editableDataVersion,"/rngmine/js/app.js?v=20261030-memory-timer-skip"];
       for(const src of scripts){await new Promise(function(resolve,reject){const script=document.createElement("script");script.src=src;script.onload=resolve;script.onerror=function(){reject(new Error("Could not load "+src));};document.body.appendChild(script);});}
     })().catch(function(error){console.error(error);});
   </script>
