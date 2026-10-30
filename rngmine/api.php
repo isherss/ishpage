@@ -43,6 +43,9 @@ try {
                 'bestRoll' => $bestRoll,
                 'bestRollEp' => $bestRollEp,
                 'coalMined' => max(0, (int) ($state['coalTotal'] ?? 0)),
+                'rollsEarned' => max(0, (int) ($state['bonus'] ?? 0)),
+                'currentCoal' => max(0, (int) ($state['progress'] ?? 0)),
+                'coalLost' => max(0, (int) ($state['coalTotal'] ?? 0) - (max(0, (int) ($state['bonus'] ?? 0)) * 40 + max(0, (int) ($state['progress'] ?? 0)))),
                 'totalEp' => max(0, (int) ($state['lifetime'] ?? 0)),
             ];
         }

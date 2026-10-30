@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261030-memory-timer-skip">
+  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261030-coal-no-select">
   <script src="/rngmine/js/first-visit.js"></script>
 </head>
 <body>
@@ -159,13 +159,13 @@
     (async function(){
       const files=["mining","leaderboard","blurbs","roll-history","puzzle-info","badge-book"];
       const fragments=await Promise.all(files.map(async function(file){
-        const response=await fetch("/rngmine/pages/"+file+".html?v=20261030-fit-width");
+        const response=await fetch("/rngmine/pages/"+file+".html?v=20261030-coal-lost");
         if(!response.ok)throw new Error("Could not load RNGMINE page: "+file);
         return response.text();
       }));
       document.getElementById("routePanels").innerHTML=fragments.join("\n");
       const editableDataVersion=Date.now();
-      const scripts=["/rngmine/js/rng-calculator.js","/rngmine/js/blurb-questions.js?v=20261029-1","/rngmine/js/minigame-settings.js?v="+editableDataVersion,"/rngmine/js/puzzle-info.js?v="+editableDataVersion,"/rngmine/js/app.js?v=20261030-memory-timer-skip"];
+      const scripts=["/rngmine/js/rng-calculator.js","/rngmine/js/blurb-questions.js?v=20261029-1","/rngmine/js/minigame-settings.js?v="+editableDataVersion,"/rngmine/js/puzzle-info.js?v="+editableDataVersion,"/rngmine/js/app.js?v=20261030-coal-lost"];
       for(const src of scripts){await new Promise(function(resolve,reject){const script=document.createElement("script");script.src=src;script.onload=resolve;script.onerror=function(){reject(new Error("Could not load "+src));};document.body.appendChild(script);});}
     })().catch(function(error){console.error(error);});
   </script>

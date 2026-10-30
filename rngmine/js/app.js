@@ -916,14 +916,14 @@
   function jumpTo(el,block){ try{ el.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:block}); }catch(e){ el.scrollIntoView(); } }
 
   var leaderboardData=null, leaderboardBlurbs=null, leaderboardMetric="bestRoll";
-  var leaderboardLabels={bestRoll:"Best roll",totalEp:"Total EP",coalMined:"Coal mined"};
+  var leaderboardLabels={bestRoll:"Best roll",totalEp:"Total EP",coalMined:"Coal mined",coalLost:"Coal lost"};
   function renderLeaderboard(){
     var status=$("leaderboardStatus"), rows=$("leaderboardRows"), metric=leaderboardMetric;
     rows.innerHTML="";
     if(leaderboardData===null){status.textContent="Loading leaderboard...";return;}
     if(!leaderboardData.length){status.textContent="No account scores yet.";return;}
     var leaders=leaderboardData.slice().sort(function(a,b){
-      var primary=metric==="bestRoll"?(b.bestRollEp-a.bestRollEp):metric==="coalMined"?(b.coalMined-a.coalMined):(b.totalEp-a.totalEp);
+      var primary=metric==="bestRoll"?(b.bestRollEp-a.bestRollEp):metric==="coalMined"?(b.coalMined-a.coalMined):metric==="coalLost"?(b.coalLost-a.coalLost):(b.totalEp-a.totalEp);
       return primary||(b.totalEp-a.totalEp)||(b.bestRollEp-a.bestRollEp)||(b.coalMined-a.coalMined)||String(a.username).localeCompare(String(b.username));
     }).slice(0,100);
     leaders.forEach(function(leader,index){
@@ -942,6 +942,7 @@
           score.appendChild(number);score.appendChild(meta);
         }
       }else if(metric==="totalEp") score.textContent=fmt(leader.totalEp)+" EP";
+      else if(metric==="coalLost") score.textContent=fmt(leader.coalLost||0);
       else score.textContent=fmt(leader.coalMined);
       rows.appendChild(tr);
     });

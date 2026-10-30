@@ -616,4 +616,6 @@ html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(s
 #memoryTime{font-variant-numeric:tabular-nums;text-shadow:0 0 8px rgba(39,245,245,.35)}
 #memorySkip{min-height:32px;padding:5px 9px;border:1px solid #145214;border-radius:0;background:#000;color:#46bf46;font:10px var(--mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 #memorySkip:hover{border-color:#27F549;color:#a7ffbb}
-#memorySkip[hidden]{display:none}
+#memorySkip[hidden]{display:none}/* Coal is an interactive tap area: prevent mobile text selection and callout popups here. */
+.mine,.mine *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
+.mine{touch-action:manipulation}
