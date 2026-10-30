@@ -174,6 +174,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   body .project-card h2,
   body .album-table th { font-size: clamp(18px, 5vw, 24px) !important; }
   body .music-content { width: 94vw !important; }
+  body .column > .page-navigation span { font-size: clamp(38px, 11.5vw, 64px) !important; }
   body pre {
     box-sizing: border-box;
     max-width: 96vw !important;
@@ -182,6 +183,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(6px, 1.9vw, 10px) !important;
   }
 }
+
 
 
 
