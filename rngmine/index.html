@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-puzzle-info">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-mobile-nav">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -25,17 +25,25 @@
         </svg>
       </a>
     </div>
-    <nav class="top-tabs" role="tablist" aria-label="Main navigation">
+    <div class="top-actions">
+            <div class="rolls" id="rollsBox" aria-live="polite"><b id="rollsLeft">1</b> <span id="rollsLabel">roll left</span></div>
+      <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-expanded="false" aria-controls="mobileNavigation">MENU</button>
+    </div>
+    <section class="mobile-navigation" id="mobileNavigation" aria-hidden="true" aria-label="RNGMine navigation">
+      <div class="mobile-nav-head">
+        <h2>Navigation</h2>
+        <button class="mobile-nav-close" id="mobileMenuClose" type="button" aria-label="Close navigation">×</button>
+      </div>
+          <nav class="top-tabs" role="tablist" aria-label="Main navigation">
       <button class="top-tab active" id="mineTab" type="button" role="tab" aria-selected="true" aria-controls="gameMain">Mining</button>
       <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
       <button class="top-tab" id="rollsTab" type="button" role="tab" aria-selected="false" aria-controls="rollsPanel">Rolls</button>
       <button class="top-tab" id="badgesTab" type="button" role="tab" aria-selected="false" aria-controls="badgesPanel">Badges</button>
       <button class="top-tab" id="puzzleInfoTab" type="button" role="tab" aria-selected="false" aria-controls="puzzleInfoPanel">Puzzle Info</button>
     </nav>
-    <div class="top-actions">
-      <div class="rolls" id="rollsBox" aria-live="polite"><b id="rollsLeft">1</b> <span id="rollsLabel">roll left</span></div>
-      <button class="account-btn guest-boost" id="guestBoostBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button>
-      <div class="account-bar" id="accountBar" aria-live="polite">
+            <button class="account-btn guest-boost" id="guestBoostBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button>
+
+            <div class="account-bar" id="accountBar" aria-live="polite">
         <button class="account-user" id="accountUser" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="profileMenu"></button>
         <span class="account-sync" id="accountSync" hidden></span>
         <div class="profile-menu" id="profileMenu" role="dialog" aria-label="Player profile" hidden>
@@ -58,7 +66,7 @@
         <button class="account-btn" id="loginBtn" type="button">Login</button>
         <button class="account-btn" id="logoutBtn" type="button" hidden>Log out</button>
       </div>
-    </div>
+    </section>
   </header>
 
   <main id="gameMain" role="tabpanel" aria-labelledby="mineTab">
@@ -230,5 +238,33 @@
   <script src="js/rng-calculator.js"></script>
   <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
   <script src="js/app.js?v=20261029-dynamite-15s"></script>
+  <script>
+    (function(){
+      const menu=document.getElementById("mobileNavigation");
+      const openButton=document.getElementById("mobileMenuToggle");
+      const closeButton=document.getElementById("mobileMenuClose");
+      const mobile=window.matchMedia("(max-width: 700px)");
+      function setOpen(open){
+        menu.classList.toggle("open",open&&mobile.matches);
+        const isOpen=open&&mobile.matches;
+        menu.setAttribute("aria-hidden",String(!mobile.matches&&!isOpen?false:!isOpen));
+        openButton.setAttribute("aria-expanded",String(isOpen));
+        if(isOpen){menu.setAttribute("role","dialog");menu.setAttribute("aria-modal","true");document.body.style.overflow="hidden";closeButton.focus();}
+        else{menu.removeAttribute("role");menu.removeAttribute("aria-modal");document.body.style.overflow="";}
+      }
+      function syncMode(){if(!mobile.matches)setOpen(false);else menu.setAttribute("aria-hidden",String(!menu.classList.contains("open")));}
+      openButton.addEventListener("click",function(){setOpen(!menu.classList.contains("open"));});
+      closeButton.addEventListener("click",function(){setOpen(false);openButton.focus();});
+      menu.querySelectorAll(".top-tab").forEach(function(tab){tab.addEventListener("click",function(){setOpen(false);openButton.focus();});});
+      document.getElementById("loginBtn").addEventListener("click",function(){if(mobile.matches)setOpen(false);});
+      document.addEventListener("keydown",function(event){if(event.key==="Escape"&&menu.classList.contains("open")){setOpen(false);openButton.focus();}});
+      mobile.addEventListener("change",syncMode);
+      syncMode();
+    })();
+  </script>
 </body>
 </html>
+
+
+
+

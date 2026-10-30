@@ -505,3 +505,45 @@ html.auth-check body .wrap{visibility:hidden}
 .coal{filter:drop-shadow(0 0 8px rgba(39,245,245,.65));-webkit-tap-highlight-color:transparent}
 .coal span{color:#8affad;text-shadow:0 0 8px rgba(39,245,73,.8),0 1px 3px #000}
 .mine,.mine .coal{cursor:crosshair}
+
+/* Mobile header: keep the brand row compact and put navigation/account actions in a full-screen menu. */
+.mobile-menu-toggle,.mobile-nav-close{display:none}
+.mobile-navigation{display:contents}
+.mobile-nav-head{display:none}
+@media(min-width:701px){
+  .brand-group{order:1}
+  .mobile-navigation,.top-actions{display:contents}
+  .top-tabs{order:2}
+  #rollsBox{order:3}
+  .guest-boost{order:4}
+  .account-bar{order:5}
+}
+@media(max-width:700px){
+  .top{display:grid!important;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;padding:10px 0}
+  .brand-group{grid-column:2;grid-row:1;justify-self:center;gap:7px}
+  .brand{font-size:18px}
+  .brand-home{width:25px;height:25px}
+  .brand-home svg{width:14px;height:14px}
+  .top-actions{display:contents}
+  #rollsBox{grid-column:1;grid-row:1;justify-self:start;white-space:nowrap;font-size:10px}
+  #rollsLeft{font-size:16px}
+  .mobile-menu-toggle{display:inline-flex;grid-column:3;grid-row:1;align-items:center;justify-content:center;min-height:32px;padding:5px 8px;border:1px solid #145214;border-radius:0;background:#000;color:#46bf46;font:12px var(--mono);letter-spacing:.06em}
+  .mobile-navigation{display:none;position:fixed;inset:0;z-index:1400;overflow-y:auto;flex-direction:column;align-items:stretch;gap:18px;padding:max(18px,env(safe-area-inset-top)) 20px max(20px,env(safe-area-inset-bottom));background:#000;color:#a7ffbb}
+  .mobile-navigation.open{display:flex}
+  .mobile-nav-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:14px;border-bottom:1px dotted #145214}
+  .mobile-nav-head h2{margin:0;color:#46bf46;font:20px var(--display);letter-spacing:.08em;text-transform:uppercase}
+  .mobile-nav-close{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid #145214;border-radius:0;background:#000;color:#46bf46;font:24px var(--mono)}
+  .mobile-navigation .top-tabs{display:flex;flex:0 0 auto;order:0;flex-direction:column;align-items:stretch;gap:8px;width:100%;margin:0}
+  .mobile-navigation .top-tab{width:100%;min-height:46px;padding:11px 14px;border:1px solid #145214;text-align:left;font-size:14px}
+  .mobile-navigation .top-tab.active{background:#030803}
+  .mobile-navigation .guest-boost{width:100%;min-height:44px;text-align:left}
+  .mobile-navigation .account-bar{width:100%;justify-content:flex-start;flex-wrap:wrap;gap:8px;padding-top:14px;border-top:1px dotted #145214}
+  .mobile-navigation .account-bar>.account-btn{min-height:42px;padding:9px 14px}
+  html.first-visit body .top{display:grid!important;grid-template-columns:auto 1fr auto;}
+  html.first-visit body .top .rolls{display:block!important}
+  html.first-visit body .top .mobile-navigation.open .top-tabs{display:flex!important}
+  html.first-visit body .top .mobile-navigation.open .guest-boost:not([hidden]){display:block!important}
+}
+.mine,.coal{touch-action:manipulation}
+
+
