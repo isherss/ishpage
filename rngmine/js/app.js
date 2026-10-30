@@ -6,6 +6,14 @@
   function puzzleOdds(id,fallback){ var puzzle=PUZZLE_INFO.find?PUZZLE_INFO.find(function(item){return item.id===id;}):null; return puzzle&&Number.isFinite(puzzle.oddsDenominator)&&puzzle.oddsDenominator>0?puzzle.oddsDenominator:fallback; }
   var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=15000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function syncVisualViewport(){
+    var viewport=window.visualViewport,root=document.documentElement;
+    root.style.setProperty("--rng-visual-height",(viewport?viewport.height:window.innerHeight)+"px");
+    root.style.setProperty("--rng-visual-top",(viewport?viewport.offsetTop:0)+"px");
+  }
+  syncVisualViewport();
+  window.addEventListener("resize",syncVisualViewport);
+  if(window.visualViewport){window.visualViewport.addEventListener("resize",syncVisualViewport);window.visualViewport.addEventListener("scroll",syncVisualViewport);}
   function $(id){return document.getElementById(id);}
   function fmt(n){return Number(n).toLocaleString("en-US");}
   var LABELS={trash:"Trash",common:"Common",uncommon:"Uncommon",rare:"Rare",epic:"Epic",anomaly:"Anomaly",mythic:"Mythic"};
@@ -1148,6 +1156,8 @@
     cancelReveal();
   },true);
 
+  $("jumpCoalBtn").addEventListener("click",function(){jumpTo($("coalMineSection"),"center");});
+  $("jumpGenerateBtn").addEventListener("click",function(){jumpTo($("genBtn"),"center");});
   $("genBtn").addEventListener("click",doRoll);
   function toggleGuestBoost(){
     if(authUser) return;

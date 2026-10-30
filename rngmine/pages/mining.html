@@ -1,4 +1,8 @@
   <main id="gameMain" role="tabpanel" aria-labelledby="mineTab" hidden>
+    <nav class="mobile-mine-shortcuts" aria-label="Mining quick navigation">
+      <button type="button" id="jumpCoalBtn">Coal mine</button>
+      <button type="button" id="jumpGenerateBtn">Generate</button>
+    </nav>
     <section class="hero" id="hero" data-tier="none" aria-labelledby="rollH">
       <h2 class="sr" id="rollH">Your roll</h2>
       <div class="display" id="display"></div>
@@ -37,7 +41,7 @@
       <div class="bd-list" id="bdList"></div>
     </section>
 
-    <section class="section dimmable mine-sec" aria-labelledby="mineH">
+    <section class="section dimmable mine-sec" id="coalMineSection" aria-labelledby="mineH">
       <div class="panel-head mine-panel-head"><div class="mine-heading"><h2 id="mineH">Coal mine</h2><button class="account-btn guest-boost mine-god-mode" id="guestBoostMineBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button></div><span id="coalCount" class="coal-count"></span>
       </div>
       <div class="mine" id="mine">
