@@ -395,7 +395,8 @@ html.first-visit body .top{position:absolute;top:env(safe-area-inset-top,0px);le
 html.first-visit body .top .top-tabs,
 html.first-visit body .top .rolls,
 html.first-visit body .top .guest-boost{display:none!important}
-html.first-visit body .wrap>main{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;margin:0}
+html.first-visit body .wrap>#routePanels{display:flex;flex:1;flex-direction:column;width:100%;min-height:0}
+html.first-visit body #routePanels>#gameMain{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;margin:0;min-height:0}
 html.first-visit body main>.hero{width:100%;padding-top:0;gap:22px}
 html.first-visit body .hero .tagline,
 html.first-visit body .hero .meta,
