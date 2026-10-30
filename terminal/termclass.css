@@ -23,3 +23,11 @@ body{
         --size: 1.4;
     }
 }
+
+
+/* Mobile terminal layout */
+@media (max-width: 700px) {
+  :root { --size: 1.2; }
+  .center.terminal { width: 94vw !important; height: 75vh !important; }
+}
+

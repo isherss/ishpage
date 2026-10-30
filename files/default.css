@@ -94,3 +94,88 @@ src: url('/files/fonts/Hachicro/Hachicro.woff2') format('woff2'),
 url('/files/fonts/Hachicro/Hachicro.woff') format('woff'),
 url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
 }
+
+/* Mobile sizing for the Ish pages. RNGMine uses its own stylesheet. */
+@media (max-width: 700px) {
+  body { overflow-x: hidden; }
+  body .page-title {
+    display: inline-block;
+    max-width: 96vw;
+    font-size: clamp(40px, 11vw, 72px) !important;
+    line-height: .95 !important;
+  }
+  body .page-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 14px;
+    width: 94vw;
+    margin: 14px auto !important;
+    padding: 0;
+  }
+  body .page-navigation a,
+  body .page-navigation > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body .page-navigation span {
+    margin-right: 0 !important;
+    font-size: clamp(19px, 5.4vw, 25px) !important;
+    line-height: 1.15 !important;
+    white-space: nowrap;
+  }
+  body .page-navigation br { display: none !important; }
+  body a[href="/"] img {
+    width: clamp(32px, 9vw, 44px) !important;
+    height: clamp(32px, 9vw, 44px) !important;
+    max-width: none;
+  }
+  body .row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  body .column,
+  body .column-side,
+  body .column-middle,
+  body .column-arrow,
+  body .column-mobile-middle,
+  body .column-mobile-side,
+  body .what {
+    float: none !important;
+    box-sizing: border-box;
+    width: 94vw !important;
+    margin: 1rem auto !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
+  }
+  body .column span,
+  body .column-mobile-middle span,
+  body .column-side span,
+  body .column-middle span,
+  body .what span,
+  body #splash1,
+  body #splash2,
+  body .project-card p,
+  body .project-card-hint,
+  body .album-status,
+  body .album-table td {
+    font-size: clamp(16px, 4.2vw, 20px) !important;
+    line-height: 1.45 !important;
+  }
+  body .project-card-list { width: 94vw !important; grid-template-columns: 1fr !important; }
+  body .project-card h2,
+  body .album-table th { font-size: clamp(18px, 5vw, 24px) !important; }
+  body .music-content { width: 94vw !important; }
+  body pre {
+    box-sizing: border-box;
+    max-width: 96vw !important;
+    margin: 12px auto !important;
+    overflow-x: auto;
+    font-size: clamp(6px, 1.9vw, 10px) !important;
+  }
+}
