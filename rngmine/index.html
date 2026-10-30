@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-filters">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-filter-collapse">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -151,7 +151,9 @@
       <button class="account-btn" id="blurbRefresh" type="button">Refresh</button>
     </div>
     <p class="leaderboard-status" id="blurbStatus" role="status" aria-live="polite">Open this tab to load roll blurbs.</p>
-    <div class="blurb-filters" aria-label="Search and filter roll blurbs">
+    <details class="blurb-filter-disclosure">
+      <summary>Search and filter blurbs</summary>
+      <div class="blurb-filters" aria-label="Search and filter roll blurbs">
       <label class="blurb-filter-search">Search answers or users<input id="blurbSearch" type="search" placeholder="Search blurbs..." autocomplete="off"></label>
       <label>User<select id="blurbUserFilter"><option value="">All users</option></select></label>
       <label>Rarity<select id="blurbRarityFilter"><option value="">All rarities</option><option value="trash">Trash</option><option value="common">Common</option><option value="uncommon">Uncommon</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="anomaly">Anomaly</option><option value="mythic">Mythic</option><option value="divine">Divine</option></select></label>

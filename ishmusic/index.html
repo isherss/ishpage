@@ -16,6 +16,18 @@
       font: 13px/1.6 "Lucida Console", "Courier New", monospace;
       text-align: left;
     }
+    .favorite-song { display:grid; grid-template-columns:160px minmax(0,1fr); gap:16px; align-items:center; margin:0 0 22px; padding:14px; border:1px solid #145214; background:#010401; box-shadow:0 0 18px rgba(39,245,73,.06); }
+    .favorite-song h2 { margin:0 0 10px; color:#46bf46; font:16px "BlueScreenV1", "Lucida Console", monospace; letter-spacing:.04em; text-transform:uppercase; }
+    .favorite-player-frame { width:160px; height:90px; border:1px solid #145214; background:#000; }
+    .favorite-player-frame iframe { display:block; width:100%; height:100%; border:0; }
+    .favorite-song-controls { display:grid; grid-template-columns:auto minmax(100px,1fr) auto; gap:10px; align-items:center; }
+    .favorite-song-button { min-height:36px; padding:7px 12px; border:1px solid #27f549; border-radius:0; background:#020803; color:#a7ffbb; font:12px "Lucida Console", monospace; cursor:pointer; }
+    .favorite-song-button:hover,.favorite-song-button:focus-visible { background:#06200a; outline:1px solid #46bf46; }
+    .favorite-waveform { width:100%; height:42px; display:block; color:#27f549; }
+    .favorite-volume { display:flex; align-items:center; gap:7px; color:#679477; font-size:10px; white-space:nowrap; }
+    .favorite-volume input { width:90px; accent-color:#27f549; }
+    .favorite-song-time { grid-column:2; display:flex; justify-content:space-between; color:#679477; font-size:10px; }
+    @media (max-width:640px) { .favorite-song { grid-template-columns:1fr; } .favorite-player-frame { width:100%; height:auto; aspect-ratio:16/9; } .favorite-song-controls { grid-template-columns:auto minmax(40px,1fr); } .favorite-volume { grid-column:1/-1; } .favorite-song-time { grid-column:1; } }
     .album-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .album-status { color: #679477; font-size: 11px; }
     .album-search {
@@ -62,6 +74,18 @@
   <span style="border-top-style:dotted;border-color:green;padding-right:20vw;padding-left:20vw;"></span>
 
   <main class="music-content">
+    <section class="favorite-song" aria-labelledby="favoriteSongTitle">
+      <div class="favorite-player-frame" id="favoriteSongPlayer" aria-label="Favorite song YouTube player"></div>
+      <div>
+        <h2 id="favoriteSongTitle">Listen to my favorite song</h2>
+        <div class="favorite-song-controls">
+          <button class="favorite-song-button" id="favoriteSongToggle" type="button" aria-label="Play favorite song" disabled>▶ PLAY</button>
+          <canvas class="favorite-waveform" id="favoriteSongWaveform" role="img" aria-label="Song waveform progress" width="720" height="84"></canvas>
+          <label class="favorite-volume"><span>VOL</span><input id="favoriteSongVolume" type="range" min="0" max="100" value="70" aria-label="Favorite song volume" disabled><span id="favoriteSongVolumeValue">70%</span></label>
+          <div class="favorite-song-time"><span id="favoriteSongElapsed">0:00</span><span id="favoriteSongDuration">0:00</span></div>
+        </div>
+      </div>
+    </section>
 <div class="album-tools">
       <span class="album-status" id="albumStatus" role="status">[ LOADING ALBUM RECOMMENDATIONS… ]</span>
       <input class="album-search" id="albumSearch" type="search" placeholder="Filter albums, artists, notes…" aria-label="Filter album recommendations" disabled>
@@ -73,6 +97,21 @@
       </table>
     </div>
   </main>
+  <script>
+    (() => {
+      const button=document.getElementById("favoriteSongToggle"), volume=document.getElementById("favoriteSongVolume"), volumeValue=document.getElementById("favoriteSongVolumeValue"), canvas=document.getElementById("favoriteSongWaveform"), ctx=canvas.getContext("2d"), elapsed=document.getElementById("favoriteSongElapsed"), duration=document.getElementById("favoriteSongDuration");
+      const bars=Array.from({length:72},(_,i)=>.18+Math.abs(Math.sin(i*12.9898)*Math.cos(i*4.1414))*.82);
+      let player=null, playing=false, ready=false;
+      function formatTime(seconds){seconds=Math.max(0,Math.floor(seconds||0));return Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");}
+      function drawWave(progress=0){const w=canvas.width,h=canvas.height,mid=h/2,barWidth=5,gap=5;ctx.clearRect(0,0,w,h);bars.forEach((level,i)=>{const x=i*(barWidth+gap),amp=level*(h*.42),active=(i/(bars.length-1))<=progress;ctx.fillStyle=active?"#46bf46":"#145214";ctx.fillRect(x,mid-amp,barWidth,amp*2);});if(progress>0&&progress<1){const x=progress*w;ctx.fillStyle="#a7ffbb";ctx.fillRect(x-1,4,2,h-8);}}
+      drawWave();
+      window.onYouTubeIframeAPIReady=function(){player=new YT.Player("favoriteSongPlayer",{width:"160",height:"90",videoId:"Yp8o35zahgo",playerVars:{playsinline:1,controls:0,rel:0},events:{onReady(event){ready=true;event.target.setVolume(Number(volume.value));button.disabled=false;volume.disabled=false;duration.textContent=formatTime(event.target.getDuration());},onStateChange(event){playing=event.data===YT.PlayerState.PLAYING;button.textContent=playing?"Ⅱ PAUSE":"▶ PLAY";button.setAttribute("aria-label",playing?"Pause favorite song":"Play favorite song");if(event.data===YT.PlayerState.ENDED){playing=false;drawWave();elapsed.textContent="0:00";}}}});};
+      const api=document.createElement("script");api.src="https://www.youtube.com/iframe_api";document.head.appendChild(api);
+      button.addEventListener("click",()=>{if(!ready)return;if(playing)player.pauseVideo();else player.playVideo();});
+      volume.addEventListener("input",()=>{const value=Number(volume.value);volumeValue.textContent=value+"%";if(ready)player.setVolume(value);});
+      window.setInterval(()=>{if(!ready||!playing)return;const current=player.getCurrentTime(),total=player.getDuration();elapsed.textContent=formatTime(current);duration.textContent=formatTime(total);drawWave(total?current/total:0);},100);
+    })();
+  </script>
   <script src="/ishScript.js"></script>
   <script>
     // Source of truth: /files/IshMusic/album recs.xlsx. Save the workbook and reload this page to refresh the table.
