@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-filter-collapse">
+  <link rel="stylesheet" href="css/styles.css?v=20261030-hide-status-lines">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -32,14 +32,12 @@
       <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
       <button class="top-tab" id="blurbTab" type="button" role="tab" aria-selected="false" aria-controls="blurbPanel">Blurbs</button>
       <button class="top-tab" id="rollsTab" type="button" role="tab" aria-selected="false" aria-controls="rollsPanel">Rolls</button>
-      <button class="top-tab" id="badgesTab" type="button" role="tab" aria-selected="false" aria-controls="badgesPanel">Badges</button>
       <button class="top-tab" id="puzzleInfoTab" type="button" role="tab" aria-selected="false" aria-controls="puzzleInfoPanel">Puzzle Info</button>
     </nav>
             <button class="account-btn guest-boost" id="guestBoostBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button>
 
             <div class="account-bar" id="accountBar" aria-live="polite">
         <button class="account-user" id="accountUser" type="button" hidden aria-haspopup="dialog" aria-expanded="false" aria-controls="profileMenu"></button>
-        <span class="account-sync" id="accountSync" hidden></span>
         <div class="profile-menu" id="profileMenu" role="dialog" aria-label="Player profile" hidden>
           <form id="profileForm">
             <h2>Player profile</h2>
@@ -136,7 +134,7 @@
       <button class="leaderboard-tab" id="leaderboardEpTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="totalEp">Total EP</button>
       <button class="leaderboard-tab" id="leaderboardCoalTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="coalMined">Coal mined</button>
     </div>
-    <p class="leaderboard-status" id="leaderboardStatus" role="status" aria-live="polite">Open the tab to load the leaderboard.</p>
+    <p class="leaderboard-status visually-hidden" id="leaderboardStatus" role="status" aria-live="polite">Open the tab to load the leaderboard.</p>
     <div class="leaderboard-table-wrap" id="leaderboardTableWrap" role="tabpanel" aria-labelledby="leaderboardBestTab" tabindex="0">
       <table class="leaderboard-table">
         <thead><tr><th scope="col">Rank</th><th scope="col">Miner</th><th scope="col" id="leaderboardValueHeading">Best roll</th></tr></thead>
@@ -150,7 +148,7 @@
       <div><h1>Roll blurbs</h1><p>ANSWERS SHARED WITH ROLLS</p></div>
       <button class="account-btn" id="blurbRefresh" type="button">Refresh</button>
     </div>
-    <p class="leaderboard-status" id="blurbStatus" role="status" aria-live="polite">Open this tab to load roll blurbs.</p>
+    <p class="leaderboard-status visually-hidden" id="blurbStatus" role="status" aria-live="polite">Open this tab to load roll blurbs.</p>
     <details class="blurb-filter-disclosure">
       <summary>Search and filter blurbs</summary>
       <div class="blurb-filters" aria-label="Search and filter roll blurbs">
@@ -267,7 +265,7 @@
   <script src="js/rng-calculator.js"></script>
   <script src="js/blurb-questions.js?v=20261029-1"></script>
   <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
-  <script src="js/app.js?v=20261029-blurb-filters"></script>
+  <script src="js/app.js?v=20261030-hide-status-lines"></script>
   <script>
     (function(){
       const menu=document.getElementById("mobileNavigation");

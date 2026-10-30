@@ -912,7 +912,7 @@
       else score.textContent=fmt(leader.coalMined);
       rows.appendChild(tr);
     });
-    status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
+    status.textContent="";
   }
   function blurbDateKey(epoch){
     var d=new Date(Number(epoch)*1000),pad=function(n){return n<10?"0"+n:String(n);};
@@ -958,7 +958,7 @@
       content.appendChild(details);
       tr.appendChild(rank);tr.appendChild(miner);tr.appendChild(content);rows.appendChild(tr);
     });
-    status.textContent="SHOWING "+filteredBlurbs.length+" OF "+leaderboardBlurbs.length+" ROLL BLURBS";
+    status.textContent="";
   }
   ["blurbSearch","blurbUserFilter","blurbRarityFilter","blurbDateFrom","blurbDateTo"].forEach(function(id){var control=$(id);control.addEventListener(id==="blurbSearch"?"input":"change",renderBlurbs);});
   $("blurbFiltersClear").addEventListener("click",function(){$("blurbSearch").value="";$("blurbUserFilter").value="";$("blurbRarityFilter").value="";$("blurbDateFrom").value="";$("blurbDateTo").value="";renderBlurbs();});
