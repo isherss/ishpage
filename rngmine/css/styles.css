@@ -578,3 +578,20 @@ body.practice-minigame .dyn-time,body.practice-minigame .dyn-bar,body.practice-m
 }
 .dyn,.wires,.vy{inset:var(--rng-visual-top,0px) 0 auto;height:var(--rng-visual-height,100dvh);max-height:var(--rng-visual-height,100dvh);box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain}
 .dyn-panel,.wire-panel,.vy-panel{max-height:calc(var(--rng-visual-height,100dvh) - 32px);overflow-y:auto;overscroll-behavior:contain}
+@media(max-width:700px){
+  html,body{width:100%;max-width:100%;overflow-x:clip}
+  .wrap{width:100%;max-width:100%;min-width:0;padding-left:max(10px,env(safe-area-inset-left,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  .leaderboard-tabs{flex-wrap:wrap}
+  .leaderboard-tab{flex:1 1 auto}
+  .leaderboard-table-wrap{overflow-x:hidden}
+  .leaderboard-table{width:100%;table-layout:fixed;white-space:normal}
+  .leaderboard-table th,.leaderboard-table td{min-width:0;padding:8px 5px;overflow-wrap:anywhere;word-break:break-word}
+  .leaderboard-table:not(.blurb-table) th:first-child,.leaderboard-table:not(.blurb-table) td:first-child{width:12%}
+  .leaderboard-table:not(.blurb-table) th:nth-child(2),.leaderboard-table:not(.blurb-table) td:nth-child(2){width:36%}
+  .leaderboard-table:not(.blurb-table) th:nth-child(3),.leaderboard-table:not(.blurb-table) td:nth-child(3){width:52%}
+  .blurb-table th:first-child,.blurb-table td:first-child{width:9%}
+  .blurb-table th:nth-child(2),.blurb-table td:nth-child(2){width:23%}
+  .blurb-table th:nth-child(3),.blurb-table td:nth-child(3){width:68%}
+  .blurb-table .leaderboard-blurb{min-width:0;overflow-wrap:anywhere}
+  .hist li{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) auto;gap:6px}
+}

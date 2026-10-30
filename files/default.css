@@ -1,4 +1,7 @@
+*,*::before,*::after { box-sizing:border-box; }
+html,body { width:100%; max-width:100%; margin:0; }
 body {
+  overflow-x:clip;
   background-color:#000000;
   color: green;
   text-align: center;
@@ -22,6 +25,7 @@ body .page-navigation * {
 
 img {
     width: 77%;
+    max-width:100%;
     height: auto;
 }
 
@@ -97,13 +101,14 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
 
 /* Mobile sizing for the Ish pages. RNGMine uses its own stylesheet. */
 @media (max-width: 700px) {
-  body { overflow-x: hidden; }
+  body { width:100%; max-width:100%; overflow-x:clip; }
   body .page-title {
     display: inline-block;
     max-width: 96vw;
     font-size: clamp(64px, 20vw, 112px) !important;
     line-height: .95 !important;
   }
+  body.ish-subpage .page-title { font-size:clamp(28px, 11vw, 64px) !important; white-space:nowrap; }
   body .column > .page-navigation { flex-direction: column; gap: 4px; }
   body .page-navigation {
     display: flex;
@@ -185,7 +190,8 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   body.ish-subpage .page-navigation {
     flex-wrap: nowrap;
     gap: 0 clamp(4px, 1.2vw, 10px);
-    width: 98vw;
+    width:100%;
+    max-width:100%;
   }
   body.ish-subpage .page-navigation span {
     font-size: clamp(15px, 4.2vw, 22px) !important;
@@ -205,3 +211,15 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
 
 
 
+
+@media(max-width:700px){
+  body .page-title{max-width:100vw}
+  body.ish-subpage .page-title{font-size:clamp(28px,11vw,64px)!important;white-space:nowrap}
+  body .page-navigation{width:min(94vw,100%);max-width:100%}
+  body.ish-subpage .page-navigation{width:100%;max-width:100%;gap:0 clamp(2px,1vw,8px)}
+  body.ish-subpage .page-navigation span{font-size:clamp(14px,4vw,22px)!important;white-space:nowrap!important}
+  body .column,body .column-side,body .column-middle,body .column-arrow,body .column-mobile-middle,body .column-mobile-side,body .what{width:min(94vw,100%)!important;max-width:100%;min-width:0}
+  body .column span,body .column-mobile-middle span,body .column-side span,body .column-middle span,body .what span,body .project-card,body .project-card p{max-width:100%;overflow-wrap:anywhere}
+  body .project-card-list,body .music-content{width:min(94vw,100%);max-width:100%;min-width:0}
+  body pre{max-width:calc(100vw - 12px)!important;overflow-x:auto}
+}
