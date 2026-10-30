@@ -101,7 +101,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   body .page-title {
     display: inline-block;
     max-width: 96vw;
-    font-size: clamp(40px, 11vw, 72px) !important;
+    font-size: clamp(64px, 20vw, 112px) !important;
     line-height: .95 !important;
   }
   body .column > .page-navigation { flex-direction: column; gap: 4px; }
@@ -123,7 +123,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   }
   body .page-navigation span {
     margin-right: 0 !important;
-    font-size: clamp(30px, 8vw, 44px) !important;
+    font-size: clamp(38px, 11.5vw, 64px) !important;
     line-height: 1 !important;
     white-space: normal !important;
   }
@@ -182,6 +182,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(6px, 1.9vw, 10px) !important;
   }
 }
+
 
 
 
