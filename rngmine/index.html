@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-comments">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-filters">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -151,6 +151,14 @@
       <button class="account-btn" id="blurbRefresh" type="button">Refresh</button>
     </div>
     <p class="leaderboard-status" id="blurbStatus" role="status" aria-live="polite">Open this tab to load roll blurbs.</p>
+    <div class="blurb-filters" aria-label="Search and filter roll blurbs">
+      <label class="blurb-filter-search">Search answers or users<input id="blurbSearch" type="search" placeholder="Search blurbs..." autocomplete="off"></label>
+      <label>User<select id="blurbUserFilter"><option value="">All users</option></select></label>
+      <label>Rarity<select id="blurbRarityFilter"><option value="">All rarities</option><option value="trash">Trash</option><option value="common">Common</option><option value="uncommon">Uncommon</option><option value="rare">Rare</option><option value="epic">Epic</option><option value="anomaly">Anomaly</option><option value="mythic">Mythic</option><option value="divine">Divine</option></select></label>
+      <label>From<input id="blurbDateFrom" type="date"></label>
+      <label>To<input id="blurbDateTo" type="date"></label>
+      <button class="account-btn blurb-filter-clear" id="blurbFiltersClear" type="button">Clear filters</button>
+    </div>
     <div class="leaderboard-table-wrap">
       <table class="leaderboard-table blurb-table">
         <thead><tr><th scope="col">#</th><th scope="col">Miner</th><th scope="col">Roll · answer · time</th></tr></thead>
@@ -256,7 +264,7 @@
   <script src="js/rng-calculator.js"></script>
   <script src="js/blurb-questions.js?v=20261029-1"></script>
   <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
-  <script src="js/app.js?v=20261029-blurb-comments"></script>
+  <script src="js/app.js?v=20261029-blurb-filters"></script>
   <script>
     (function(){
       const menu=document.getElementById("mobileNavigation");

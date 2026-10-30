@@ -903,7 +903,7 @@
         if(leader.bestRoll===null||leader.bestRoll===undefined){score.textContent="—";}
         else{
           var number=document.createElement("b"), meta=document.createElement("small"), rarity=tierOf(leader.bestRollEp);
-          number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=fmt(leader.bestRoll);
+          number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=String(leader.bestRoll);
           meta.className="leaderboard-best-meta";
           meta.textContent=(LABELS[rarity]||rarity)+" · "+fmt(leader.bestRollEp)+" EP · "+pctLine(leader.bestRollEp).txt;
           score.appendChild(number);score.appendChild(meta);
@@ -914,16 +914,38 @@
     });
     status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
   }
+  function blurbDateKey(epoch){
+    var d=new Date(Number(epoch)*1000),pad=function(n){return n<10?"0"+n:String(n);};
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+  }
+  function updateBlurbUsers(){
+    var select=$("blurbUserFilter"),selected=select.value,users={};
+    leaderboardBlurbs.forEach(function(entry){users[entry.username]=entry.displayName||entry.username;});
+    select.innerHTML="<option value=\"\">All users</option>";
+    Object.keys(users).sort(function(a,b){return users[a].localeCompare(users[b]);}).forEach(function(username){var option=document.createElement("option");option.value=username;option.textContent=users[username];select.appendChild(option);});
+    if(Object.prototype.hasOwnProperty.call(users,selected)) select.value=selected;
+  }
+  function getFilteredBlurbs(){
+    var query=$("blurbSearch").value.trim().toLocaleLowerCase(),user=$("blurbUserFilter").value,rarity=$("blurbRarityFilter").value,from=$("blurbDateFrom").value,to=$("blurbDateTo").value;
+    return leaderboardBlurbs.filter(function(entry){
+      var comments=(entry.comments||[]).map(function(item){return item.comment;}).join(" ");
+      var searchable=(entry.displayName+" "+entry.username+" "+entry.blurb+" "+comments).toLocaleLowerCase(),day=blurbDateKey(entry.createdAt),tier=tierOf(entry.ep);
+      return (!query||searchable.indexOf(query)!==-1)&&(!user||entry.username===user)&&(!rarity||tier===rarity)&&(!from||day>=from)&&(!to||day<=to);
+    });
+  }
   function renderBlurbs(){
     var rows=$("blurbRows"),status=$("blurbStatus"); rows.innerHTML="";
     if(leaderboardBlurbs===null){status.textContent="Loading roll blurbs...";return;}
     if(!leaderboardBlurbs.length){status.textContent="No roll blurbs have been posted yet.";return;}
-    leaderboardBlurbs.forEach(function(entry,index){
+    updateBlurbUsers();
+    var filteredBlurbs=getFilteredBlurbs();
+    if(!filteredBlurbs.length){status.textContent="No blurbs match these filters.";return;}
+    filteredBlurbs.forEach(function(entry,index){
       var tr=document.createElement("tr"),rank=document.createElement("td"),miner=document.createElement("td"),content=document.createElement("td");
       tr.className="blurb-row";rank.className="leaderboard-rank";rank.textContent="#"+(index+1);
       miner.className="leaderboard-miner";miner.textContent=entry.displayName||entry.username;miner.style.setProperty("--leader-name-color",entry.nameColor||"#27F549");
       var rarity=tierOf(entry.ep),number=document.createElement("b"),meta=document.createElement("small"),answer=document.createElement("p"),time=document.createElement("small");
-      number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=fmt(entry.roll);
+      number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=String(entry.roll);
       meta.className="leaderboard-best-meta";meta.textContent=(LABELS[rarity]||rarity)+" · "+fmt(entry.ep)+" EP · "+pctLine(entry.ep).txt;
       answer.className="blurb-answer";answer.textContent=entry.blurb;
       time.className="blurb-time";time.textContent=new Date(Number(entry.createdAt)*1000).toLocaleString();
@@ -933,17 +955,21 @@
       comments.forEach(function(item){var row=document.createElement("div"),head=document.createElement("div"),author=document.createElement("b"),stamp=document.createElement("small"),text=document.createElement("p");row.className="blurb-comment";head.className="blurb-comment-head";author.textContent=item.displayName||item.username;author.style.setProperty("--leader-name-color",item.nameColor||"#27F549");stamp.textContent=new Date(Number(item.createdAt)*1000).toLocaleString();text.textContent=item.comment;head.appendChild(author);head.appendChild(stamp);row.appendChild(head);row.appendChild(text);commentList.appendChild(row);});
       details.appendChild(summary);details.appendChild(commentList);
       if(authUser){var form=document.createElement("form"),input=document.createElement("textarea"),actions=document.createElement("div"),button=document.createElement("button"),message=document.createElement("p");form.className="blurb-comment-form";form.dataset.blurbId=entry.id;input.maxLength=1000;input.rows=2;input.required=true;input.placeholder="Write a comment...";input.setAttribute("aria-label","Write a comment");actions.className="blurb-comment-actions";button.className="account-btn";button.type="submit";button.textContent="Comment";message.className="blurb-comment-message";message.setAttribute("role","status");actions.appendChild(button);form.appendChild(input);form.appendChild(message);form.appendChild(actions);commentList.appendChild(form);}else{var note=document.createElement("p");note.className="blurb-login-note";note.textContent="Log in to comment.";commentList.appendChild(note);}
-      content.appendChild(details);      tr.appendChild(rank);tr.appendChild(miner);tr.appendChild(content);rows.appendChild(tr);
+      content.appendChild(details);
+      tr.appendChild(rank);tr.appendChild(miner);tr.appendChild(content);rows.appendChild(tr);
     });
-    status.textContent="SHOWING "+leaderboardBlurbs.length+" ROLL BLURBS";
+    status.textContent="SHOWING "+filteredBlurbs.length+" OF "+leaderboardBlurbs.length+" ROLL BLURBS";
   }
+  ["blurbSearch","blurbUserFilter","blurbRarityFilter","blurbDateFrom","blurbDateTo"].forEach(function(id){var control=$(id);control.addEventListener(id==="blurbSearch"?"input":"change",renderBlurbs);});
+  $("blurbFiltersClear").addEventListener("click",function(){$("blurbSearch").value="";$("blurbUserFilter").value="";$("blurbRarityFilter").value="";$("blurbDateFrom").value="";$("blurbDateTo").value="";renderBlurbs();});
   $("blurbRows").addEventListener("submit",function(event){
     var form=event.target.closest(".blurb-comment-form"); if(!form) return;
     event.preventDefault(); var input=form.querySelector("textarea"),button=form.querySelector("button[type=submit]"),message=form.querySelector(".blurb-comment-message"),comment=input.value.trim();
     if(!comment){message.textContent="Enter a comment first.";return;}
     button.disabled=true; message.textContent="Posting...";
     apiRequest("blurb-comment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf,blurbId:form.dataset.blurbId,comment:comment})}).then(function(){leaderboardBlurbs=null;loadBlurbs(true);}).catch(function(error){message.textContent=error.message||"Comment could not be posted.";}).finally(function(){button.disabled=false;});
-  });  function loadBlurbs(force){
+  });
+  function loadBlurbs(force){
     if(leaderboardBlurbs!==null&&!force){renderBlurbs();return;}
     $("blurbStatus").textContent="Loading roll blurbs...";
     apiRequest("leaderboard",{method:"GET"}).then(function(result){leaderboardBlurbs=Array.isArray(result.blurbs)?result.blurbs:[];renderBlurbs();}).catch(function(error){$("blurbStatus").textContent=error.message||"Blurbs unavailable.";});
