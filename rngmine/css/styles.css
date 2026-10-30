@@ -595,3 +595,4 @@ body.practice-minigame .dyn-time,body.practice-minigame .dyn-bar,body.practice-m
   .blurb-table .leaderboard-blurb{min-width:0;overflow-wrap:anywhere}
   .hist li{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) auto;gap:6px}
 }
+.hero .pct{border:0!important;text-decoration:none!important;box-shadow:none!important;background:none!important}.hero .pct::before,.hero .pct::after{content:none!important;display:none!important}
