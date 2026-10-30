@@ -1,4 +1,4 @@
-/* Puzzle descriptions and displayed odds/timers are sourced from minigame-settings.js. */
+/* Edit each puzzle solution below. Odds and timers come from minigame-settings.js. Changes load on the next page refresh. */
 (function(){
   var settings=window.RNGMINE_MINIGAME_SETTINGS;
   window.RNGMINE_PUZZLE_INFO = [
