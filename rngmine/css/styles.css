@@ -618,4 +618,8 @@ html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(s
 #memorySkip:hover{border-color:#27F549;color:#a7ffbb}
 #memorySkip[hidden]{display:none}/* Coal is an interactive tap area: prevent mobile text selection and callout popups here. */
 .mine,.mine *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
-.mine{touch-action:manipulation}
+.mine{touch-action:manipulation}/* Routed leaderboard needs clearance below the absolute first-visit mobile header. */
+@media(max-width:700px){html.first-visit body #routePanels>#leaderboardPanel{margin-top:calc(112px + env(safe-area-inset-top,0px))}}
+@media(max-width:700px){html.first-visit body #routePanels>#blurbPanel{margin-top:calc(112px + env(safe-area-inset-top,0px))}}
+
+.dyn-go:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}

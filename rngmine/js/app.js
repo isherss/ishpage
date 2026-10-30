@@ -490,7 +490,9 @@
 
   /* ---------- dynamite: three quick sums in 30 seconds, or the coal progress resets ---------- */
   var dyn={active:false,timer:0,probs:[],idx:0,end:0};
-  var dynEl=$("dyn"), dynQ=$("dynQ"), dynIn=$("dynIn"), dynBar=$("dynBar"), dynStep=$("dynStep"), dynTime=$("dynTime"), dynForm=$("dynForm");
+  var dynEl=$("dyn"), dynQ=$("dynQ"), dynIn=$("dynIn"), dynBar=$("dynBar"), dynStep=$("dynStep"), dynTime=$("dynTime"), dynForm=$("dynForm"), dynGo=$("dynForm").querySelector(".dyn-go");
+  function updateDynDefuse(){dynGo.disabled=!dynIn.value.trim();}
+  dynIn.addEventListener("input",updateDynDefuse);
   function ri(lo,hi){ return lo+Math.floor(Math.random()*(hi-lo+1)); }
   /* addition and subtraction use numbers up to 2 digits, and answers are never negative */
   function makeProb(){
@@ -504,7 +506,7 @@
     var p=dyn.probs[dyn.idx];
     dynQ.textContent=p.a+" "+p.op+" "+p.b+" =";
     dynStep.textContent="Problem "+(dyn.idx+1)+" of "+DYN_PROBLEMS;
-    dynIn.value="";
+    dynIn.value=""; updateDynDefuse();
   }
   function dynTick(){
     if(state.testMinigame){ dynBar.style.width="100%"; dynTime.textContent="Practice"; dynEl.classList.remove("urgent"); return; }
@@ -539,6 +541,7 @@
   dynForm.addEventListener("submit",function(e){
     e.preventDefault();
     if(!dyn.active) return;
+    if(!dynIn.value.trim()){updateDynDefuse();return;}
     var p=dyn.probs[dyn.idx], v=parseInt(dynIn.value,10);
     if(v===p.ans){
       dyn.idx++;
