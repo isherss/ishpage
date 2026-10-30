@@ -53,7 +53,7 @@
   function apiRequest(action,options){
     options=options||{}; options.credentials="same-origin";
     options.headers=Object.assign({"Accept":"application/json"},options.headers||{});
-    return fetch("api.php?action="+encodeURIComponent(action),options).then(function(response){
+    return fetch("/rngmine/api.php?action="+encodeURIComponent(action),options).then(function(response){
       return response.json().catch(function(){return {};}).then(function(body){
         if(!response.ok) throw new Error(body.error||"Account request failed.");
         return body;
@@ -235,9 +235,31 @@
     if(e){ renderStatic(e.n); } else { renderPlaceholder(); }
     renderHist();
   }
+  var historyPage=1, historyPageSize=15;
+  function renderHistoryPagination(pageCount){
+    var nav=$("historyPagination");nav.replaceChildren();nav.hidden=pageCount<=1;
+    if(pageCount<=1)return;
+    function addButton(label,page,disabled,current,aria){
+      var button=document.createElement("button");button.type="button";button.className="history-page-button";button.textContent=label;button.disabled=!!disabled;
+      if(current)button.setAttribute("aria-current","page");
+      if(aria)button.setAttribute("aria-label",aria);
+      button.addEventListener("click",function(){historyPage=page;renderHist();});
+      nav.appendChild(button);
+    }
+    function addGap(){var gap=document.createElement("span");gap.className="history-page-gap";gap.textContent="…";nav.appendChild(gap);}
+    addButton("‹",historyPage-1,historyPage===1,false,"Previous page");
+    var first=Math.max(1,historyPage-2),last=Math.min(pageCount,first+4);first=Math.max(1,last-4);
+    if(first>1){addButton("1",1,false,historyPage===1,"Page 1");if(first>2)addGap();}
+    for(var page=first;page<=last;page++)addButton(String(page),page,false,page===historyPage,"Page "+page);
+    if(last<pageCount){if(last<pageCount-1)addGap();addButton(String(pageCount),pageCount,false,historyPage===pageCount,"Page "+pageCount);}
+    addButton("›",historyPage+1,historyPage===pageCount,false,"Next page");
+  }
   function renderHist(){
     var ol=$("hist"); ol.innerHTML="";
-    state.history.slice(0,10).forEach(function(e){
+    var pageCount=Math.ceil(state.history.length/historyPageSize);
+    historyPage=Math.min(Math.max(1,historyPage),Math.max(1,pageCount));
+    var firstEntry=(historyPage-1)*historyPageSize;
+    state.history.slice(firstEntry,firstEntry+historyPageSize).forEach(function(e){
       var t=tierOf(e.total), li=document.createElement("li");
       li.innerHTML='<span class="h-n"></span><span class="h-t"></span><span class="h-d"></span>';
       li.dataset.tier=t; li.children[0].textContent=String(e.n);
@@ -246,6 +268,7 @@
       ol.appendChild(li);
     });
     $("histNone").hidden=state.history.length>0;
+    renderHistoryPagination(pageCount);
     $("best").textContent=state.best?"Best: "+state.best.n+" · "+fmt(state.best.total)+" EP":"";
   }
   function renderBook(){
@@ -386,8 +409,8 @@
     state.lifetime=(state.lifetime||0)+a.total;
     var rolledAt=new Date().toISOString(), rollEntry={n:n,total:a.total,day:state.day};
     if(authUser){ rollEntry.rolledAt=rolledAt; pendingRollBlurb={roll:n,ep:a.total,rolledAt:rolledAt,question:randomBlurbQuestion(),historyEntry:rollEntry}; }
+    historyPage=1;
     state.history.unshift(rollEntry);
-    state.history=state.history.slice(0,40);
     a.groups.forEach(function(g){ state.found[g.main.id]=1; g.subs.forEach(function(s){ state.found[s.id]=1; }); });
     if(!state.best||a.total>state.best.total) state.best={n:n,total:a.total};
     save();
@@ -1021,7 +1044,9 @@
     renderLeaderboard();
   }
   var topTabButtons=Array.prototype.slice.call(document.querySelectorAll(".top-tab[aria-controls]"));
-  function selectTopTab(selectedTab){
+  function selectTopTab(selectedTab,updateAddress){
+    if(updateAddress!==false){var targetPath=new URL(selectedTab.href).pathname;if(location.pathname!==targetPath)history.pushState({tab:selectedTab.id},"",targetPath);}
+    document.title=(selectedTab.textContent.trim()==="Mining"?"":selectedTab.textContent.trim()+" | ")+"RNGmine";
     if(selectedTab.id!=="mineTab"){ clearTimeout(mineBoomTimer); mine.classList.remove("boom"); }
     topTabButtons.forEach(function(tab){
       var active=tab===selectedTab, panel=$(tab.getAttribute("aria-controls"));
@@ -1037,7 +1062,13 @@
     else if(selectedTab.id==="badgesTab") renderBook();
     else if(selectedTab.id==="puzzleInfoTab") renderPuzzleInfo();
   }
-  topTabButtons.forEach(function(tab){tab.addEventListener("click",function(){selectTopTab(tab);});});
+  function tabForLocation(){
+    var path=location.pathname.replace(/\/+$/,"")||"/";
+    return topTabButtons.find(function(tab){return (new URL(tab.href).pathname.replace(/\/+$/,"")||"/")===path;})||$("mineTab");
+  }
+  topTabButtons.forEach(function(tab){tab.addEventListener("click",function(event){event.preventDefault();selectTopTab(tab);});});
+  window.addEventListener("popstate",function(){selectTopTab(tabForLocation(),false);});
+  selectTopTab(tabForLocation(),false);
   document.querySelectorAll(".leaderboard-tab[data-metric]").forEach(function(tab){
     tab.addEventListener("click",function(){selectLeaderboardMetric(tab.dataset.metric);});
   });

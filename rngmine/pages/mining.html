@@ -1,0 +1,52 @@
+  <main id="gameMain" role="tabpanel" aria-labelledby="mineTab" hidden>
+    <section class="hero" id="hero" data-tier="none" aria-labelledby="rollH">
+      <h2 class="sr" id="rollH">Your roll</h2>
+      <div class="display" id="display"></div>
+      <p class="tagline" id="tagline">Mine coal to earn rolls. What will yours be?</p>
+      <div class="meta" id="meta" hidden>
+        <span class="pill-tier" id="tierPill"></span><i class="dot">●</i><span class="pct" id="pctTxt"></span>
+      </div>
+      <div class="eppill" id="epPill" hidden>0 EP</div>
+      <div class="life" id="life" hidden><b id="lifeN">0 EP</b><span>Your lifetime EP</span></div>
+      <button class="gen" id="genBtn" type="button" disabled>Generate</button>
+      <button class="continue" id="continueBtn" type="button" hidden>Continue Mining</button>
+      <div class="roll-blurb-prompt" id="blurbPrompt" hidden>
+        <h3>Question for this roll</h3>
+        <p class="roll-blurb-question" id="blurbQuestion"></p>
+        <p class="roll-blurb-public">Your answer will be public with this roll.</p>
+        <form id="blurbForm">
+          <label class="sr" for="blurbAnswer">Your answer</label>
+          <textarea id="blurbAnswer" maxlength="500" rows="3" required></textarea>
+          <p class="roll-blurb-message" id="blurbMessage" role="status" aria-live="polite"></p>
+          <div class="roll-blurb-actions">
+            <button class="account-btn account-submit" id="blurbSubmit" type="submit">Post answer</button>
+            <button class="account-btn" id="blurbSkip" type="button">Skip</button>
+          </div>
+        </form>
+      </div>
+
+    </section>
+
+    <section class="bd" id="bd" hidden aria-labelledby="bdH">
+      <div class="bd-title-row">
+        <div class="bd-title-copy">
+          <h2 id="bdH">Badge breakdown</h2>
+          <p class="count" id="bdCount"></p>
+        </div>
+      </div>
+      <div class="bd-list" id="bdList"></div>
+    </section>
+
+    <section class="section dimmable mine-sec" aria-labelledby="mineH">
+      <div class="panel-head mine-panel-head"><div class="mine-heading"><h2 id="mineH">Coal mine</h2><button class="account-btn guest-boost mine-god-mode" id="guestBoostMineBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button></div><span id="coalCount" class="coal-count"></span>
+      </div>
+      <div class="mine" id="mine">
+        <button class="coal" id="coal" type="button" aria-label="Mine coal"><span id="coalHits" aria-hidden="true"></span></button>
+        <div class="empty-note" id="mineNote"></div>
+      </div>
+      <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+      <p class="prog" id="progText"></p>
+      <p class="prog2" id="progText2"></p>
+    </section>
+
+  </main>

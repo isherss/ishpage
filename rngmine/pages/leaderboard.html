@@ -1,0 +1,22 @@
+  <section class="leaderboard-panel" id="leaderboardPanel" role="tabpanel" aria-labelledby="leaderboardTab" hidden>
+    <div class="leaderboard-head">
+      <div>
+        <h1>Leaderboard</h1>
+        <p>ACCOUNT RANKINGS</p>
+      </div>
+      <button class="account-btn" id="leaderboardRefresh" type="button">Refresh</button>
+    </div>
+    <div class="leaderboard-tabs" role="tablist" aria-label="Leaderboard category">
+      <button class="leaderboard-tab active" id="leaderboardBestTab" type="button" role="tab" aria-selected="true" aria-controls="leaderboardTableWrap" data-metric="bestRoll">Best roll</button>
+      <button class="leaderboard-tab" id="leaderboardEpTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="totalEp">Total EP</button>
+      <button class="leaderboard-tab" id="leaderboardCoalTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardTableWrap" data-metric="coalMined">Coal mined</button>
+    </div>
+    <p class="leaderboard-status visually-hidden" id="leaderboardStatus" role="status" aria-live="polite">Open the tab to load the leaderboard.</p>
+    <div class="leaderboard-table-wrap" id="leaderboardTableWrap" role="tabpanel" aria-labelledby="leaderboardBestTab" tabindex="0">
+      <table class="leaderboard-table">
+        <thead><tr><th scope="col">Rank</th><th scope="col">Miner</th><th scope="col" id="leaderboardValueHeading">Best roll</th></tr></thead>
+        <tbody id="leaderboardRows"></tbody>
+      </table>
+    </div>
+  </section>
+

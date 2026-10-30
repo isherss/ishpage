@@ -300,7 +300,7 @@ try {
             rng_json(['error' => 'Invalid save data.'], 400);
         }
         $state = json_encode($data['state'], JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
-        if (!is_string($state) || strlen($state) > 500000) {
+        if (!is_string($state) || strlen($state) > 15000000) {
             rng_json(['error' => 'Save data is too large.'], 413);
         }
         $save = $pdo->prepare('INSERT INTO rngmine_saves (user_id, state_json) VALUES (?, ?) ON DUPLICATE KEY UPDATE state_json = VALUES(state_json), updated_at = CURRENT_TIMESTAMP');

@@ -1,0 +1,2 @@
+RewriteEngine On
+RewriteRule ^(leaderboard|blurbs|roll-history|puzzle-info)/?$ index.html [L]
