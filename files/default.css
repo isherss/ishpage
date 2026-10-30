@@ -104,6 +104,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(40px, 11vw, 72px) !important;
     line-height: .95 !important;
   }
+  body .column > .page-navigation { flex-direction: column; gap: 14px; }
   body .page-navigation {
     display: flex;
     flex-wrap: wrap;
@@ -179,3 +180,4 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(6px, 1.9vw, 10px) !important;
   }
 }
+
