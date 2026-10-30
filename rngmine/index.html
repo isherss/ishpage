@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-header-controls-mobile-fix">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-no-ranking-dots">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -17,13 +17,6 @@
   <header class="top dimmable">
     <div class="brand-group">
       <div class="brand">RNGmine</div>
-      <a class="brand-home" href="/" aria-label="Home" title="Home">
-        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
-          <path d="M1 7h2V5h2V3h2V1h2v2h2v2h2v2h2v2h-2v6H3V9H1z" />
-          <path class="home-door" d="M7 15v-4h3v4z" />
-          <path class="home-window" d="M4 8h2v2H4zM11 8h2v2h-2z" />
-        </svg>
-      </a>
     </div>
     <div class="top-actions">
             <div class="rolls" id="rollsBox" aria-live="polite"><b id="rollsLeft">1</b> <span id="rollsLabel">roll left</span></div>
@@ -63,7 +56,14 @@
             </div>
           </form>
         </div>
-        <button class="account-btn" id="loginBtn" type="button">Login</button>
+              <a class="brand-home" href="/" aria-label="Home" title="Home">
+        <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+          <path d="M1 7h2V5h2V3h2V1h2v2h2v2h2v2h2v2h-2v6H3V9H1z" />
+          <path class="home-door" d="M7 15v-4h3v4z" />
+          <path class="home-window" d="M4 8h2v2H4zM11 8h2v2h-2z" />
+        </svg>
+      </a>
+<button class="account-btn" id="loginBtn" type="button">Login</button>
         <button class="account-btn" id="logoutBtn" type="button" hidden>Log out</button>
       </div>
     </section>
@@ -95,7 +95,7 @@
     </section>
 
     <section class="section dimmable mine-sec" aria-labelledby="mineH">
-      <div class="panel-head mine-panel-head"><div class="mine-heading"><h2 id="mineH">Coal mine</h2><button class="account-btn guest-boost mine-god-mode" id="guestBoostMineBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button><span id="coalCount" class="coal-count"></span></div>
+      <div class="panel-head mine-panel-head"><div class="mine-heading"><h2 id="mineH">Coal mine</h2><button class="account-btn guest-boost mine-god-mode" id="guestBoostMineBtn" type="button" hidden aria-pressed="false" title="Toggle unlimited rolls and one-hit coal for this guest session">God mode: Off</button></div><span id="coalCount" class="coal-count"></span>
       </div>
       <div class="mine" id="mine">
         <button class="coal" id="coal" type="button" aria-label="Mine coal"><span id="coalHits" aria-hidden="true"></span></button>
