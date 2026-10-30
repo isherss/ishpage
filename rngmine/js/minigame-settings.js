@@ -8,5 +8,6 @@ window.RNGMINE_MINIGAME_SETTINGS = {
   wires:    { oddsDenominator: 10, timeLimitSeconds: 10 },
   verity:   { oddsDenominator: 30, timeLimitSeconds: 20 },
   double:   { oddsDenominator: 25, timeLimitSeconds: 20 },
-  captcha:  { oddsDenominator: 15, timeLimitSeconds: 10 }
+  captcha:  { oddsDenominator: 15, timeLimitSeconds: 10 },
+  memory:   { oddsDenominator: 15, timeLimitSeconds: 15, previewSeconds: 3, tileCount: 6 }
 };

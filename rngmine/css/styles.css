@@ -600,3 +600,16 @@ body.practice-minigame .dyn-time,body.practice-minigame .dyn-bar,body.practice-m
 /* The first-visit header is absolutely positioned, so keep routed panels clear of it. */
 html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(safe-area-inset-top,0px))}
 @media(max-width:700px){html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(112px + env(safe-area-inset-top,0px))}}
+
+/* Memory Grid puzzle */
+.memory-panel{width:min(420px,100%);border-radius:0;border:1px solid #145214;background:#010401;color:#a7ffbb;font-family:var(--mono)}
+.memory .vy-head{align-items:center;color:#46bf46;font:18px var(--display);letter-spacing:.07em}
+.memory .vy-head>span:nth-child(2){color:#27F5F5;font:12px var(--mono);white-space:nowrap}
+.memory-instructions{margin:0;color:#679477;font:11px/1.5 var(--mono);text-align:center}
+.memory-grid{width:min(100%,336px);align-self:center;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;touch-action:manipulation}
+.memory-tile{aspect-ratio:1;min-width:0;border:1px solid #145214;border-radius:0;background:#020803;box-shadow:inset 0 0 10px rgba(0,0,0,.55);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.memory-tile.lit,.memory-tile:disabled.lit{border-color:#27F549;background:#39ff78;box-shadow:0 0 18px rgba(39,245,73,.7),inset 0 0 10px #baffc8}
+.memory-tile.selected{border-color:#27F5F5;background:#0d5632;box-shadow:0 0 12px rgba(39,245,245,.35)}
+.memory-tile:disabled{cursor:default}
+.memory.blast .memory-tile{animation:wireshake .6s}
+@media(max-width:420px){.memory-grid{gap:6px}.memory-panel{padding:12px}.memory .vy-head{font-size:16px}}
