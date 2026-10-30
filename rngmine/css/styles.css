@@ -597,3 +597,6 @@ body.practice-minigame .dyn-time,body.practice-minigame .dyn-bar,body.practice-m
   .hist li{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) auto;gap:6px}
 }
 .hero .pct{border:0!important;text-decoration:none!important;box-shadow:none!important;background:none!important}.hero .pct::before,.hero .pct::after{content:none!important;display:none!important}
+/* The first-visit header is absolutely positioned, so keep routed panels clear of it. */
+html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(safe-area-inset-top,0px))}
+@media(max-width:700px){html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(112px + env(safe-area-inset-top,0px))}}
