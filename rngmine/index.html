@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="css/styles.css?v=20261029-no-ranking-dots">
+  <link rel="stylesheet" href="css/styles.css?v=20261029-blurb-comments">
   <script src="js/first-visit.js"></script>
 </head>
 <body>
@@ -30,6 +30,7 @@
           <nav class="top-tabs" role="tablist" aria-label="Main navigation">
       <button class="top-tab active" id="mineTab" type="button" role="tab" aria-selected="true" aria-controls="gameMain">Mining</button>
       <button class="top-tab" id="leaderboardTab" type="button" role="tab" aria-selected="false" aria-controls="leaderboardPanel">Leaderboard</button>
+      <button class="top-tab" id="blurbTab" type="button" role="tab" aria-selected="false" aria-controls="blurbPanel">Blurbs</button>
       <button class="top-tab" id="rollsTab" type="button" role="tab" aria-selected="false" aria-controls="rollsPanel">Rolls</button>
       <button class="top-tab" id="badgesTab" type="button" role="tab" aria-selected="false" aria-controls="badgesPanel">Badges</button>
       <button class="top-tab" id="puzzleInfoTab" type="button" role="tab" aria-selected="false" aria-controls="puzzleInfoPanel">Puzzle Info</button>
@@ -81,6 +82,20 @@
       <div class="life" id="life" hidden><b id="lifeN">0 EP</b><span>Your lifetime EP</span></div>
       <button class="gen" id="genBtn" type="button" disabled>Generate</button>
       <button class="continue" id="continueBtn" type="button" hidden>Continue Mining</button>
+      <div class="roll-blurb-prompt" id="blurbPrompt" hidden>
+        <h3>Question for this roll</h3>
+        <p class="roll-blurb-question" id="blurbQuestion"></p>
+        <p class="roll-blurb-public">Your answer will be public with this roll.</p>
+        <form id="blurbForm">
+          <label class="sr" for="blurbAnswer">Your answer</label>
+          <textarea id="blurbAnswer" maxlength="500" rows="3" required></textarea>
+          <p class="roll-blurb-message" id="blurbMessage" role="status" aria-live="polite"></p>
+          <div class="roll-blurb-actions">
+            <button class="account-btn account-submit" id="blurbSubmit" type="submit">Post answer</button>
+            <button class="account-btn" id="blurbSkip" type="button">Skip</button>
+          </div>
+        </form>
+      </div>
 
     </section>
 
@@ -130,6 +145,19 @@
     </div>
   </section>
 
+  <section class="leaderboard-panel blurb-panel" id="blurbPanel" role="tabpanel" aria-labelledby="blurbTab" hidden>
+    <div class="leaderboard-head">
+      <div><h1>Roll blurbs</h1><p>ANSWERS SHARED WITH ROLLS</p></div>
+      <button class="account-btn" id="blurbRefresh" type="button">Refresh</button>
+    </div>
+    <p class="leaderboard-status" id="blurbStatus" role="status" aria-live="polite">Open this tab to load roll blurbs.</p>
+    <div class="leaderboard-table-wrap">
+      <table class="leaderboard-table blurb-table">
+        <thead><tr><th scope="col">#</th><th scope="col">Miner</th><th scope="col">Roll · answer · time</th></tr></thead>
+        <tbody id="blurbRows"></tbody>
+      </table>
+    </div>
+  </section>
   <section class="section hist rolls-panel dimmable" id="rollsPanel" role="tabpanel" aria-labelledby="rollsTab" tabindex="0" hidden>
     <div class="panel-head"><h2 id="histH">Recent rolls</h2><span id="best"></span></div>
     <ol id="hist"></ol>
@@ -226,8 +254,9 @@
   </div>
 </div>
   <script src="js/rng-calculator.js"></script>
+  <script src="js/blurb-questions.js?v=20261029-1"></script>
   <script src="js/puzzle-info.js?v=20261029-dynamite-15s"></script>
-  <script src="js/app.js?v=20261029-max-two-puzzles"></script>
+  <script src="js/app.js?v=20261029-blurb-comments"></script>
   <script>
     (function(){
       const menu=document.getElementById("mobileNavigation");

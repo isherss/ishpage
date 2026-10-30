@@ -46,13 +46,50 @@ try {
                 'totalEp' => max(0, (int) ($state['lifetime'] ?? 0)),
             ];
         }
+        $blurbs = [];
+        $blurbQuery = $pdo->query('SELECT b.id, b.roll_value, b.ep, b.blurb, UNIX_TIMESTAMP(b.created_at) AS created_at, u.username, p.display_name, p.name_color FROM rngmine_roll_blurbs b INNER JOIN rngmine_users u ON u.id = b.user_id LEFT JOIN rngmine_profiles p ON p.user_id = u.id ORDER BY b.created_at DESC, b.id DESC');
+        foreach ($blurbQuery->fetchAll() as $row) {
+            if ($manualAccounts !== null && !isset($manualAccounts[strtolower($row['username'])])) {
+                continue;
+            }
+            $blurbs[] = [
+                'id' => (int) $row['id'],
+                'username' => (string) $row['username'],
+                'displayName' => is_string($row['display_name'] ?? null) && trim($row['display_name']) !== '' ? $row['display_name'] : (string) $row['username'],
+                'nameColor' => is_string($row['name_color'] ?? null) && preg_match('/^#[0-9A-Fa-f]{6}$/', $row['name_color']) ? strtoupper($row['name_color']) : '#27F549',
+                'roll' => (int) $row['roll_value'],
+                'ep' => (int) $row['ep'],
+                'blurb' => (string) $row['blurb'],
+                'createdAt' => (int) $row['created_at'],
+            ];
+        }
+        $commentsByBlurb = [];
+        $commentQuery = $pdo->query('SELECT c.id, c.blurb_id, c.comment_text, UNIX_TIMESTAMP(c.created_at) AS created_at, u.username, p.display_name, p.name_color FROM rngmine_blurb_comments c INNER JOIN rngmine_users u ON u.id = c.user_id LEFT JOIN rngmine_profiles p ON p.user_id = u.id ORDER BY c.created_at ASC, c.id ASC');
+        foreach ($commentQuery->fetchAll() as $row) {
+            if ($manualAccounts !== null && !isset($manualAccounts[strtolower($row['username'])])) {
+                continue;
+            }
+            $blurbId = (int) $row['blurb_id'];
+            $commentsByBlurb[$blurbId][] = [
+                'id' => (int) $row['id'],
+                'username' => (string) $row['username'],
+                'displayName' => is_string($row['display_name'] ?? null) && trim($row['display_name']) !== '' ? $row['display_name'] : (string) $row['username'],
+                'nameColor' => is_string($row['name_color'] ?? null) && preg_match('/^#[0-9A-Fa-f]{6}$/', $row['name_color']) ? strtoupper($row['name_color']) : '#27F549',
+                'comment' => (string) $row['comment_text'],
+                'createdAt' => (int) $row['created_at'],
+            ];
+        }
+        foreach ($blurbs as &$blurb) {
+            $blurb['comments'] = $commentsByBlurb[$blurb['id']] ?? [];
+        }
+        unset($blurb);
         usort($leaders, static function (array $a, array $b): int {
             return ($b['totalEp'] <=> $a['totalEp'])
                 ?: ($b['bestRollEp'] <=> $a['bestRollEp'])
                 ?: ($b['coalMined'] <=> $a['coalMined'])
                 ?: strcasecmp($a['displayName'], $b['displayName']);
         });
-        rng_json(['leaders' => $leaders]);
+        rng_json(['leaders' => $leaders, 'blurbs' => $blurbs]);
     }
 
     if ($action === 'session' && $method === 'GET') {
@@ -114,6 +151,53 @@ try {
         rng_json(['displayName' => $displayName, 'nameColor' => $nameColor]);
     }
 
+    if ($action === 'roll-blurb' && $method === 'POST') {
+        if (!rng_same_origin()) {
+            rng_json(['error' => 'Request rejected.'], 403);
+        }
+        $data = rng_request_json();
+        $user = rng_require_user($pdo);
+        rng_require_csrf($data);
+        if (!is_numeric($data['roll'] ?? null) || !is_numeric($data['ep'] ?? null) || !is_string($data['blurb'] ?? null) || !is_string($data['rolledAt'] ?? null)) {
+            rng_json(['error' => 'Invalid roll blurb.'], 400);
+        }
+        $roll = (int) $data['roll'];
+        $ep = (int) $data['ep'];
+        $blurb = trim($data['blurb']);
+        $characters = preg_match_all('/./us', $blurb);
+        $rolledAt = strtotime($data['rolledAt']);
+        if ($roll < 0 || $roll > 1000000 || $ep < 0 || $ep > 1000000000 || $blurb === '' || $characters === false || $characters > 500 || $rolledAt === false) {
+            rng_json(['error' => 'Blurb must be 1 to 500 characters.'], 400);
+        }
+        $save = $pdo->prepare('INSERT INTO rngmine_roll_blurbs (user_id, roll_value, ep, blurb, created_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))');
+        $save->execute([(int) $user['id'], $roll, $ep, $blurb, $rolledAt]);
+        rng_json(['ok' => true]);
+    }
+    if ($action === 'blurb-comment' && $method === 'POST') {
+        if (!rng_same_origin()) {
+            rng_json(['error' => 'Request rejected.'], 403);
+        }
+        $data = rng_request_json();
+        $user = rng_require_user($pdo);
+        rng_require_csrf($data);
+        if (!is_numeric($data['blurbId'] ?? null) || !is_string($data['comment'] ?? null)) {
+            rng_json(['error' => 'Invalid comment.'], 400);
+        }
+        $blurbId = (int) $data['blurbId'];
+        $comment = trim($data['comment']);
+        $characters = preg_match_all('/./us', $comment);
+        if ($blurbId < 1 || $comment === '' || $characters === false || $characters > 1000) {
+            rng_json(['error' => 'Comments must be 1 to 1000 characters.'], 400);
+        }
+        $exists = $pdo->prepare('SELECT id FROM rngmine_roll_blurbs WHERE id = ?');
+        $exists->execute([$blurbId]);
+        if (!$exists->fetch()) {
+            rng_json(['error' => 'Blurb not found.'], 404);
+        }
+        $save = $pdo->prepare('INSERT INTO rngmine_blurb_comments (blurb_id, user_id, comment_text) VALUES (?, ?, ?)');
+        $save->execute([$blurbId, (int) $user['id'], $comment]);
+        rng_json(['ok' => true]);
+    }
     if ($action === 'login' && $method === 'POST') {
         if (!rng_same_origin()) {
             rng_json(['error' => 'Request rejected.'], 403);

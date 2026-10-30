@@ -41,6 +41,26 @@ function rng_db(): PDO
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         CONSTRAINT rngmine_saves_user_fk FOREIGN KEY (user_id) REFERENCES rngmine_users(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS rngmine_roll_blurbs (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        roll_value INT UNSIGNED NOT NULL,
+        ep BIGINT UNSIGNED NOT NULL,
+        blurb VARCHAR(500) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX rngmine_roll_blurbs_recent_idx (created_at, id),
+        CONSTRAINT rngmine_roll_blurbs_user_fk FOREIGN KEY (user_id) REFERENCES rngmine_users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS rngmine_blurb_comments (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        blurb_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        comment_text VARCHAR(1000) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX rngmine_blurb_comments_recent_idx (blurb_id, created_at, id),
+        CONSTRAINT rngmine_blurb_comments_blurb_fk FOREIGN KEY (blurb_id) REFERENCES rngmine_roll_blurbs(id) ON DELETE CASCADE,
+        CONSTRAINT rngmine_blurb_comments_user_fk FOREIGN KEY (user_id) REFERENCES rngmine_users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $pdo->exec("CREATE TABLE IF NOT EXISTS rngmine_profiles (
         user_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
         display_name VARCHAR(96) NOT NULL,

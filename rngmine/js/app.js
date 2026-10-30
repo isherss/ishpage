@@ -2,6 +2,7 @@
   "use strict";
   var R=window.RNGU;
   var PUZZLE_INFO=window.RNGMINE_PUZZLE_INFO||[];
+  var BLURB_QUESTIONS=window.RNGMINE_BLURB_QUESTIONS||[];
   function puzzleOdds(id,fallback){ var puzzle=PUZZLE_INFO.find?PUZZLE_INFO.find(function(item){return item.id===id;}):null; return puzzle&&Number.isFinite(puzzle.oddsDenominator)&&puzzle.oddsDenominator>0?puzzle.oddsDenominator:fallback; }
   var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=5000, DB_MS=20000, WIRE_MS=5000, VY_MS=15000, DYN_MS=15000, DYN_PROBLEMS=3;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -354,6 +355,25 @@
       done();
     }
   }
+  var pendingRollBlurb=null;
+  function randomBlurbQuestion(){
+    var questions=BLURB_QUESTIONS.filter(function(question){return typeof question==="string"&&question.trim();});
+    return questions.length?questions[Math.floor(Math.random()*questions.length)]:"What would you like to share with this roll?";
+  }
+  function showBlurbPrompt(entry){
+    $("blurbQuestion").textContent=entry.question;
+    $("blurbAnswer").value=""; $("blurbMessage").textContent=""; $("blurbSubmit").disabled=false; $("blurbPrompt").hidden=false;
+  }
+  function postRollBlurb(entry,answer){
+    var submit=$("blurbSubmit"); submit.disabled=true; $("blurbMessage").textContent="Posting your answer...";
+    apiRequest("roll-blurb",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf,roll:entry.roll,ep:entry.ep,blurb:answer,rolledAt:entry.rolledAt})}).then(function(){
+      entry.historyEntry.blurb=answer; save();
+      if(pendingRollBlurb===entry){pendingRollBlurb=null;$("blurbMessage").textContent="Answer posted with your roll.";$("blurbPrompt").hidden=true;}
+      leaderboardBlurbs=null;
+      if(!$("blurbPanel").hidden) loadBlurbs(true);
+      setSyncStatus("Blurb posted",false);
+    }).catch(function(error){if(pendingRollBlurb===entry) $("blurbMessage").textContent=error.message||"Answer could not be posted. Try again.";setSyncStatus("Blurb not synced",true);}).finally(function(){submit.disabled=false;});
+  }
   function doRoll(){
     if(busy){ if(cancelReveal) cancelReveal(); return; }
     ensureDay();
@@ -364,7 +384,9 @@
     var n=Math.floor(1000001*Math.random());
     var a=analyze(n), tier=tierOf(a.total);
     state.lifetime=(state.lifetime||0)+a.total;
-    state.history.unshift({n:n,total:a.total,day:state.day});
+    var rolledAt=new Date().toISOString(), rollEntry={n:n,total:a.total,day:state.day};
+    if(authUser){ rollEntry.rolledAt=rolledAt; pendingRollBlurb={roll:n,ep:a.total,rolledAt:rolledAt,question:randomBlurbQuestion(),historyEntry:rollEntry}; }
+    state.history.unshift(rollEntry);
     state.history=state.history.slice(0,40);
     a.groups.forEach(function(g){ state.found[g.main.id]=1; g.subs.forEach(function(s){ state.found[s.id]=1; }); });
     if(!state.best||a.total>state.best.total) state.best={n:n,total:a.total};
@@ -373,11 +395,14 @@
       busy=false; renderHist(); renderBook();
       msg="Rolled "+n+": "+fmt(a.total)+" EP, "+LABELS[tier]+".";
       updateUI();
+      if(authUser&&pendingRollBlurb&&pendingRollBlurb.roll===n) showBlurbPrompt(pendingRollBlurb);
     }
     if(REDUCED){ renderStatic(n); done(); return; }
     updateUI();
     playReveal(n,a,done);
   }
+  $("blurbForm").addEventListener("submit",function(event){event.preventDefault();var answer=$("blurbAnswer").value.trim();if(!answer){$("blurbMessage").textContent="Please enter an answer.";return;}if(!pendingRollBlurb){$("blurbPrompt").hidden=true;return;}postRollBlurb(pendingRollBlurb,answer);});
+  $("blurbSkip").addEventListener("click",function(){pendingRollBlurb=null;$("blurbPrompt").hidden=true;});
   $("continueBtn").addEventListener("click",function(){ document.body.classList.remove("awaiting-continue","rolling"); hero.classList.remove("rolling"); document.body.classList.add("has-roll"); $("continueBtn").hidden=true; requestAnimationFrame(function(){ layoutCoal(); }); });
 
   /* ---------- coal: each piece takes 3 to 12 hits, and mining one can light a dynamite fuse ---------- */
@@ -466,11 +491,17 @@
   }
   function endDyn(){ clearInterval(dyn.timer); document.body.classList.remove("dyn-on"); dyn.active=false; state.dyn=null; dynEl.hidden=true; }
   function defuse(){ endDyn(); msg="Dynamite defused. Your coal is safe."; save(); updateUI(); runNext(); }
+  var mineBoomTimer=0;
+  function animateMineBoom(){
+    if($("gameMain").hidden) return;
+    clearTimeout(mineBoomTimer); mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom");
+    mineBoomTimer=setTimeout(function(){mine.classList.remove("boom");},750);
+  }
   function explode(){
     var testFailed=!!state.testMinigame;
     endDyn(); clearFailedGameProgress(); pending=[]; msg=testFailed?"BOOM. Test game failed; coal progress was kept.":"BOOM. The dynamite went off and your coal progress reset to 0. Bonus rolls you already earned are safe.";
     save(); updateUI();
-    if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
+    if(!REDUCED) animateMineBoom();
   }
   dynForm.addEventListener("submit",function(e){
     e.preventDefault();
@@ -564,7 +595,7 @@
     setTimeout(function(){
       if(!wire.active) return;
       closeWires(); clearFailedGameProgress(); save(); updateUI();
-      if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
+      if(!REDUCED) animateMineBoom();
     },REDUCED?0:600);
   }
   function wireDone(){
@@ -680,7 +711,7 @@
     setTimeout(function(){
       if(!vy.active) return;
       closeVerity(); clearFailedGameProgress(); pending=[]; save(); updateUI();
-      if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
+      if(!REDUCED) animateMineBoom();
     },REDUCED?0:600);
   }
   /* drag a 2D shape from the tray into a statue. Right shape in the right statue swaps it in; anything else blows the bomb. */
@@ -773,7 +804,7 @@
     setTimeout(function(){
       if(!db.active) return;
       closeDouble(); clearFailedGameProgress(); pending=[]; save(); updateUI();
-      if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
+      if(!REDUCED) animateMineBoom();
     },REDUCED?0:600);
   }
   /* "1a 2s 3v": count then letter (s solar, v void, a arc), any order, missing elements count as 0 */
@@ -832,7 +863,7 @@
     setTimeout(function(){
       if(!cz.active) return;
       closeCaptcha(); clearFailedGameProgress(); pending=[]; save(); updateUI();
-      if(!REDUCED){ mine.classList.remove("boom"); void mine.offsetWidth; mine.classList.add("boom"); }
+      if(!REDUCED) animateMineBoom();
     },REDUCED?0:600);
   }
   function czSubmit(){
@@ -851,7 +882,7 @@
 
   function jumpTo(el,block){ try{ el.scrollIntoView({behavior:REDUCED?"auto":"smooth",block:block}); }catch(e){ el.scrollIntoView(); } }
 
-  var leaderboardData=null, leaderboardMetric="bestRoll";
+  var leaderboardData=null, leaderboardBlurbs=null, leaderboardMetric="bestRoll";
   var leaderboardLabels={bestRoll:"Best roll",totalEp:"Total EP",coalMined:"Coal mined"};
   function renderLeaderboard(){
     var status=$("leaderboardStatus"), rows=$("leaderboardRows"), metric=leaderboardMetric;
@@ -883,6 +914,40 @@
     });
     status.textContent=leaders.length+" miner"+(leaders.length===1?"":"s")+" · RANKED BY "+leaderboardLabels[metric].toUpperCase();
   }
+  function renderBlurbs(){
+    var rows=$("blurbRows"),status=$("blurbStatus"); rows.innerHTML="";
+    if(leaderboardBlurbs===null){status.textContent="Loading roll blurbs...";return;}
+    if(!leaderboardBlurbs.length){status.textContent="No roll blurbs have been posted yet.";return;}
+    leaderboardBlurbs.forEach(function(entry,index){
+      var tr=document.createElement("tr"),rank=document.createElement("td"),miner=document.createElement("td"),content=document.createElement("td");
+      tr.className="blurb-row";rank.className="leaderboard-rank";rank.textContent="#"+(index+1);
+      miner.className="leaderboard-miner";miner.textContent=entry.displayName||entry.username;miner.style.setProperty("--leader-name-color",entry.nameColor||"#27F549");
+      var rarity=tierOf(entry.ep),number=document.createElement("b"),meta=document.createElement("small"),answer=document.createElement("p"),time=document.createElement("small");
+      number.className="leaderboard-best-number";number.dataset.rarity=rarity;number.textContent=fmt(entry.roll);
+      meta.className="leaderboard-best-meta";meta.textContent=(LABELS[rarity]||rarity)+" · "+fmt(entry.ep)+" EP · "+pctLine(entry.ep).txt;
+      answer.className="blurb-answer";answer.textContent=entry.blurb;
+      time.className="blurb-time";time.textContent=new Date(Number(entry.createdAt)*1000).toLocaleString();
+      content.className="leaderboard-blurb";content.appendChild(number);content.appendChild(meta);content.appendChild(answer);content.appendChild(time);
+      var comments=Array.isArray(entry.comments)?entry.comments:[],details=document.createElement("details"),summary=document.createElement("summary"),commentList=document.createElement("div");
+      details.className="blurb-comments";summary.textContent="Comments ("+comments.length+")";commentList.className="blurb-comment-list";
+      comments.forEach(function(item){var row=document.createElement("div"),head=document.createElement("div"),author=document.createElement("b"),stamp=document.createElement("small"),text=document.createElement("p");row.className="blurb-comment";head.className="blurb-comment-head";author.textContent=item.displayName||item.username;author.style.setProperty("--leader-name-color",item.nameColor||"#27F549");stamp.textContent=new Date(Number(item.createdAt)*1000).toLocaleString();text.textContent=item.comment;head.appendChild(author);head.appendChild(stamp);row.appendChild(head);row.appendChild(text);commentList.appendChild(row);});
+      details.appendChild(summary);details.appendChild(commentList);
+      if(authUser){var form=document.createElement("form"),input=document.createElement("textarea"),actions=document.createElement("div"),button=document.createElement("button"),message=document.createElement("p");form.className="blurb-comment-form";form.dataset.blurbId=entry.id;input.maxLength=1000;input.rows=2;input.required=true;input.placeholder="Write a comment...";input.setAttribute("aria-label","Write a comment");actions.className="blurb-comment-actions";button.className="account-btn";button.type="submit";button.textContent="Comment";message.className="blurb-comment-message";message.setAttribute("role","status");actions.appendChild(button);form.appendChild(input);form.appendChild(message);form.appendChild(actions);commentList.appendChild(form);}else{var note=document.createElement("p");note.className="blurb-login-note";note.textContent="Log in to comment.";commentList.appendChild(note);}
+      content.appendChild(details);      tr.appendChild(rank);tr.appendChild(miner);tr.appendChild(content);rows.appendChild(tr);
+    });
+    status.textContent="SHOWING "+leaderboardBlurbs.length+" ROLL BLURBS";
+  }
+  $("blurbRows").addEventListener("submit",function(event){
+    var form=event.target.closest(".blurb-comment-form"); if(!form) return;
+    event.preventDefault(); var input=form.querySelector("textarea"),button=form.querySelector("button[type=submit]"),message=form.querySelector(".blurb-comment-message"),comment=input.value.trim();
+    if(!comment){message.textContent="Enter a comment first.";return;}
+    button.disabled=true; message.textContent="Posting...";
+    apiRequest("blurb-comment",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf,blurbId:form.dataset.blurbId,comment:comment})}).then(function(){leaderboardBlurbs=null;loadBlurbs(true);}).catch(function(error){message.textContent=error.message||"Comment could not be posted.";}).finally(function(){button.disabled=false;});
+  });  function loadBlurbs(force){
+    if(leaderboardBlurbs!==null&&!force){renderBlurbs();return;}
+    $("blurbStatus").textContent="Loading roll blurbs...";
+    apiRequest("leaderboard",{method:"GET"}).then(function(result){leaderboardBlurbs=Array.isArray(result.blurbs)?result.blurbs:[];renderBlurbs();}).catch(function(error){$("blurbStatus").textContent=error.message||"Blurbs unavailable.";});
+  }
   function launchPuzzlePractice(id){
     if(busy||dyn.active||wire.active||vy.active||db.active||cz.active) return;
     pending=[]; state.testMinigame=true; save();
@@ -913,7 +978,9 @@
     status.textContent="Loading leaderboard..."; $("leaderboardRows").innerHTML="";
     apiRequest("leaderboard",{method:"GET"}).then(function(result){
       leaderboardData=Array.isArray(result.leaders)?result.leaders:[];
+      leaderboardBlurbs=Array.isArray(result.blurbs)?result.blurbs:[];
       renderLeaderboard();
+      if(!$("blurbPanel").hidden) renderBlurbs();
     }).catch(function(error){status.textContent=error.message||"Leaderboard unavailable.";});
   }
   function selectLeaderboardMetric(metric){
@@ -929,6 +996,7 @@
   }
   var topTabButtons=Array.prototype.slice.call(document.querySelectorAll(".top-tab[aria-controls]"));
   function selectTopTab(selectedTab){
+    if(selectedTab.id!=="mineTab"){ clearTimeout(mineBoomTimer); mine.classList.remove("boom"); }
     topTabButtons.forEach(function(tab){
       var active=tab===selectedTab, panel=$(tab.getAttribute("aria-controls"));
       tab.classList.toggle("active",active);
@@ -938,7 +1006,8 @@
     if(selectedTab.id==="leaderboardTab"){
       if(authUser&&accountStateReady) remoteSaveNow().catch(function(){}).then(function(){loadLeaderboard(true);});
       else loadLeaderboard();
-    }else if(selectedTab.id==="rollsTab") renderHist();
+    }else if(selectedTab.id==="blurbTab") loadBlurbs();
+    else if(selectedTab.id==="rollsTab") renderHist();
     else if(selectedTab.id==="badgesTab") renderBook();
     else if(selectedTab.id==="puzzleInfoTab") renderPuzzleInfo();
   }
@@ -947,6 +1016,7 @@
     tab.addEventListener("click",function(){selectLeaderboardMetric(tab.dataset.metric);});
   });
   $("leaderboardRefresh").addEventListener("click",function(){loadLeaderboard(true);});
+  $("blurbRefresh").addEventListener("click",function(){loadBlurbs(true);});
 
 
   function closeProfile(){ $("profileMenu").hidden=true; $("accountUser").setAttribute("aria-expanded","false"); }
@@ -971,8 +1041,8 @@
     button.disabled=true; message.classList.remove("error"); message.textContent="Saving profile...";
     apiRequest("profile",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({csrf:authCsrf,displayName:$("profileDisplayName").value,nameColor:$("profileColorHex").value})}).then(function(profile){
       authDisplayName=profile.displayName; authNameColor=profile.nameColor; setAccountUI();
-      message.textContent="Profile saved."; leaderboardData=null;
-      if(!$('leaderboardPanel').hidden) loadLeaderboard(true);
+      message.textContent="Profile saved."; leaderboardData=null; leaderboardBlurbs=null;
+      if(!$('leaderboardPanel').hidden) loadLeaderboard(true); else if(!$('blurbPanel').hidden) loadBlurbs(true);
     }).catch(function(error){message.classList.add("error");message.textContent=error.message||"Profile could not be saved.";}).finally(function(){button.disabled=false;});
   });
   $("loginBtn").addEventListener("click",function(){
