@@ -3,8 +3,8 @@
   var R=window.RNGU;
   var PUZZLE_INFO=window.RNGMINE_PUZZLE_INFO||[];
   var BLURB_QUESTIONS=window.RNGMINE_BLURB_QUESTIONS||[];
-  function puzzleOdds(id,fallback){ var puzzle=PUZZLE_INFO.find?PUZZLE_INFO.find(function(item){return item.id===id;}):null; return puzzle&&Number.isFinite(puzzle.oddsDenominator)&&puzzle.oddsDenominator>0?puzzle.oddsDenominator:fallback; }
-  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=puzzleOdds("dyn",15), WIRE_ODDS=puzzleOdds("wires",10), VERITY_ODDS=puzzleOdds("verity",30), DBL_ODDS=puzzleOdds("double",25), CZ_ODDS=puzzleOdds("captcha",20), CZ_MS=8000, DB_MS=20000, WIRE_MS=8000, VY_MS=20000, DYN_MS=20000, DYN_PROBLEMS=3;
+  var MINIGAME_SETTINGS=window.RNGMINE_MINIGAME_SETTINGS;
+  var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=MINIGAME_SETTINGS.dynamite.oddsDenominator, WIRE_ODDS=MINIGAME_SETTINGS.wires.oddsDenominator, VERITY_ODDS=MINIGAME_SETTINGS.verity.oddsDenominator, DBL_ODDS=MINIGAME_SETTINGS.double.oddsDenominator, CZ_ODDS=MINIGAME_SETTINGS.captcha.oddsDenominator, CZ_MS=MINIGAME_SETTINGS.captcha.timeLimitSeconds*1000, DB_MS=MINIGAME_SETTINGS.double.timeLimitSeconds*1000, WIRE_MS=MINIGAME_SETTINGS.wires.timeLimitSeconds*1000, VY_MS=MINIGAME_SETTINGS.verity.timeLimitSeconds*1000, DYN_MS=MINIGAME_SETTINGS.dynamite.timeLimitSeconds*1000, DYN_PROBLEMS=MINIGAME_SETTINGS.dynamite.problemCount;
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function syncVisualViewport(){
     var viewport=window.visualViewport,root=document.documentElement;
@@ -789,7 +789,7 @@
   $("vyPal").addEventListener("pointercancel",function(e){ vyEnd(e,false); });
 
 
-  /* ---------- double break: see phase 1 orbs, work out how many of each element appear across both phases, in 20 seconds ---------- */
+  /* ---------- double break: timer is configured in minigame-settings.js ---------- */
   var DBE=[{n:"Solar",c:"#fb923c",d:"#9a3412"},{n:"Void",c:"#a855f7",d:"#4c1d95"},{n:"Arc",c:"#38bdf8",d:"#0c4a6e"}];
   function dbNext(e){ return e===1?0:(e===0?2:1); }   /* void -> solar -> arc -> void */
   var db={active:false,o:[],end:0,timer:0,locked:false}, dbEl=$("db");
@@ -855,7 +855,7 @@
   $("dbIn").addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); dbSubmit(); } });
 
 
-  /* ---------- captcha: read the warped code and type it within 20 seconds ---------- */
+  /* ---------- captcha: timer is configured in minigame-settings.js ---------- */
   var czEl=$("cz"), cz={active:false,code:"",seed:0,end:0,timer:0,locked:false};
   function rng(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; var t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
   function czDraw(){
@@ -1021,7 +1021,7 @@
       head.className="puzzle-info-card-head";
       title.textContent=puzzle.name;
       odds.className="puzzle-info-odds";
-      odds.textContent="1 in "+puzzle.oddsDenominator+" · "+(pct<1?pct.toFixed(2):pct.toFixed(1))+"% per coal";
+      odds.textContent="1 in "+puzzle.oddsDenominator+" · "+(pct<1?pct.toFixed(2):pct.toFixed(1))+"% per coal · "+puzzle.timeLimitSeconds+"s timer";
       label.className="puzzle-info-label";
       label.textContent="Select to practice · unlimited time";
       text.className="puzzle-info-solution";
