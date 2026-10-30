@@ -7,35 +7,35 @@
       name: "Dynamite",
       oddsDenominator: settings.dynamite.oddsDenominator,
       timeLimitSeconds: settings.dynamite.timeLimitSeconds,
-      solution: "Solve each of the "+settings.dynamite.problemCount+" arithmetic problems and submit the answer within "+settings.dynamite.timeLimitSeconds+" seconds. A wrong answer or expired timer detonates the dynamite. Finish all "+settings.dynamite.problemCount+" to defuse it."
+      solution: "Solve "+settings.dynamite.problemCount+" math problems (addition/subtraction up to 2 digits) within "+settings.dynamite.timeLimitSeconds+" seconds. A wrong answer or expired timer detonates the dynamite. Finish all "+settings.dynamite.problemCount+" to defuse it."
     },
     {
       id: "wires",
       name: "Wires",
       oddsDenominator: settings.wires.oddsDenominator,
       timeLimitSeconds: settings.wires.timeLimitSeconds,
-      solution: "Drag each wire from a color on the left to the matching color on the right. Match all four wires before the timer expires; a wrong match fails the puzzle."
+      solution: "Match the wires with each other (like among us)."
     },
     {
       id: "verity",
       name: "Verity",
       oddsDenominator: settings.verity.oddsDenominator,
       timeLimitSeconds: settings.verity.timeLimitSeconds,
-      solution: "Compare each room's shape with the statue in the same column. Rearrange the statue shapes by dragging one shape onto its statue, then another shape onto a different statue to swap them. Lock in when each statue's pair does not contain the shape shown in its room."
+      solution: "Exactly like Verity dissection from Salvations's Edge (Destiny 2). The inside room has 3 2D shapes assigned to them on each side. The outside room has 3 3D shapes on each side that are made of 2 2D shapes (eg. cone = triange + cirlcle). The outside shape cannot contain the 2D shape on the same side. Drag one of the 2D shapes on the bottom into the 3D shape to swap out the 2D shape in the 3D shape with another 2D shape in another 3D shape. Keep swapping until all 3 3D shapes don't have the shape assigned to their side."
     },
     {
       id: "double",
       name: "Double Break",
       oddsDenominator: settings.double.oddsDenominator,
       timeLimitSeconds: settings.double.timeLimitSeconds,
-      solution: "Count each element across both phases: the three orbs shown first, plus the orb each one changes into. The cycle is Void → Solar → Arc → Void. Enter the totals using s for Solar, v for Void, and a for Arc (for example: 2s 3v 1a), then lock in."
+      solution: "Exactly like double break callouts from Argos, Planetary Core in Eater of Worlds (Destiny 2). Given 3 orbs, you can callout the next 3 orbs that spawn as well since they follow the 'Void -> Solar -> Arc -> Void' rotation. So to callout the double break, you have to count the orbs in the first phase and what will spawn in the second phase, then total it. It will be in the format of Xv Xs Xa, v = void, s = solar, a = arc."
     },
     {
       id: "captcha",
       name: "Captcha",
       oddsDenominator: settings.captcha.oddsDenominator,
       timeLimitSeconds: settings.captcha.timeLimitSeconds,
-      solution: "Read the five distorted characters, type them into the answer field, and choose Verify before the timer runs out."
+      solution: "Its a captcha"
     }
   ];
 })();
