@@ -47,7 +47,7 @@
   </style>
 </head>
 <body>
-  <span class="page-title" style="font-family:'BlueScreenV1';line-height:80%;font-size:10vw;display:inline-block;">ishMusic</span>
+  <span class="page-title" style="font-family:'BlueScreenV1';line-height:80%;font-size:10vw;display:inline-block;color:green;">ishMusic</span>
   <br><br>
   <span>
     <a href="/" aria-label="Home"><img src="/images/house.png" alt="Home" style="height:3vw;width:3vw;" onmouseover="this.src='/images/househover.png'" onmouseout="this.src='/images/house.png'"></a>
@@ -165,7 +165,7 @@
       albumData = { headers, rows };
       renderTable();
       searchEl.disabled = false;
-      statusEl.textContent = `[ ${rows.length} ALBUM RECS // FROM ALBUM RECS.XLSX ]`;
+      statusEl.textContent = `[ ${rows.length} ALBUM RECS ]`;
     }
 
     function renderTable() {
@@ -209,6 +209,7 @@
   </script>
 </body>
 </html>
+
 
 
 
