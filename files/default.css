@@ -104,7 +104,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(40px, 11vw, 72px) !important;
     line-height: .95 !important;
   }
-  body .column > .page-navigation { flex-direction: column; gap: 14px; }
+  body .column > .page-navigation { flex-direction: column; gap: 4px; }
   body .page-navigation {
     display: flex;
     flex-wrap: wrap;
@@ -123,11 +123,13 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   }
   body .page-navigation span {
     margin-right: 0 !important;
-    font-size: clamp(19px, 5.4vw, 25px) !important;
-    line-height: 1.15 !important;
-    white-space: nowrap;
+    font-size: clamp(30px, 8vw, 44px) !important;
+    line-height: 1 !important;
+    white-space: normal !important;
   }
   body .page-navigation br { display: none !important; }
+  body .column > .page-navigation a[href="/terminal"] { margin-top: 54px; }
+  body .column > .page-navigation a[href="/terminal"] span { font-size: clamp(12px, 2.8vw, 16px) !important; }
   body a[href="/"] img {
     width: clamp(32px, 9vw, 44px) !important;
     height: clamp(32px, 9vw, 44px) !important;
@@ -180,4 +182,8 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(6px, 1.9vw, 10px) !important;
   }
 }
+
+
+
+
 
