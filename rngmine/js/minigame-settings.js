@@ -4,6 +4,7 @@
   timeLimitSeconds: timer duration for a real puzzle (practice remains unlimited).
 */
 window.RNGMINE_MINIGAME_SETTINGS = {
+  destiny2PuzzlesEnabledByDefault: false,
   dynamite: { oddsDenominator: 15, timeLimitSeconds: 20, problemCount: 3 },
   wires:    { oddsDenominator: 10, timeLimitSeconds: 10 },
   verity:   { oddsDenominator: 30, timeLimitSeconds: 20 },

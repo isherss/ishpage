@@ -5,6 +5,8 @@
   var BLURB_QUESTIONS=window.RNGMINE_BLURB_QUESTIONS||[];
   var MINIGAME_SETTINGS=window.RNGMINE_MINIGAME_SETTINGS;
   var FREE=0, PER=40, KEY="rngdle-mine-v3", OWNER_KEY="rngmine-state-owner", GUEST_KEY=KEY+"-guest", LOGIN_LAYOUT_KEY="rngmine-login-layout", GUEST_BOOST_KEY="rngmine-guest-boost", DYN_ODDS=MINIGAME_SETTINGS.dynamite.oddsDenominator, WIRE_ODDS=MINIGAME_SETTINGS.wires.oddsDenominator, VERITY_ODDS=MINIGAME_SETTINGS.verity.oddsDenominator, DBL_ODDS=MINIGAME_SETTINGS.double.oddsDenominator, CZ_ODDS=MINIGAME_SETTINGS.captcha.oddsDenominator, MEM_ODDS=MINIGAME_SETTINGS.memory.oddsDenominator, MEM_MS=MINIGAME_SETTINGS.memory.timeLimitSeconds*1000, MEM_PREVIEW_MS=MINIGAME_SETTINGS.memory.previewSeconds*1000, MEM_TILES=MINIGAME_SETTINGS.memory.tileCount, CZ_MS=MINIGAME_SETTINGS.captcha.timeLimitSeconds*1000, DB_MS=MINIGAME_SETTINGS.double.timeLimitSeconds*1000, WIRE_MS=MINIGAME_SETTINGS.wires.timeLimitSeconds*1000, VY_MS=MINIGAME_SETTINGS.verity.timeLimitSeconds*1000, DYN_MS=MINIGAME_SETTINGS.dynamite.timeLimitSeconds*1000, DYN_PROBLEMS=MINIGAME_SETTINGS.dynamite.problemCount;
+  var DESTINY2_PUZZLES_KEY="rngmine-destiny2-puzzles", destiny2PuzzlesEnabled=!!MINIGAME_SETTINGS.destiny2PuzzlesEnabledByDefault;
+  try{var savedDestiny2Puzzles=localStorage.getItem(DESTINY2_PUZZLES_KEY);if(savedDestiny2Puzzles!==null)destiny2PuzzlesEnabled=savedDestiny2Puzzles==="1";}catch(e){}
   var REDUCED=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   function syncVisualViewport(){
     var viewport=window.visualViewport,root=document.documentElement;
@@ -475,8 +477,8 @@
       moveCoal();
       lit=Math.random()<1/DYN_ODDS;
       wired=Math.random()<1/WIRE_ODDS;
-      vyd=Math.random()<1/VERITY_ODDS;
-      dbd=Math.random()<1/DBL_ODDS;
+      vyd=destiny2PuzzlesEnabled&&Math.random()<1/VERITY_ODDS;
+      dbd=destiny2PuzzlesEnabled&&Math.random()<1/DBL_ODDS;
       czd=Math.random()<1/CZ_ODDS;
       memd=Math.random()<1/MEM_ODDS;
       updateUI();
@@ -674,6 +676,7 @@
   var vyEl=$("vy"), vyOut=$("vyOut"), vyIn=$("vyIn"), vyRound=$("vyRound");
   function runNext(){
     var e=pending.shift();
+    if(!destiny2PuzzlesEnabled&&(e==="verity"||e==="double")){runNext();return;}
     if(e==="wires") startWires(); else if(e==="verity") startVerity(); else if(e==="double") startDouble(); else if(e==="captcha") startCaptcha(); else if(e==="memory") startMemory(); else if(e==="dyn") startDynamite(); else { state.testMinigame=false; document.body.classList.remove("practice-minigame"); save(); updateUI(); }
   }
   function glyph(k,s){
@@ -1216,6 +1219,13 @@
   }
   $("guestBoostBtn").addEventListener("click",toggleGuestBoost);
   $("guestBoostMineBtn").addEventListener("click",toggleGuestBoost);
+  var destiny2PuzzleToggle=$("destiny2PuzzleToggle");
+  destiny2PuzzleToggle.checked=destiny2PuzzlesEnabled;
+  destiny2PuzzleToggle.addEventListener("change",function(){
+    destiny2PuzzlesEnabled=destiny2PuzzleToggle.checked;
+    try{localStorage.setItem(DESTINY2_PUZZLES_KEY,destiny2PuzzlesEnabled?"1":"0");}catch(e){}
+    if(!destiny2PuzzlesEnabled)pending=pending.filter(function(id){return id!=="verity"&&id!=="double";});
+  });
   window.addEventListener("resize",function(){ layoutCoal(); setAccountUI(); });
   document.addEventListener("visibilitychange",function(){ if(!document.hidden&&ensureDay()) updateUI(); });
   setInterval(function(){ if(ensureDay()) updateUI(); },60000);

@@ -627,3 +627,14 @@ html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(s
 .hist li{align-items:center}
 .hist li .h-n,.hist li .h-t{justify-self:stretch;text-align:center}
 .hist li .h-d{justify-self:end;text-align:right;white-space:nowrap}
+.destiny2-toggle{display:flex;align-items:center;gap:10px;width:max-content;max-width:100%;margin-top:8px;padding:8px 10px;border:1px solid #145214;background:#010401;color:#a7ffbb;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.destiny2-toggle input{position:absolute;width:1px;height:1px;opacity:0}
+.destiny2-switch-ui{position:relative;flex:none;width:34px;height:18px;border:1px solid #679477;background:#050805;transition:border-color .15s,background .15s,box-shadow .15s}
+.destiny2-switch-ui:after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;background:#679477;transition:transform .15s,background .15s}
+.destiny2-toggle input:checked+.destiny2-switch-ui{border-color:#27F549;background:#06200a;box-shadow:0 0 8px rgba(39,245,73,.2)}
+.destiny2-toggle input:checked+.destiny2-switch-ui:after{transform:translateX(16px);background:#39ff78;box-shadow:0 0 7px #39ff78}
+.destiny2-toggle input:focus-visible+.destiny2-switch-ui{outline:2px solid #27F5F5;outline-offset:3px}
+.destiny2-toggle-copy{display:flex;flex-direction:column;gap:2px}
+.destiny2-toggle-copy b{color:#46bf46;font:11px var(--mono);letter-spacing:.05em;text-transform:uppercase}
+.destiny2-toggle-copy small{color:#679477;font:9px/1.4 var(--mono)}
+@media(max-width:560px){.destiny2-toggle{width:100%;padding:9px 8px}}
