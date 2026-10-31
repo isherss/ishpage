@@ -637,4 +637,6 @@ html.first-visit body #routePanels>#puzzleInfoPanel{margin-top:calc(88px + env(s
 .destiny2-toggle-copy{display:flex;flex-direction:column;gap:2px}
 .destiny2-toggle-copy b{color:#46bf46;font:11px var(--mono);letter-spacing:.05em;text-transform:uppercase}
 .destiny2-toggle-copy small{color:#679477;font:9px/1.4 var(--mono)}
-@media(max-width:560px){.destiny2-toggle{width:100%;padding:9px 8px}}
+@media(max-width:560px){.destiny2-toggle{width:100%;padding:9px 8px}}.prog2{text-align:center}
+.destiny2-toggle{width:max-content;margin:8px auto 0}
+@media(max-width:560px){.destiny2-toggle{width:max-content;max-width:100%}}

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
-  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261031-destiny-switch">
+  <link rel="stylesheet" href="/rngmine/css/styles.css?v=20261031-destiny-switch-centered">
   <script src="/rngmine/js/first-visit.js"></script>
 </head>
 <body>
@@ -159,7 +159,7 @@
     (async function(){
       const files=["mining","leaderboard","blurbs","roll-history","puzzle-info","badge-book"];
       const fragments=await Promise.all(files.map(async function(file){
-        const response=await fetch("/rngmine/pages/"+file+".html?v=20261031-destiny-switch");
+        const response=await fetch("/rngmine/pages/"+file+".html?v=20261031-destiny-switch-centered");
         if(!response.ok)throw new Error("Could not load RNGMINE page: "+file);
         return response.text();
       }));
