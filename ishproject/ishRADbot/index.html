@@ -116,6 +116,7 @@
       const chartColors=["#39ff78","#27f5f5","#ffce5c","#f785ff","#ff7777","#87aaff","#d6ff68","#ffa66b","#86e0cb","#c8a4ff"];
       let raidEvents=[];
       let forceRefreshNext=false;
+      let latestData=null,backgroundRefreshRunning=false;
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
       function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
@@ -137,6 +138,7 @@
       function renderTable(){const head=byId("radTableHead"),body=byId("radTableBody");head.replaceChildren();body.replaceChildren();const raid=byId("radRaidSelect").value,span=byId("radSpanSelect").value;const {start,end}=dateRange(span);const startLabel=start?dateLabel(start):"",endLabel=end?dateLabel(end):"";const valid=!!start&&!!end&&start<=end;const events=valid?eventsInRange(start,end,raid):[];const periodDays=[];if(valid){let cursor=start;while(cursor<=end&&periodDays.length<367){periodDays.push(cursor);cursor=shiftDay(cursor,1);}}
         const heading=document.createElement("tr");addCell(heading,"Raid","th");periodDays.forEach(day=>addCell(heading,dateLabel(day),"th"));addCell(heading,"Total","th");head.appendChild(heading);const row=document.createElement("tr");addCell(row,raid);let total=0;periodDays.forEach(day=>{const count=events.filter(event=>centralDay(event.timestamp)===day).length;total+=count;addCell(row,String(count));});addCell(row,String(total)).className="rad-total";body.appendChild(row);byId("radTableScroll").hidden=!raid||!valid;byId("radNoRaids").hidden=raidEvents.length>0;}
       function render(data){
+        latestData=data;
         byId("radPlayer").textContent=data.player?.displayName||"ish#7419";
         const status=byId("radStatus");
         status.textContent=data.status||"Status unavailable";
@@ -163,12 +165,21 @@
         catch(reason){error.textContent=reason.message||"Bungie data is unavailable.";error.hidden=false;byId("radRaidLoading").hidden=true;byId("radPartyEmpty").textContent="Fireteam data is unavailable.";byId("radStatus").textContent="Status unavailable";byId("radStatus").dataset.state="unknown";}
         finally{refresh.disabled=false;refresh.textContent="Refresh";}
       }
+      async function refreshInBackground(){
+        if(backgroundRefreshRunning)return;
+        const age=latestData?.updatedAt?Date.now()-Date.parse(latestData.updatedAt):Infinity;
+        if(age<900000)return;
+        backgroundRefreshRunning=true;
+        try{const response=await fetch("/ishproject/ishRADbot/api.php?refresh=1",{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();render(data);}
+        catch(ignored){}
+        finally{backgroundRefreshRunning=false;}
+      }
       refresh.addEventListener("click",()=>{forceRefreshNext=true;load();});
       byId("radRaidSelect").addEventListener("change",renderTable);
       byId("radSpanSelect").addEventListener("change",()=>{const custom=byId("radSpanSelect").value==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;renderTable();});
       ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",renderTable));
       load();
-      window.setInterval(load,120000);
+      window.setInterval(refreshInBackground,120000);
     })();
   </script>
 </body>

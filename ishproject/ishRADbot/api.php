@@ -9,7 +9,6 @@ const ISHRADBOT_NAME = 'ish';
 const ISHRADBOT_CODE = 7419;
 const ISHRADBOT_MEMBERSHIP_TYPE = 3; // Steam
 const ISHRADBOT_RAID_MODE = 4;
-const ISHRADBOT_CACHE_SECONDS = 900;
 
 function radbotReply(int $status, array $payload): never
 {
@@ -93,6 +92,18 @@ function radbotActivityDefinition(int $hash, string $apiKey, array &$definitionC
     return $definition;
 }
 
+function radbotLoadDefinitionCache(string $cachePath): array
+{
+    if (!is_file($cachePath)) return [];
+    $data = json_decode((string) file_get_contents($cachePath), true);
+    return is_array($data) ? $data : [];
+}
+
+function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
+{
+    @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
+}
+
 function radbotBuildData(string $apiKey): array
 {
     $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/' . ISHRADBOT_MEMBERSHIP_TYPE . '/', $apiKey, [
@@ -121,7 +132,9 @@ function radbotBuildData(string $apiKey): array
     $characterActivities = $profile['characterActivities']['data'] ?? [];
     $transitory = $profile['profileTransitoryData']['data'] ?? [];
 
-    $activityDefinitionCache = [];
+    $privateCacheDir = dirname(__DIR__, 2) . '/rngmine/private';
+    $definitionsCachePath = $privateCacheDir . '/ishradbot-definitions.json';
+    $activityDefinitionCache = radbotLoadDefinitionCache($definitionsCachePath);
     $activeCharacter = null;
     foreach ($characterActivities as $characterId => $activityData) {
         if (!is_array($activityData) || (int) ($activityData['currentActivityHash'] ?? 0) === 0) continue;
@@ -222,6 +235,7 @@ function radbotBuildData(string $apiKey): array
         }
         $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
     }
+    radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
     foreach ($raidEvents as &$raidEvent) {
         $raidEvent['raid'] = $raidNames[$raidEvent['raidHash']] ?? 'Raid ' . $raidEvent['raidHash'];
         unset($raidEvent['raidHash']);
@@ -249,17 +263,33 @@ if ($apiKey === '') {
 
 $cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache.json';
 $forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
-if (!$forceRefresh && is_file($cachePath)) {
+$cached = null;
+if (is_file($cachePath)) {
     $cached = json_decode((string) file_get_contents($cachePath), true);
-    $cacheAge = time() - (int) filemtime($cachePath);
-    if (is_array($cached) && $cacheAge < ISHRADBOT_CACHE_SECONDS) radbotReply(200, $cached);
+    if (!is_array($cached)) $cached = null;
+}
+// Serve stale data immediately. The page requests a refresh in the background.
+if (!$forceRefresh && is_array($cached)) radbotReply(200, $cached);
+
+// If another request is already refreshing, reuse the saved response instead
+// of making every visitor wait on its own serial Bungie request chain.
+$lockPath = $cachePath . '.lock';
+$lock = @fopen($lockPath, 'c');
+if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
+    fclose($lock);
+    if (is_array($cached)) radbotReply(200, $cached);
+    header('Retry-After: 5');
+    radbotReply(503, ['error' => 'Bungie data is warming up. Please retry shortly.']);
 }
 
 try {
     $data = radbotBuildData($apiKey);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
+    if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);
 } catch (Throwable $error) {
+    if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
+    if (is_array($cached)) radbotReply(200, $cached);
     error_log('ishRADbot Bungie API error: ' . $error->getMessage());
     radbotReply(502, ['error' => 'Could not retrieve ishRADbot data from Bungie. Check the server API key, player privacy, or Bungie API availability.']);
 }
