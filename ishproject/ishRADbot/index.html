@@ -94,7 +94,7 @@
       <ul class="rad-chart-legend" id="radChartLegend"></ul>
       <div class="rad-controls" id="radRaidControls" hidden>
         <label>Raid<select id="radRaidSelect"></select></label>
-        <label>Timespan<select id="radSpanSelect"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="custom">Custom range</option></select></label>
+        <label>Timespan<select id="radSpanSelect"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" disabled>Monthly (needs more history)</option><option value="custom" disabled>Custom (needs more history)</option></select></label>
         <label id="radStartWrap" hidden>Start date<input id="radStartDate" type="date"></label>
         <label id="radEndWrap" hidden>End date<input id="radEndDate" type="date"></label>
       </div>
@@ -115,10 +115,11 @@
       const error=byId("radError");
       const chartColors=["#39ff78","#27f5f5","#ffce5c","#f785ff","#ff7777","#87aaff","#d6ff68","#ffa66b","#86e0cb","#c8a4ff"];
       let raidEvents=[];
+      let forceRefreshNext=false;
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
       function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
-      function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}return {start,end};}
+      function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}const available=raidEvents.map(event=>centralDay(event.timestamp));if(available.length){const earliest=available.reduce((left,right)=>left<right?left:right);if(start<earliest)start=earliest;}return {start,end};}
       function shiftDay(day,amount){const date=new Date(day+"T12:00:00Z");date.setUTCDate(date.getUTCDate()+amount);return date.toISOString().slice(0,10);}
       function eventsInRange(start,end,raid){return raidEvents.filter(event=>event.raid===raid&&centralDay(event.timestamp)>=start&&centralDay(event.timestamp)<=end);}
       function renderChart(){
@@ -158,11 +159,11 @@
       }
       async function load(){
         refresh.disabled=true;refresh.textContent="Loading…";error.hidden=true;byId("radRaidLoading").hidden=false;byId("radRaidLoading").textContent="Loading player and raid data…";
-        try{const response=await fetch("/ishproject/ishRADbot/api.php?refresh="+Date.now(),{cache:"no-store",headers:{"Accept":"application/json"}});const data=await response.json();if(!response.ok)throw new Error(data.error||"Bungie data is unavailable.");render(data);}
+        try{const refreshParam=forceRefreshNext?"?refresh=1":"";forceRefreshNext=false;const response=await fetch("/ishproject/ishRADbot/api.php"+refreshParam,{cache:"no-store",headers:{"Accept":"application/json"}});const data=await response.json();if(!response.ok)throw new Error(data.error||"Bungie data is unavailable.");render(data);}
         catch(reason){error.textContent=reason.message||"Bungie data is unavailable.";error.hidden=false;byId("radRaidLoading").hidden=true;byId("radPartyEmpty").textContent="Fireteam data is unavailable.";byId("radStatus").textContent="Status unavailable";byId("radStatus").dataset.state="unknown";}
         finally{refresh.disabled=false;refresh.textContent="Refresh";}
       }
-      refresh.addEventListener("click",load);
+      refresh.addEventListener("click",()=>{forceRefreshNext=true;load();});
       byId("radRaidSelect").addEventListener("change",renderTable);
       byId("radSpanSelect").addEventListener("change",()=>{const custom=byId("radSpanSelect").value==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;renderTable();});
       ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",renderTable));

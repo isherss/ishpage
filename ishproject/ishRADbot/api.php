@@ -9,7 +9,7 @@ const ISHRADBOT_NAME = 'ish';
 const ISHRADBOT_CODE = 7419;
 const ISHRADBOT_MEMBERSHIP_TYPE = 3; // Steam
 const ISHRADBOT_RAID_MODE = 4;
-const ISHRADBOT_CACHE_SECONDS = 120;
+const ISHRADBOT_CACHE_SECONDS = 900;
 
 function radbotReply(int $status, array $payload): never
 {
@@ -184,15 +184,18 @@ function radbotBuildData(string $apiKey): array
     $partyNames = array_values($partyNames);
 
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-    // Fetch enough history to support the longest preset plus the visible
-    // 7-day chart, whose reporting day rolls over at 03:00 America/Chicago.
-    $historyStart = $now->modify('-366 days')->getTimestamp();
+    // The default chart only needs seven reporting days. Its date boundary is
+    // 03:00 America/Chicago; subtract seven days from that boundary.
+    $central = new DateTimeZone('America/Chicago');
+    $chartBoundary = $now->setTimezone($central)->setTime(3, 0);
+    if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
+    $historyStart = $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
     $seenInstances = [];
     $historyWarnings = [];
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
-        while ($page < 2000) {
+        while ($page < 4) {
             $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
@@ -256,9 +259,11 @@ if ($apiKey === '') {
 }
 
 $cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache.json';
-if (is_file($cachePath) && (time() - (int) filemtime($cachePath)) < ISHRADBOT_CACHE_SECONDS) {
+$forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
+if (!$forceRefresh && is_file($cachePath)) {
     $cached = json_decode((string) file_get_contents($cachePath), true);
-    if (is_array($cached)) radbotReply(200, $cached);
+    $cacheAge = time() - (int) filemtime($cachePath);
+    if (is_array($cached) && $cacheAge < ISHRADBOT_CACHE_SECONDS) radbotReply(200, $cached);
 }
 
 try {
