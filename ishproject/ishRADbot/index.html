@@ -147,13 +147,13 @@
         activity.hidden=!data.activityName;
         activity.textContent=data.activityName?"Activity: "+data.activityName:"";
         const party=byId("radParty");party.replaceChildren();
-        const names=Array.isArray(data.partyMembers)?data.partyMembers:[];
-        names.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
+        const partyNames=Array.isArray(data.partyMembers)?data.partyMembers:[];
+        partyNames.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
         byId("radPartyEmpty").hidden=party.children.length>0;
         byId("radPartyEmpty").textContent=party.children.length?"":"No named fireteam members were returned.";
         raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
-        const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,names=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();names.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(names.includes(previous))raidSelect.value=previous;else if(names.length)raidSelect.value=names[0];
-        const hasRaids=names.length>0;byId("radRaidControls").hidden=!hasRaids;
+        const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();raidNames.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(raidNames.includes(previous))raidSelect.value=previous;else if(raidNames.length)raidSelect.value=raidNames[0];
+        const hasRaids=raidNames.length>0;byId("radRaidControls").hidden=!hasRaids;
         renderChart();renderTable();
         byId("radRaidLoading").hidden=true;
         byId("radNoRaids").hidden=hasRaids;
