@@ -148,31 +148,51 @@ function radbotBuildData(string $apiKey): array
     }
 
     $partyNames = [];
+    $partyMemberIds = [];
     foreach (($transitory['partyMembers'] ?? []) as $partyMember) {
         if (!is_array($partyMember)) continue;
         $name = trim((string) ($partyMember['displayName'] ?? ''));
-        if ($name === '' || (string) ($partyMember['membershipId'] ?? '') === $membershipId) continue;
-        $partyNames[mb_strtolower($name)] = $name;
+        $partyMembershipId = trim((string) ($partyMember['membershipId'] ?? ''));
+        if ($partyMembershipId !== '' && $partyMembershipId === $membershipId) continue;
+        if ($name === '' && $partyMembershipId === '') continue;
+        $key = $partyMembershipId !== '' ? $partyMembershipId : mb_strtolower($name);
+        $partyNames[$key] = $name !== '' ? $name : 'Guardian ' . substr($partyMembershipId, -6);
+        if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = true;
+    }
+
+    // Transitory partyMembers only have last-known names. Resolve their
+    // Destiny membership IDs through Bungie's account membership lookup, which
+    // includes bungieGlobalDisplayName and bungieGlobalDisplayNameCode.
+    foreach (array_keys($partyMemberIds) as $partyMembershipId) {
+        try {
+            $membershipData = radbotBungie('/User/GetMembershipsById/' . rawurlencode($partyMembershipId) . '/' . ISHRADBOT_MEMBERSHIP_TYPE . '/');
+            $memberships = $membershipData['destinyMemberships'] ?? [];
+            foreach ($memberships as $linkedMembership) {
+                if (!is_array($linkedMembership)) continue;
+                $globalName = trim((string) ($linkedMembership['bungieGlobalDisplayName'] ?? ''));
+                $globalCode = $linkedMembership['bungieGlobalDisplayNameCode'] ?? null;
+                if ($globalName === '' || !is_numeric($globalCode)) continue;
+                $partyNames[$partyMembershipId] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
+                break;
+            }
+        } catch (Throwable $ignored) {
+            // Keep the transitory last-known display name if lookup is unavailable.
+        }
     }
     $partyNames = array_values($partyNames);
     natcasesort($partyNames);
     $partyNames = array_values($partyNames);
 
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-    $today = $now->format('Y-m-d');
-    $weekStart = $now->modify('-6 days')->setTime(0, 0);
-    $monthStart = $now->modify('-29 days')->setTime(0, 0);
-    $weekDays = [];
-    for ($offset = 6; $offset >= 0; $offset--) {
-        $weekDays[] = $now->modify('-' . $offset . ' days')->format('Y-m-d');
-    }
-
-    $raidCounts = [];
+    // Fetch enough history to support the longest preset plus the visible
+    // 7-day chart, whose reporting day rolls over at 03:00 America/Chicago.
+    $historyStart = $now->modify('-366 days')->getTimestamp();
+    $raidEvents = [];
     $seenInstances = [];
     $historyWarnings = [];
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
-        while ($page < 10) {
+        while ($page < 2000) {
             $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
@@ -191,8 +211,7 @@ function radbotBuildData(string $apiKey): array
                 $timestamp = strtotime($period);
                 if ($timestamp === false) continue;
                 $oldestPeriod = $timestamp;
-                $day = gmdate('Y-m-d', $timestamp);
-                if ($timestamp < $monthStart->getTimestamp()) continue;
+                if ($timestamp < $historyStart) continue;
                 $activityDetails = $entry['activityDetails'] ?? [];
                 $instanceId = (string) ($activityDetails['instanceId'] ?? '');
                 if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
@@ -209,28 +228,15 @@ function radbotBuildData(string $apiKey): array
                 }
                 $raidName = trim((string) ($definition['displayProperties']['name'] ?? ''));
                 if ($raidName === '') $raidName = 'Raid ' . $definitionHash;
-                if (!isset($raidCounts[$raidName])) $raidCounts[$raidName] = ['days' => [], 'week' => 0, 'month' => 0];
-                $raidCounts[$raidName]['month']++;
-                if ($timestamp >= $weekStart->getTimestamp()) {
-                    $raidCounts[$raidName]['week']++;
-                    $raidCounts[$raidName]['days'][$day] = ($raidCounts[$raidName]['days'][$day] ?? 0) + 1;
-                }
+                $raidEvents[] = ['raid' => $raidName, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
             }
-            if ($oldestPeriod !== null && $oldestPeriod < $monthStart->getTimestamp()) break;
+            if ($oldestPeriod !== null && $oldestPeriod < $historyStart) break;
             if (count($activities) < 250) break;
             $page++;
         }
     }
 
-    uasort($raidCounts, static function (array $left, array $right): int {
-        return strcasecmp((string) array_key_first([$left]), (string) array_key_first([$right]));
-    });
-    $raids = [];
-    foreach ($raidCounts as $raidName => $counts) {
-        $days = [];
-        foreach ($weekDays as $day) $days[$day] = (int) ($counts['days'][$day] ?? 0);
-        $raids[] = ['name' => (string) $raidName, 'days' => $days, 'last7Days' => (int) $counts['week'], 'last30Days' => (int) $counts['month']];
-    }
+    usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? ISHRADBOT_NAME)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? ISHRADBOT_CODE), 4, '0', STR_PAD_LEFT);
     return [
@@ -238,8 +244,7 @@ function radbotBuildData(string $apiKey): array
         'status' => $status,
         'activityName' => $activityName,
         'partyMembers' => $partyNames,
-        'weekDays' => $weekDays,
-        'raids' => $raids,
+        'raidEvents' => $raidEvents,
         'updatedAt' => gmdate(DATE_ATOM),
         'historyWarning' => count($historyWarnings) > 0 ? 'Some character activity histories could not be loaded. Public stats/privacy settings may limit access.' : '',
     ];

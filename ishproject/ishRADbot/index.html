@@ -29,6 +29,20 @@
     .rad-party{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;list-style:none}
     .rad-party li{padding:8px 10px;border:1px solid #102d18;background:#020803;color:#a7ffbb;font-size:12px;overflow-wrap:anywhere}
     .rad-empty{margin:0;color:var(--rad-muted);font-size:12px;line-height:1.6}
+    .rad-chart-wrap{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+    .rad-chart{display:block;width:100%;min-width:620px;height:auto;overflow:visible}
+    .rad-chart text{fill:var(--rad-muted);font:10px "Lucida Console",monospace}
+    .rad-chart .rad-grid{stroke:#102d18;stroke-width:1}
+    .rad-chart .rad-axis{stroke:#286333;stroke-width:1}
+    .rad-chart .rad-series{fill:none;stroke-width:2.5;vector-effect:non-scaling-stroke}
+    .rad-chart .rad-point{stroke:#010401;stroke-width:1.5;vector-effect:non-scaling-stroke}
+    .rad-chart-legend{display:flex;flex-wrap:wrap;gap:8px 16px;padding:0;margin:12px 0 0;list-style:none}
+    .rad-chart-legend li{display:flex;align-items:center;gap:7px;color:#a7ffbb;font-size:10px}
+    .rad-legend-swatch{width:11px;height:3px;flex:none}
+    .rad-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:14px 0}
+    .rad-controls label{display:grid;gap:5px;color:var(--rad-muted);font-size:10px;text-transform:uppercase}
+    .rad-controls select,.rad-controls input{min-height:34px;padding:6px 9px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#a7ffbb;font:11px "Lucida Console",monospace}
+    .rad-controls [hidden]{display:none}
     .rad-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
     .rad-table{width:100%;border-collapse:collapse;color:#a7ffbb;font-size:11px;white-space:nowrap}
     .rad-table th,.rad-table td{padding:9px 10px;border-bottom:1px solid #102d18;text-align:center}
@@ -71,16 +85,26 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRaidHeading">
-      <div class="rad-status-row"><h2 id="radRaidHeading">Raid Clears</h2><span class="rad-tagline">Past 7 days by day · past 30 days total</span></div>
+      <div class="rad-status-row"><h2 id="radRaidHeading">Raid Clears</h2><span class="rad-tagline">Daily totals · 3:00 a.m. to 3:00 a.m. Central</span></div>
       <p class="rad-loading" id="radRaidLoading">Loading raid clear history…</p>
       <p class="rad-empty rad-error" id="radError" hidden></p>
+      <div class="rad-chart-wrap" id="radChartWrap" hidden>
+        <svg class="rad-chart" id="radChart" viewBox="0 0 960 360" role="img" aria-label="Raid clears over the last seven days"></svg>
+      </div>
+      <ul class="rad-chart-legend" id="radChartLegend"></ul>
+      <div class="rad-controls" id="radRaidControls" hidden>
+        <label>Raid<select id="radRaidSelect"></select></label>
+        <label>Timespan<select id="radSpanSelect"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="custom">Custom range</option></select></label>
+        <label id="radStartWrap" hidden>Start date<input id="radStartDate" type="date"></label>
+        <label id="radEndWrap" hidden>End date<input id="radEndDate" type="date"></label>
+      </div>
+      <p class="rad-empty" id="radNoRaids" hidden>No completed raids were found in the available history.</p>
       <div class="rad-table-scroll" id="radTableScroll" hidden>
         <table class="rad-table">
           <thead id="radTableHead"></thead>
           <tbody id="radTableBody"></tbody>
         </table>
       </div>
-      <p class="rad-empty" id="radNoRaids" hidden>No completed raids were found in the past 30 days.</p>
       <div class="rad-meta"><span>Live activity details refresh from Bungie’s API.</span><span id="radUpdated"></span></div>
     </section>
   </main>
@@ -89,8 +113,28 @@
       const byId=id=>document.getElementById(id);
       const refresh=byId("radRefresh");
       const error=byId("radError");
+      const chartColors=["#39ff78","#27f5f5","#ffce5c","#f785ff","#ff7777","#87aaff","#d6ff68","#ffa66b","#86e0cb","#c8a4ff"];
+      let raidEvents=[];
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
-      function dateLabel(day){const date=new Date(day+"T00:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
+      function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
+      function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
+      function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}return {start,end};}
+      function shiftDay(day,amount){const date=new Date(day+"T12:00:00Z");date.setUTCDate(date.getUTCDate()+amount);return date.toISOString().slice(0,10);}
+      function eventsInRange(start,end,raid){return raidEvents.filter(event=>event.raid===raid&&centralDay(event.timestamp)>=start&&centralDay(event.timestamp)<=end);}
+      function renderChart(){
+        const svg=byId("radChart"),legend=byId("radChartLegend");svg.replaceChildren();legend.replaceChildren();
+        const today=centralDay(Date.now()/1000),days=Array.from({length:7},(_,index)=>shiftDay(today,index-6));
+        const names=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));
+        const w=960,h=360,left=58,right=22,top=22,bottom=54,plotW=w-left-right,plotH=h-top-bottom;
+        const totals=days.map(day=>raidEvents.filter(event=>centralDay(event.timestamp)===day).length);const max=Math.max(1,...totals);const step=max<=4?1:Math.ceil(max/4);const yMax=Math.max(step,Math.ceil(max/step)*step);
+        for(let value=0;value<=yMax;value+=step){const y=top+plotH-(value/yMax)*plotH;const grid=document.createElementNS("http://www.w3.org/2000/svg","line");grid.setAttribute("x1",left);grid.setAttribute("x2",w-right);grid.setAttribute("y1",y);grid.setAttribute("y2",y);grid.setAttribute("class","rad-grid");svg.appendChild(grid);const label=document.createElementNS("http://www.w3.org/2000/svg","text");label.setAttribute("x",left-12);label.setAttribute("y",y+4);label.setAttribute("text-anchor","end");label.textContent=String(value);svg.appendChild(label);}
+        const axis=document.createElementNS("http://www.w3.org/2000/svg","line");axis.setAttribute("x1",left);axis.setAttribute("x2",w-right);axis.setAttribute("y1",top+plotH);axis.setAttribute("y2",top+plotH);axis.setAttribute("class","rad-axis");svg.appendChild(axis);
+        days.forEach((day,index)=>{const x=left+(index/(days.length-1))*plotW;const label=document.createElementNS("http://www.w3.org/2000/svg","text");label.setAttribute("x",x);label.setAttribute("y",h-25);label.setAttribute("text-anchor","middle");label.textContent=dateLabel(day);svg.appendChild(label);});
+        names.forEach((name,seriesIndex)=>{const color=chartColors[seriesIndex%chartColors.length];const points=days.map((day,index)=>{const count=raidEvents.filter(event=>event.raid===name&&centralDay(event.timestamp)===day).length;return {x:left+(index/(days.length-1))*plotW,y:top+plotH-(count/yMax)*plotH,count};});const line=document.createElementNS("http://www.w3.org/2000/svg","polyline");line.setAttribute("points",points.map(point=>point.x+","+point.y).join(" "));line.setAttribute("class","rad-series");line.setAttribute("stroke",color);svg.appendChild(line);points.forEach(point=>{const circle=document.createElementNS("http://www.w3.org/2000/svg","circle");circle.setAttribute("cx",point.x);circle.setAttribute("cy",point.y);circle.setAttribute("r","3.5");circle.setAttribute("fill",color);circle.setAttribute("class","rad-point");const title=document.createElementNS("http://www.w3.org/2000/svg","title");title.textContent=name+": "+point.count+" on "+dateLabel(days[points.indexOf(point)]);circle.appendChild(title);svg.appendChild(circle);});const item=document.createElement("li"),swatch=document.createElement("span");swatch.className="rad-legend-swatch";swatch.style.backgroundColor=color;item.append(swatch,document.createTextNode(name));legend.appendChild(item);});
+        byId("radChartWrap").hidden=raidEvents.length===0;
+      }
+      function renderTable(){const head=byId("radTableHead"),body=byId("radTableBody");head.replaceChildren();body.replaceChildren();const raid=byId("radRaidSelect").value,span=byId("radSpanSelect").value;const {start,end}=dateRange(span);const startLabel=start?dateLabel(start):"",endLabel=end?dateLabel(end):"";const valid=!!start&&!!end&&start<=end;const events=valid?eventsInRange(start,end,raid):[];const periodDays=[];if(valid){let cursor=start;while(cursor<=end&&periodDays.length<367){periodDays.push(cursor);cursor=shiftDay(cursor,1);}}
+        const heading=document.createElement("tr");addCell(heading,"Raid","th");periodDays.forEach(day=>addCell(heading,dateLabel(day),"th"));addCell(heading,"Total","th");head.appendChild(heading);const row=document.createElement("tr");addCell(row,raid);let total=0;periodDays.forEach(day=>{const count=events.filter(event=>centralDay(event.timestamp)===day).length;total+=count;addCell(row,String(count));});addCell(row,String(total)).className="rad-total";body.appendChild(row);byId("radTableScroll").hidden=!raid||!valid;byId("radNoRaids").hidden=raidEvents.length>0;}
       function render(data){
         byId("radPlayer").textContent=data.player?.displayName||"ish#7419";
         const status=byId("radStatus");
@@ -104,14 +148,12 @@
         names.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
         byId("radPartyEmpty").hidden=party.children.length>0;
         byId("radPartyEmpty").textContent=party.children.length?"":"No named fireteam members were returned.";
-        const head=byId("radTableHead"),body=byId("radTableBody");head.replaceChildren();body.replaceChildren();
-        const dates=Array.isArray(data.weekDays)?data.weekDays:[];
-        const heading=document.createElement("tr");addCell(heading,"Raid","th");dates.forEach(day=>addCell(heading,dateLabel(day),"th"));addCell(heading,"7 days","th");addCell(heading,"30 days","th");head.appendChild(heading);
-        const raids=Array.isArray(data.raids)?data.raids:[];
-        raids.forEach(raid=>{const row=document.createElement("tr");addCell(row,raid.name);dates.forEach(day=>addCell(row,String(raid.days?.[day]||0)));addCell(row,String(raid.last7Days||0)).className="rad-total";addCell(row,String(raid.last30Days||0)).className="rad-total";body.appendChild(row);});
+        raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
+        const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,names=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();names.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(names.includes(previous))raidSelect.value=previous;else if(names.length)raidSelect.value=names[0];
+        const hasRaids=names.length>0;byId("radRaidControls").hidden=!hasRaids;
+        renderChart();renderTable();
         byId("radRaidLoading").hidden=true;
-        byId("radTableScroll").hidden=raids.length===0;
-        byId("radNoRaids").hidden=raids.length>0;
+        byId("radNoRaids").hidden=hasRaids;
         byId("radUpdated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleString():"";
       }
       async function load(){
@@ -121,6 +163,9 @@
         finally{refresh.disabled=false;refresh.textContent="Refresh";}
       }
       refresh.addEventListener("click",load);
+      byId("radRaidSelect").addEventListener("change",renderTable);
+      byId("radSpanSelect").addEventListener("change",()=>{const custom=byId("radSpanSelect").value==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;renderTable();});
+      ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",renderTable));
       load();
       window.setInterval(load,120000);
     })();
