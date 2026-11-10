@@ -148,7 +148,6 @@ function radbotBuildData(string $apiKey): array
     }
 
     $partyNames = [];
-    $partyMemberIds = [];
     foreach (($transitory['partyMembers'] ?? []) as $partyMember) {
         if (!is_array($partyMember)) continue;
         $name = trim((string) ($partyMember['displayName'] ?? ''));
@@ -157,27 +156,6 @@ function radbotBuildData(string $apiKey): array
         if ($name === '' && $partyMembershipId === '') continue;
         $key = $partyMembershipId !== '' ? $partyMembershipId : mb_strtolower($name);
         $partyNames[$key] = $name !== '' ? $name : 'Guardian ' . substr($partyMembershipId, -6);
-        if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = true;
-    }
-
-    // Transitory partyMembers only have last-known names. Resolve their
-    // Destiny membership IDs through Bungie's account membership lookup, which
-    // includes bungieGlobalDisplayName and bungieGlobalDisplayNameCode.
-    foreach (array_keys($partyMemberIds) as $partyMembershipId) {
-        try {
-            $membershipData = radbotBungie('/User/GetMembershipsById/' . rawurlencode($partyMembershipId) . '/' . ISHRADBOT_MEMBERSHIP_TYPE . '/');
-            $memberships = $membershipData['destinyMemberships'] ?? [];
-            foreach ($memberships as $linkedMembership) {
-                if (!is_array($linkedMembership)) continue;
-                $globalName = trim((string) ($linkedMembership['bungieGlobalDisplayName'] ?? ''));
-                $globalCode = $linkedMembership['bungieGlobalDisplayNameCode'] ?? null;
-                if ($globalName === '' || !is_numeric($globalCode)) continue;
-                $partyNames[$partyMembershipId] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
-                break;
-            }
-        } catch (Throwable $ignored) {
-            // Keep the transitory last-known display name if lookup is unavailable.
-        }
     }
     $partyNames = array_values($partyNames);
     natcasesort($partyNames);
@@ -191,6 +169,7 @@ function radbotBuildData(string $apiKey): array
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
     $historyStart = $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
+    $raidHashes = [];
     $seenInstances = [];
     $historyWarnings = [];
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
@@ -224,20 +203,30 @@ function radbotBuildData(string $apiKey): array
                 if ($definitionHash === 0) $definitionHash = (int) ($activityDetails['referenceId'] ?? 0);
                 if ($definitionHash === 0) continue;
                 if ($instanceId !== '') $seenInstances[$instanceId] = true;
-                try {
-                    $definition = radbotActivityDefinition($definitionHash, $apiKey, $activityDefinitionCache);
-                } catch (Throwable $ignored) {
-                    $definition = [];
-                }
-                $raidName = trim((string) ($definition['displayProperties']['name'] ?? ''));
-                if ($raidName === '') $raidName = 'Raid ' . $definitionHash;
-                $raidEvents[] = ['raid' => $raidName, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
+                $raidHashes[$definitionHash] = true;
+                $raidEvents[] = ['raidHash' => $definitionHash, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
             }
             if ($oldestPeriod !== null && $oldestPeriod < $historyStart) break;
             if (count($activities) < 250) break;
             $page++;
         }
     }
+
+    // Resolve each unique raid hash only once after collecting history.
+    $raidNames = [];
+    foreach (array_keys($raidHashes) as $definitionHash) {
+        try {
+            $definition = radbotActivityDefinition((int) $definitionHash, $apiKey, $activityDefinitionCache);
+        } catch (Throwable $ignored) {
+            $definition = [];
+        }
+        $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
+    }
+    foreach ($raidEvents as &$raidEvent) {
+        $raidEvent['raid'] = $raidNames[$raidEvent['raidHash']] ?? 'Raid ' . $raidEvent['raidHash'];
+        unset($raidEvent['raidHash']);
+    }
+    unset($raidEvent);
 
     usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
 
