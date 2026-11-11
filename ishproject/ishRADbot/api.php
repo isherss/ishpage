@@ -302,7 +302,16 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $partyNames = [];
     $partyMemberIds = [];
-    foreach (($transitory['partyMembers'] ?? []) as $partyMember) {
+    $transitoryPartyMembers = $transitory['partyMembers'] ?? [];
+    // Bungie has returned the party list under both the profile-transitory
+    // root and currentActivity across API versions. Combine them so IDs from
+    // either shape can be resolved to the member's Bungie name tag.
+    $currentActivityPartyMembers = is_array($transitoryActivity) ? ($transitoryActivity['partyMembers'] ?? []) : [];
+    $partyMemberRecords = array_merge(
+        is_array($transitoryPartyMembers) ? $transitoryPartyMembers : [],
+        is_array($currentActivityPartyMembers) ? $currentActivityPartyMembers : []
+    );
+    foreach ($partyMemberRecords as $partyMember) {
         if (!is_array($partyMember)) continue;
         $globalName = trim((string) ($partyMember['bungieGlobalDisplayName'] ?? ''));
         $globalCode = $partyMember['bungieGlobalDisplayNameCode'] ?? null;
@@ -315,22 +324,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         $key = $partyMembershipId !== '' ? $partyMembershipId : mb_strtolower($name);
         $partyNames[$key] = $name !== '' ? $name : 'Guardian ' . substr($partyMembershipId, -6);
         if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = (int) ($partyMember['membershipType'] ?? $targetMembershipType);
-    }
-    $raidHubApiKey = radbotRaidHubApiKey();
-    if ($raidHubApiKey !== '' && count($partyMemberIds) > 0) {
-        try {
-            $playerData = radbotRaidHub('/player/basic/batch', $raidHubApiKey, ['membershipIds' => array_slice(array_keys($partyMemberIds), 0, 12)]);
-            foreach (($playerData['players'] ?? []) as $player) {
-                if (!is_array($player)) continue;
-                $playerId = trim((string) ($player['membershipId'] ?? ''));
-                $globalName = trim((string) ($player['bungieGlobalDisplayName'] ?? ''));
-                $globalCode = $player['bungieGlobalDisplayNameCode'] ?? null;
-                if ($playerId === '' || $globalName === '' || !is_numeric($globalCode)) continue;
-                $partyNames[$playerId] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
-            }
-        } catch (Throwable $ignored) {
-            // Preserve Bungie's last-known party name if RaidHub lookup fails.
-        }
     }
     $unresolvedIds = [];
     foreach (array_keys($partyMemberIds) as $partyMembershipId) {
