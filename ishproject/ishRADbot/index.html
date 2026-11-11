@@ -19,6 +19,7 @@
     .rad-panel{margin:14px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--rad-line);background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);text-align:left}
     .rad-panel h2{margin:0 0 14px;color:#46bf46;font:18px "BlueScreenV1","Lucida Console",monospace;letter-spacing:.06em;text-transform:uppercase}
     .rad-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .rad-guardian-status-row{justify-content:center;gap:16px}
     .rad-player{color:#a7ffbb;font-size:14px;overflow-wrap:anywhere}
     .rad-status{display:inline-flex;align-items:center;gap:8px;color:#39ff78;font-size:12px}
     .rad-status:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
@@ -77,7 +78,7 @@
 </head>
 <body class="ish-radbot">
   <main class="rad-wrap">
-    <nav class="rad-nav" aria-label="Project navigation">
+    <nav class="rad-nav page-navigation" aria-label="Project navigation">
       <a class="rad-back" href="/ishproject/">← Projects</a>
       <a href="/" aria-label="Home">Home</a>
     </nav>
@@ -90,11 +91,9 @@
           <input id="radLookupName" name="name" type="text" value="ish#7419" placeholder="Name#1234" pattern=".+#[0-9]{1,4}" maxlength="56" autocomplete="off" required>
           <button class="rad-refresh" type="submit">Look up</button>
         </form>
-        <div class="rad-status-row">
-          <div>
-            <h2 id="radPlayerHeading">Guardian Status</h2>
-            <div class="rad-player" id="radPlayer">ish#7419</div>
-          </div>
+        <h2 class="page-title" id="radPlayerHeading">Guardian Status</h2>
+        <div class="rad-status-row rad-guardian-status-row">
+          <div class="rad-player" id="radPlayer">ish#7419</div>
           <div class="rad-status" id="radStatus" data-state="loading">Loading status…</div>
           <button class="rad-refresh" id="radRefresh" type="button">Refresh</button>
         </div>
@@ -102,14 +101,14 @@
       </section>
 
       <section class="rad-panel" aria-labelledby="radPartyHeading">
-        <h2 id="radPartyHeading">Fireteam</h2>
+        <h2 class="page-title" id="radPartyHeading">Fireteam</h2>
         <ul class="rad-party" id="radParty"></ul>
         <p class="rad-empty" id="radPartyEmpty">Loading fireteam…</p>
       </section>
     </div>
 
     <section class="rad-panel" aria-labelledby="radRecentHeading">
-      <h2 id="radRecentHeading">LAST RAID</h2>
+      <h2 class="page-title" id="radRecentHeading">LAST RAID</h2>
       <p class="rad-recent-name" id="radRecentName" hidden></p>
       <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
       <ul class="rad-party" id="radRecentPlayers" hidden></ul>
@@ -117,7 +116,7 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRaidHeading">
-      <div class="rad-status-row"><h2 id="radRaidHeading">Raid Clears</h2><span class="rad-tagline">Total clears per day · 3:00 a.m. to 3:00 a.m. Central</span></div>
+      <div class="rad-status-row"><h2 class="page-title" id="radRaidHeading">Raid Clears</h2><span class="rad-tagline">Total clears per day · 3:00 a.m. to 3:00 a.m. Central</span></div>
       <p class="rad-loading" id="radRaidLoading">Loading raid clear history…</p>
       <p class="rad-empty rad-error" id="radError" hidden></p>
       <div class="rad-chart-wrap" id="radChartWrap" hidden style="position:relative">
@@ -210,7 +209,7 @@
         const partyNames=Array.isArray(data.partyMembers)?data.partyMembers:[];
         partyNames.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
         byId("radPartyEmpty").hidden=party.children.length>0;
-        byId("radPartyEmpty").textContent=party.children.length?"":"No named fireteam members were returned.";
+        byId("radPartyEmpty").textContent=party.children.length?"":"its empty";
         const recent=data.recentActivity, recentPlayers=byId("radRecentPlayers");recentPlayers.replaceChildren();
         if(recent&&recent.name){
           byId("radRecentName").textContent=recent.name;byId("radRecentName").hidden=false;
