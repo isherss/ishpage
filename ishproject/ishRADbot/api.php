@@ -256,13 +256,17 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $closedReasons = is_array($joinability) ? (int) ($joinability['closedReasons'] ?? 0) : 0;
     $hasPresenceSignal = is_array($joinability) && array_key_exists('closedReasons', $joinability);
     $isOffline = $hasPresenceSignal && ($closedReasons & 32768) !== 0;
+    // These joinability reasons are positive signals that the player is in
+    // matchmaking, loading, solo activity, or another active game state.
+    $hasJoinabilityActivitySignal = $hasPresenceSignal && ($closedReasons & (1 | 2 | 4 | 16)) !== 0;
     $transitoryActivity = $transitory['currentActivity'] ?? null;
     $transitoryActivityStart = is_array($transitoryActivity) ? strtotime((string) ($transitoryActivity['startTime'] ?? '')) : false;
     // Bungie can set endTime after an encounter completes while the player is
     // still in the activity space, so a recent currentActivity is still a
     // positive in-game signal even when endTime is populated.
-    $hasCurrentActivitySignal = $transitoryActivityStart !== false
-        && $transitoryActivityStart <= time() + 60;
+    $hasCurrentActivitySignal = ($transitoryActivityStart !== false
+        && $transitoryActivityStart <= time() + 60)
+        || $hasJoinabilityActivitySignal;
     foreach (is_array($characterActivities) ? $characterActivities : [] as $characterId => $activityData) {
         if (!is_array($activityData) || (int) ($activityData['currentActivityHash'] ?? 0) === 0) continue;
         if ($activeCharacter === null || (string) ($activityData['dateActivityStarted'] ?? '') > (string) ($activeCharacter['started'] ?? '')) {
@@ -345,8 +349,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     }
 
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-    // The default chart only needs seven reporting days. Its date boundary is
-    // 03:00 America/Chicago; subtract seven days from that boundary.
+    // The default chart uses reporting days from 03:00 to 03:00 America/Chicago.
     $central = new DateTimeZone('America/Chicago');
     $chartBoundary = $now->setTimezone($central)->setTime(3, 0);
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
@@ -410,8 +413,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
-    if (!$raidHubHistoryLoaded) {
-      foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
+    foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
         while ($allTime || $customRange !== null || $page < 4) {
             $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
@@ -449,27 +451,26 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             if (count($activities) < 250) break;
             $page++;
         }
-        }
     }
 
-    if (!$raidHubHistoryLoaded) {
-        // Resolve each unique raid hash only once after collecting history.
-        $raidNames = [];
-        foreach (array_keys($raidHashes) as $definitionHash) {
-            try {
-                $definition = radbotActivityDefinition((int) $definitionHash, $apiKey, $activityDefinitionCache);
-            } catch (Throwable $ignored) {
-                $definition = [];
-            }
-            $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
+    // Resolve Bungie raid hashes collected alongside the RaidHub instances.
+    $raidNames = [];
+    foreach (array_keys($raidHashes) as $definitionHash) {
+        try {
+            $definition = radbotActivityDefinition((int) $definitionHash, $apiKey, $activityDefinitionCache);
+        } catch (Throwable $ignored) {
+            $definition = [];
         }
-        radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
-        foreach ($raidEvents as &$raidEvent) {
+        $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
+    }
+    radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
+    foreach ($raidEvents as &$raidEvent) {
+        if (isset($raidEvent['raidHash'])) {
             $raidEvent['raid'] = $raidNames[$raidEvent['raidHash']] ?? 'Raid ' . $raidEvent['raidHash'];
             unset($raidEvent['raidHash']);
         }
-        unset($raidEvent);
     }
+    unset($raidEvent);
 
     // Keep the full RaidHub catalog alongside the player's observed raids.
     // The all-time table uses catalog entries to render zero-clear rows.
@@ -502,7 +503,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                         'durationSeconds' => is_numeric($historyDuration) ? (int) round((float) $historyDuration) : 0,
                     ];
                 }
-                break;
             }
         } catch (Throwable $error) {
             $historyWarnings[] = $error->getMessage();
