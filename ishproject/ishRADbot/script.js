@@ -11,11 +11,14 @@
       let allTimeSort={key:"raid",direction:1};
       let forceRefreshNext=false;
       let latestData=null,backgroundRefreshRunning=false;
+      let activityStartedAtMs=null;
       function readSavedName(){const entry=document.cookie.split(";").map(value=>value.trim()).find(value=>value.startsWith("ishradbotGuardian="));if(!entry)return defaultNameTag;try{return decodeURIComponent(entry.slice("ishradbotGuardian=".length));}catch(ignored){return defaultNameTag;}}
       function saveName(name){document.cookie="ishradbotGuardian="+encodeURIComponent(name)+"; Max-Age=31536000; Path=/ishproject/ishRADbot; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");}
       let currentNameTag=readSavedName();lookupInput.value=currentNameTag;
       const builtInRaidCatalog=["Leviathan","Eater of Worlds","Spire of Stars","Last Wish","Scourge of the Past","Crown of Sorrow","Garden of Salvation","Deep Stone Crypt","Vault of Glass","Vow of the Disciple","King's Fall","Root of Nightmares","Crota's End","Salvation's Edge","The Desert Perpetual","The Desert Perpetual (Epic)"];
       function apiUrl(force,presenceOnly=false,spanOverride=null){const query=new URLSearchParams({name:currentNameTag});if(force)query.set("refresh","1");if(presenceOnly)query.set("presence","1");const span=spanOverride||byId("radSpanSelect").value;if(!presenceOnly&&span==="alltime")query.set("allTime","1");else if(!presenceOnly&&span==="monthly")query.set("history","monthly");else if(!presenceOnly&&span==="custom"){query.set("timeframe","custom");query.set("startDate",byId("radStartDate").value);query.set("endDate",byId("radEndDate").value);}return "/ishproject/ishRADbot/api.php?"+query.toString();}
+      function elapsedLabel(seconds){const value=Math.max(0,Math.floor(seconds)),hours=Math.floor(value/3600),minutes=Math.floor((value%3600)/60),remaining=value%60;return hours>0?hours+"h "+String(minutes).padStart(2,"0")+"m "+String(remaining).padStart(2,"0")+"s":minutes>0?minutes+"m "+String(remaining).padStart(2,"0")+"s":remaining+"s";}
+      function renderActivity(data){const label=byId("radActivity"),inActivity=String(data.status||"").toLowerCase()==="in an activity",started=Date.parse(data.activityStartedAt||"");if(Number.isFinite(started))activityStartedAtMs=started;else activityStartedAtMs=null;label.hidden=!data.activityName&&!inActivity;if(label.hidden){label.textContent="";return;}const elapsed=activityStartedAtMs===null?"Activity duration unavailable from Bungie.":"In activity for "+elapsedLabel((Date.now()-activityStartedAtMs)/1000);label.textContent=(data.activityName?"Activity: "+data.activityName+" · ":"")+elapsed;}
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
       function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
@@ -99,10 +102,7 @@
         const normalizedStatus=(data.status||"").toLowerCase();
         status.textContent=data.status||"Status unavailable";
         status.dataset.state=normalizedStatus==="offline"?"offline":(normalizedStatus.includes("orbit")?"orbit":(normalizedStatus.startsWith("online")?"online":(normalizedStatus.includes("activity")?"activity":"unknown")));
-        const activity=byId("radActivity");
-        const inActivity=normalizedStatus==="in an activity";
-        activity.hidden=!data.activityName&&!inActivity;
-        activity.textContent=data.activityName?"Activity: "+data.activityName:(inActivity?"Activity details unavailable from Bungie.":"");
+        renderActivity(data);
         const party=byId("radParty");party.replaceChildren();
         const partyNames=Array.isArray(data.partyMembers)?data.partyMembers:[];
         partyNames.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
@@ -136,7 +136,7 @@
       async function refreshInBackground(){
         if(backgroundRefreshRunning||document.visibilityState!=="visible"||!latestData)return;
         backgroundRefreshRunning=true;
-        try{const response=await fetch(apiUrl(true,true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();if(!data.presenceOnly)return;latestData={...latestData,...data};const normalized=String(data.status||"").toLowerCase(),status=byId("radStatus");status.textContent=data.status||"Status unavailable";status.dataset.state=normalized==="offline"?"offline":(normalized.includes("orbit")?"orbit":(normalized.startsWith("online")?"online":(normalized.includes("activity")?"activity":"unknown")));const activity=byId("radActivity"),inActivity=normalized==="in an activity";activity.hidden=!data.activityName&&!inActivity;activity.textContent=data.activityName?"Activity: "+data.activityName:(inActivity?"Activity details unavailable from Bungie.":"");const party=byId("radParty");party.replaceChildren();(Array.isArray(data.partyMembers)?data.partyMembers:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});byId("radPartyEmpty").textContent=party.children.length?"":"its empty";byId("radPartyEmpty").hidden=party.children.length>0;byId("radUpdated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleString():"";}
+        try{const response=await fetch(apiUrl(true,true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();if(!data.presenceOnly)return;latestData={...latestData,...data};const normalized=String(data.status||"").toLowerCase(),status=byId("radStatus");status.textContent=data.status||"Status unavailable";status.dataset.state=normalized==="offline"?"offline":(normalized.includes("orbit")?"orbit":(normalized.startsWith("online")?"online":(normalized.includes("activity")?"activity":"unknown")));renderActivity(latestData);const party=byId("radParty");party.replaceChildren();(Array.isArray(data.partyMembers)?data.partyMembers:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});byId("radPartyEmpty").textContent=party.children.length?"":"its empty";byId("radPartyEmpty").hidden=party.children.length>0;byId("radUpdated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleString():"";}
         catch(ignored){}
         finally{backgroundRefreshRunning=false;}
       }
@@ -146,4 +146,5 @@
       ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",()=>{if(byId("radSpanSelect").value!=="custom")return;if(!hasCustomDates()){renderTable();return;}if(!historyMatches("custom")){load();return;}renderTable();}));
       load();
       window.setInterval(refreshInBackground,30000);
+      window.setInterval(()=>{if(latestData)renderActivity(latestData);},1000);
     })();

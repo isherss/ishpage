@@ -276,6 +276,10 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             ];
         }
     }
+    $activityStartedAt = trim((string) ($activeCharacter['started'] ?? ''));
+    if ($activityStartedAt === '' && $transitoryActivityStart !== false) {
+        $activityStartedAt = gmdate(DATE_ATOM, $transitoryActivityStart);
+    }
 
     // No current activity does not prove the player is in orbit: Bungie's
     // transitory profile data may omit the offline flag or be stale.
@@ -300,7 +304,11 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $partyMemberIds = [];
     foreach (($transitory['partyMembers'] ?? []) as $partyMember) {
         if (!is_array($partyMember)) continue;
-        $name = trim((string) ($partyMember['displayName'] ?? ''));
+        $globalName = trim((string) ($partyMember['bungieGlobalDisplayName'] ?? ''));
+        $globalCode = $partyMember['bungieGlobalDisplayNameCode'] ?? null;
+        $name = $globalName !== '' && is_numeric($globalCode)
+            ? $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT)
+            : trim((string) ($partyMember['displayName'] ?? ''));
         $partyMembershipId = trim((string) ($partyMember['membershipId'] ?? ''));
         if ($partyMembershipId !== '' && $partyMembershipId === $membershipId) continue;
         if ($name === '' && $partyMembershipId === '') continue;
@@ -343,6 +351,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
             'status' => $status,
             'activityName' => $activityName,
+            'activityStartedAt' => $activityStartedAt,
             'partyMembers' => $partyNames,
             'updatedAt' => gmdate(DATE_ATOM),
         ];
@@ -613,6 +622,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
+        'activityStartedAt' => $activityStartedAt,
         'recentActivity' => $recentActivity,
         'recentActivityError' => $recentActivityError,
         'partyMembers' => $partyNames,
