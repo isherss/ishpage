@@ -252,6 +252,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $definitionsCachePath = $privateCacheDir . '/ishradbot-definitions.json';
     $activityDefinitionCache = radbotLoadDefinitionCache($definitionsCachePath);
     $activeCharacter = null;
+    $joinability = $transitory['joinability'] ?? [];
+    $closedReasons = is_array($joinability) ? (int) ($joinability['closedReasons'] ?? 0) : 0;
+    $isOffline = ($closedReasons & 32768) !== 0;
     $transitoryActivity = $transitory['currentActivity'] ?? null;
     $transitoryActivityStart = is_array($transitoryActivity) ? strtotime((string) ($transitoryActivity['startTime'] ?? '')) : false;
     $transitoryActivityEnd = is_array($transitoryActivity) ? trim((string) ($transitoryActivity['endTime'] ?? '')) : '';
@@ -268,9 +271,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
-    $status = 'In orbit';
+    $status = $isOffline ? 'Offline' : 'In orbit';
     $activityName = '';
-    if ($activeCharacter !== null) {
+    if (!$isOffline && $activeCharacter !== null) {
         $status = 'In an activity';
         try {
             $activityDefinition = radbotActivityDefinition($activeCharacter['hash'], $apiKey, $activityDefinitionCache);
@@ -278,7 +281,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         } catch (Throwable $ignored) {
             $activityName = '';
         }
-    } elseif (!is_array($characters) || count($characters) === 0) {
+    } elseif (!$isOffline && (!is_array($characters) || count($characters) === 0)) {
         $status = 'Status unavailable';
     }
 
@@ -579,7 +582,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 14,
+        'schemaVersion' => 15,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -616,9 +619,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after switching historical API requests to Bungie's
-// HTTPS stats host.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 14) radbotReply(200, $cached);
+// Force one refresh after adding the offline signal to Guardian status.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 15) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
