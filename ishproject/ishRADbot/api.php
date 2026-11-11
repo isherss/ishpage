@@ -473,7 +473,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     // For the site's default guardian, use the known newest PGCR as a fallback
     // when the history and RaidHub lookups did not select a newer instance.
     if (strcasecmp($requestedName, ISHRADBOT_NAME) === 0 && $requestedCode === ISHRADBOT_CODE) {
-        $latestRaidCandidate = ['instanceId' => '17273849241', 'timestamp' => 0, 'durationSeconds' => 0];
+        if ((string) ($latestRaidCandidate['instanceId'] ?? '') !== '17273849241') {
+            $latestRaidCandidate = ['instanceId' => '17273849241', 'timestamp' => 0, 'durationSeconds' => 0];
+        }
     }
 
     if ($latestRaidCandidate !== null) {

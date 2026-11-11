@@ -208,12 +208,11 @@
         const recent=data.recentActivity, recentPlayers=byId("radRecentPlayers");recentPlayers.replaceChildren();
         if(recent&&recent.name){
           byId("radRecentName").textContent=recent.name;byId("radRecentName").hidden=false;
-          const started=recent.startedAt?new Date(recent.startedAt).toLocaleString():"Start time unavailable",completed=recent.completedAt?new Date(recent.completedAt).toLocaleString():"End time unavailable";
-          byId("radRecentMeta").textContent="Started "+started+" · Ended "+completed+" · "+durationLabel(Number(recent.durationSeconds));byId("radRecentMeta").hidden=false;
+          byId("radRecentMeta").textContent=durationLabel(Number(recent.durationSeconds));byId("radRecentMeta").hidden=false;
           (Array.isArray(recent.players)?recent.players:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;recentPlayers.appendChild(item);});
           recentPlayers.hidden=recentPlayers.children.length===0;byId("radRecentEmpty").textContent=recentPlayers.children.length?"":"Guardian names were not included in this raid report.";byId("radRecentEmpty").hidden=recentPlayers.children.length>0;
         }else{
-          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No ended raid activity with start, end, and duration details was returned.";byId("radRecentEmpty").hidden=false;
+          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No recent raid report details were returned.";byId("radRecentEmpty").hidden=false;
         }
         raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
         const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();const allOption=document.createElement("option");allOption.value="__all__";allOption.textContent="All raids";raidSelect.appendChild(allOption);raidNames.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(previous==="__all__"||raidNames.includes(previous))raidSelect.value=previous;else raidSelect.value="__all__";
