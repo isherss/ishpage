@@ -230,18 +230,13 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         throw new RuntimeException('Could not find ' . $requestedName . '#' . str_pad((string) $requestedCode, 4, '0', STR_PAD_LEFT) . '. Check the Bungie name and code.');
     }
     $member = null;
-    $fallbackMember = null;
     foreach ($search as $candidate) {
         if (!is_array($candidate)) continue;
         if (isset($candidate['bungieGlobalDisplayName']) && strcasecmp((string) $candidate['bungieGlobalDisplayName'], $requestedName) !== 0) continue;
         if (isset($candidate['bungieGlobalDisplayNameCode']) && (int) $candidate['bungieGlobalDisplayNameCode'] !== $requestedCode) continue;
-        if ($fallbackMember === null) $fallbackMember = $candidate;
-        if ((int) ($candidate['membershipType'] ?? 0) === ISHRADBOT_MEMBERSHIP_TYPE) {
-            $member = $candidate;
-            break;
-        }
+        $member = $candidate;
+        break;
     }
-    if ($member === null) $member = $fallbackMember;
     if (!is_array($member) || empty($member['membershipId'])) {
         throw new RuntimeException('Bungie found the name, but did not return a Destiny membership for it.');
     }
@@ -608,7 +603,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 23,
+        'schemaVersion' => 22,
         'allTimeHistory' => $allTime,
         'monthlyHistory' => $monthly,
         'customHistory' => $customRange !== null,
@@ -682,11 +677,9 @@ if (is_file($cachePath)) {
     $cached = json_decode((string) file_get_contents($cachePath), true);
     if (!is_array($cached)) $cached = null;
 }
-// Rebuild prior history caches after correcting platform membership selection.
-if (is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) < 23) $cached = null;
 // Serve stale data immediately. The page requests a refresh in the background.
 // Keep separate cached datasets for the default recent window and all-time history.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 23) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 22) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
