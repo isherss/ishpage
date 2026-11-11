@@ -492,7 +492,8 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             $latestRaidHistory = radbotBungie($latestRaidPath, $apiKey);
             foreach (($latestRaidHistory['activities'] ?? []) as $raidEntry) {
                 if (!is_array($raidEntry)) continue;
-                $timestamp = strtotime((string) ($raidEntry['period'] ?? ''));
+                $period = (string) ($raidEntry['period'] ?? $raidEntry[' period'] ?? '');
+                $timestamp = strtotime($period);
                 $raidInstanceId = trim((string) ($raidEntry['activityDetails']['instanceId'] ?? ''));
                 if ($timestamp === false || $raidInstanceId === '') continue;
                 if ($latestRaidCandidate === null || $timestamp > $latestRaidCandidate['timestamp']) {
@@ -687,7 +688,7 @@ $lockPath = $cachePath . '.lock';
 $lock = @fopen($lockPath, 'c');
 if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
     fclose($lock);
-    if (is_array($cached)) radbotReply(200, $cached);
+    if (!$forceRefresh && is_array($cached)) radbotReply(200, $cached);
     header('Retry-After: 5');
     radbotReply(503, ['error' => 'Bungie data is warming up. Please retry shortly.']);
 }
@@ -699,7 +700,7 @@ try {
     radbotReply(200, $data);
 } catch (Throwable $error) {
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
-    if (is_array($cached)) radbotReply(200, $cached);
+    if (!$forceRefresh && is_array($cached)) radbotReply(200, $cached);
     error_log('ishRADbot Bungie API error: ' . $error->getMessage());
-    radbotReply(502, ['error' => 'Could not retrieve ishRADbot data from Bungie. Check the server API key, player privacy, or Bungie API availability.']);
+    radbotReply(502, ['error' => ($forceRefresh ? 'Could not refresh ishRADbot data: ' : 'Could not retrieve ishRADbot data: ') . $error->getMessage()]);
 }
