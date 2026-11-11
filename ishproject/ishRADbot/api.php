@@ -325,6 +325,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $historyStart = $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
     $recentActivity = null;
+    $recentActivityError = '';
     $raidHashes = [];
     $latestRaidCandidate = null;
     $seenInstances = [];
@@ -503,16 +504,26 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                         elseif ($displayName !== '') $reportPlayers[$playerKey] = $displayName;
                         if ($reportMembershipId !== '' && $reportMembershipType > 0) $reportPlayerMembershipTypes[$reportMembershipId] = $reportMembershipType;
                     }
-                    $entryDuration = $entry['values']['activityDurationSeconds']['basic']['value'] ?? 0;
+                    // PGCR entries commonly expose per-player time as
+                    // timePlayedSeconds; activity history uses
+                    // activityDurationSeconds. Accept either representation.
+                    $entryDuration = $entry['values']['timePlayedSeconds']['basic']['value']
+                        ?? $entry['values']['activityDurationSeconds']['basic']['value']
+                        ?? 0;
                     if (is_numeric($entryDuration) && (int) round((float) $entryDuration) > 0) {
                         $entryDuration = (int) round((float) $entryDuration);
-                        if ($fallbackDurationSeconds === 0) $fallbackDurationSeconds = $entryDuration;
+                        $fallbackDurationSeconds = max($fallbackDurationSeconds, $entryDuration);
                         if ((string) ($player['membershipId'] ?? '') === $membershipId) $reportDurationSeconds = $entryDuration;
                     }
                 }
                 if (count($reportPlayerMembershipTypes) > 0) {
-                    $resolvedReportNames = radbotResolveBungiePlayerNames($reportPlayerMembershipTypes, $apiKey, $privateCacheDir . '/ishradbot-player-names.json');
-                    foreach ($resolvedReportNames as $reportMembershipId => $reportName) $reportPlayers[$reportMembershipId] = $reportName;
+                    try {
+                        $resolvedReportNames = radbotResolveBungiePlayerNames($reportPlayerMembershipTypes, $apiKey, $privateCacheDir . '/ishradbot-player-names.json');
+                        foreach ($resolvedReportNames as $reportMembershipId => $reportName) $reportPlayers[$reportMembershipId] = $reportName;
+                    } catch (Throwable $ignored) {
+                        // Keep names already present in the PGCR if name
+                        // resolution is unavailable.
+                    }
                 }
                 $durationSeconds = $reportDurationSeconds > 0
                     ? $reportDurationSeconds
@@ -538,10 +549,12 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     'players' => array_values(array_unique($reportPlayers)),
                 ];
             } catch (Throwable $error) {
+                $recentActivityError = $error->getMessage();
                 $historyWarnings[] = $error->getMessage();
                 // RaidHub's history can still identify the PGCR even when
                 // Bungie's detailed carnage-report endpoint is unavailable.
                 foreach ($raidEvents as $raidEvent) {
+                    if ($recentActivity !== null) break;
                     if ((string) ($raidEvent['instanceId'] ?? '') !== $instanceId) continue;
                     $eventTimestamp = (int) ($raidEvent['timestamp'] ?? 0);
                     $recentActivity = [
@@ -560,11 +573,12 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 10,
+        'schemaVersion' => 11,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
         'recentActivity' => $recentActivity,
+        'recentActivityError' => $recentActivityError,
         'partyMembers' => $partyNames,
         'raidEvents' => $raidEvents,
         'updatedAt' => gmdate(DATE_ATOM),
@@ -596,8 +610,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after the recent card gained an instance metadata fallback.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 10) radbotReply(200, $cached);
+// Force one refresh after PGCR parsing was expanded to preserve player times.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 11) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
