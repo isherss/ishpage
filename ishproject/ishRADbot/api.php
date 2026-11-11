@@ -34,6 +34,115 @@ function radbotApiKey(): string
     return '';
 }
 
+function radbotRaidHubApiKey(): string
+{
+    $environmentKey = getenv('RAIDHUB_API_KEY');
+    if (is_string($environmentKey) && trim($environmentKey) !== '') return trim($environmentKey);
+
+    $privateConfigPath = dirname(__DIR__, 2) . '/rngmine/private/raidhub.php';
+    if (is_file($privateConfigPath)) {
+        $privateConfig = require $privateConfigPath;
+        if (is_array($privateConfig) && is_string($privateConfig['apiKey'] ?? null)) return trim($privateConfig['apiKey']);
+    }
+    return '';
+}
+
+function radbotRaidHub(string $path, string $apiKey, ?array $body = null): array
+{
+    if (!function_exists('curl_init')) throw new RuntimeException('The site PHP setup needs the cURL extension enabled for RaidHub API requests.');
+    $handle = curl_init('https://api.raidhub.io' . $path);
+    if ($handle === false) throw new RuntimeException('Could not start the RaidHub API request.');
+    $headers = ['x-api-key: ' . $apiKey, 'Accept: application/json'];
+    $options = [CURLOPT_RETURNTRANSFER => true, CURLOPT_FOLLOWLOCATION => false, CURLOPT_CONNECTTIMEOUT => 5, CURLOPT_TIMEOUT => 10, CURLOPT_HTTPHEADER => $headers, CURLOPT_USERAGENT => 'ishRADbot/1.0'];
+    if ($body !== null) {
+        $jsonBody = json_encode($body);
+        if (!is_string($jsonBody)) { curl_close($handle); throw new RuntimeException('Could not encode the RaidHub API request.'); }
+        $options[CURLOPT_POST] = true;
+        $options[CURLOPT_POSTFIELDS] = $jsonBody;
+        $options[CURLOPT_HTTPHEADER][] = 'Content-Type: application/json';
+    }
+    curl_setopt_array($handle, $options);
+    $responseText = curl_exec($handle);
+    $curlError = curl_error($handle);
+    $httpStatus = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+    curl_close($handle);
+    if (!is_string($responseText)) throw new RuntimeException('RaidHub API request failed: ' . ($curlError ?: 'no response received'));
+    $decoded = json_decode($responseText, true);
+    if (!is_array($decoded) || $httpStatus < 200 || $httpStatus >= 300 || empty($decoded['success'])) {
+        throw new RuntimeException(is_array($decoded) ? (string) ($decoded['message'] ?? 'RaidHub API request was rejected.') : 'RaidHub returned an unreadable response.');
+    }
+    $response = $decoded['response'] ?? [];
+    return is_array($response) ? $response : [];
+}
+
+function radbotResolveBungiePlayerNames(array $membershipIds, string $apiKey, string $cachePath): array
+{
+    $cache = is_file($cachePath) ? json_decode((string) file_get_contents($cachePath), true) : [];
+    if (!is_array($cache)) $cache = [];
+    $now = time();
+    $resolved = [];
+    $pending = [];
+    foreach (array_unique($membershipIds) as $membershipId) {
+        $membershipId = trim((string) $membershipId);
+        if ($membershipId === '') continue;
+        $cached = $cache[$membershipId] ?? null;
+        if (is_array($cached) && (int) ($cached['expires'] ?? 0) > $now && trim((string) ($cached['label'] ?? '')) !== '') {
+            $resolved[$membershipId] = (string) $cached['label'];
+        } else {
+            $pending[$membershipId] = null;
+        }
+    }
+    if (count($pending) === 0 || !function_exists('curl_multi_init') || !function_exists('curl_init')) return $resolved;
+
+    $multi = curl_multi_init();
+    $handles = [];
+    foreach (array_keys($pending) as $membershipId) {
+        $url = 'https://www.bungie.net/Platform/User/GetMembershipsById/' . rawurlencode($membershipId) . '/' . ISHRADBOT_MEMBERSHIP_TYPE . '/';
+        $handle = curl_init($url);
+        if ($handle === false) continue;
+        curl_setopt_array($handle, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => false,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 10,
+            CURLOPT_HTTPHEADER => ['X-API-Key: ' . $apiKey, 'Accept: application/json'],
+            CURLOPT_USERAGENT => 'ishRADbot/1.0',
+        ]);
+        curl_multi_add_handle($multi, $handle);
+        $handles[$membershipId] = $handle;
+    }
+    $active = null;
+    do {
+        $multiStatus = curl_multi_exec($multi, $active);
+        if ($active && $multiStatus === CURLM_OK) {
+            $selected = curl_multi_select($multi, 1.0);
+            if ($selected === -1) usleep(10000);
+        }
+    } while ($active && $multiStatus === CURLM_OK);
+
+    foreach ($handles as $membershipId => $handle) {
+        $raw = curl_multi_getcontent($handle);
+        $data = is_string($raw) ? json_decode($raw, true) : null;
+        if (is_array($data) && (int) ($data['ErrorCode'] ?? 0) === 1) {
+            foreach (($data['Response']['destinyMemberships'] ?? []) as $candidate) {
+                if (!is_array($candidate) || (string) ($candidate['membershipId'] ?? '') !== (string) $membershipId) continue;
+                $name = trim((string) ($candidate['bungieGlobalDisplayName'] ?? ''));
+                $code = $candidate['bungieGlobalDisplayNameCode'] ?? null;
+                if ($name === '') break;
+                $label = is_numeric($code) ? $name . '#' . str_pad((string) $code, 4, '0', STR_PAD_LEFT) : $name;
+                $resolved[$membershipId] = $label;
+                $cache[$membershipId] = ['label' => $label, 'expires' => $now + 604800];
+                break;
+            }
+        }
+        curl_multi_remove_handle($multi, $handle);
+        curl_close($handle);
+    }
+    curl_multi_close($multi);
+    if (count($resolved) > 0) @file_put_contents($cachePath, json_encode($cache, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
+    return $resolved;
+}
+
 function radbotBungie(string $path, string $apiKey, ?array $body = null): array
 {
     if (!function_exists('curl_init')) {
@@ -161,6 +270,7 @@ function radbotBuildData(string $apiKey): array
     }
 
     $partyNames = [];
+    $partyMemberIds = [];
     foreach (($transitory['partyMembers'] ?? []) as $partyMember) {
         if (!is_array($partyMember)) continue;
         $name = trim((string) ($partyMember['displayName'] ?? ''));
@@ -169,6 +279,31 @@ function radbotBuildData(string $apiKey): array
         if ($name === '' && $partyMembershipId === '') continue;
         $key = $partyMembershipId !== '' ? $partyMembershipId : mb_strtolower($name);
         $partyNames[$key] = $name !== '' ? $name : 'Guardian ' . substr($partyMembershipId, -6);
+        if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = true;
+    }
+    $raidHubApiKey = radbotRaidHubApiKey();
+    if ($raidHubApiKey !== '' && count($partyMemberIds) > 0) {
+        try {
+            $playerData = radbotRaidHub('/player/basic/batch', $raidHubApiKey, ['membershipIds' => array_slice(array_keys($partyMemberIds), 0, 12)]);
+            foreach (($playerData['players'] ?? []) as $player) {
+                if (!is_array($player)) continue;
+                $playerId = trim((string) ($player['membershipId'] ?? ''));
+                $globalName = trim((string) ($player['bungieGlobalDisplayName'] ?? ''));
+                $globalCode = $player['bungieGlobalDisplayNameCode'] ?? null;
+                if ($playerId === '' || $globalName === '' || !is_numeric($globalCode)) continue;
+                $partyNames[$playerId] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
+            }
+        } catch (Throwable $ignored) {
+            // Preserve Bungie's last-known party name if RaidHub lookup fails.
+        }
+    }
+    $unresolvedIds = [];
+    foreach (array_keys($partyMemberIds) as $partyMembershipId) {
+        if (!isset($partyNames[$partyMembershipId]) || strpos($partyNames[$partyMembershipId], '#') === false) $unresolvedIds[] = $partyMembershipId;
+    }
+    if (count($unresolvedIds) > 0) {
+        $bungieNames = radbotResolveBungiePlayerNames($unresolvedIds, $apiKey, $privateCacheDir . '/ishradbot-player-names.json');
+        foreach ($bungieNames as $partyMembershipId => $playerName) $partyNames[$partyMembershipId] = $playerName;
     }
     $partyNames = array_values($partyNames);
     natcasesort($partyNames);
@@ -182,10 +317,80 @@ function radbotBuildData(string $apiKey): array
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
     $historyStart = $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
+    $recentActivity = null;
     $raidHashes = [];
     $seenInstances = [];
     $historyWarnings = [];
-    foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
+    $raidHubHistoryLoaded = false;
+    if ($raidHubApiKey !== '') {
+        try {
+            $manifestPath = $privateCacheDir . '/ishradbot-raidhub-manifest.json';
+            $manifestCache = null;
+            if (is_file($manifestPath) && (time() - (int) filemtime($manifestPath)) < 86400) {
+                $manifestCache = json_decode((string) file_get_contents($manifestPath), true);
+            }
+            if (!is_array($manifestCache) || !is_array($manifestCache['activityDefinitions'] ?? null)) {
+                $manifestCache = radbotRaidHub('/manifest', $raidHubApiKey);
+                @file_put_contents($manifestPath, json_encode($manifestCache, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
+            }
+            $raidNameById = [];
+            $activityNameById = [];
+            foreach (($manifestCache['activityDefinitions'] ?? []) as $definition) {
+                if (!is_array($definition)) continue;
+                $activityId = (string) ($definition['id'] ?? '');
+                $activityName = trim((string) ($definition['name'] ?? ''));
+                if ($activityId !== '' && $activityName !== '') $activityNameById[$activityId] = $activityName;
+                if ($activityId !== '' && $activityName !== '' && !empty($definition['isRaid'])) $raidNameById[$activityId] = $activityName;
+            }
+            $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query([
+                'completed' => 'true',
+                'minDate' => gmdate(DATE_ATOM, $historyStart),
+                'maxDate' => gmdate(DATE_ATOM, $now->getTimestamp()),
+            ], '', '&', PHP_QUERY_RFC3986);
+            $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
+            $instances = $instanceResponse['instances'] ?? $instanceResponse;
+            if (!is_array($instances)) throw new RuntimeException('RaidHub returned an invalid instance list.');
+            $mostRecentTimestamp = 0;
+            foreach ($instances as $instance) {
+                if (!is_array($instance) || (isset($instance['completed']) && !$instance['completed'])) continue;
+                $timestamp = strtotime((string) ($instance['dateCompleted'] ?? ''));
+                if ($timestamp === false || $timestamp < $historyStart) continue;
+                $instanceId = (string) ($instance['instanceId'] ?? '');
+                $activityId = (string) ($instance['activityId'] ?? '');
+                $activityName = trim((string) ($instance['metadata']['activityName'] ?? '')) ?: ($activityNameById[$activityId] ?? '');
+                if ($timestamp > $mostRecentTimestamp && $activityName !== '') {
+                    $activityPlayers = [];
+                    foreach (($instance['players'] ?? []) as $activityPlayer) {
+                        if (!is_array($activityPlayer)) continue;
+                        $playerName = trim((string) ($activityPlayer['bungieGlobalDisplayName'] ?? ''));
+                        $playerCode = $activityPlayer['bungieGlobalDisplayNameCode'] ?? null;
+                        if ($playerName !== '' && is_numeric($playerCode)) $activityPlayers[] = $playerName . '#' . str_pad((string) $playerCode, 4, '0', STR_PAD_LEFT);
+                        elseif (trim((string) ($activityPlayer['displayName'] ?? '')) !== '') $activityPlayers[] = trim((string) $activityPlayer['displayName']);
+                    }
+                    natcasesort($activityPlayers);
+                    $recentActivity = [
+                        'name' => $activityName,
+                        'startedAt' => (string) ($instance['dateStarted'] ?? ''),
+                        'completedAt' => (string) ($instance['dateCompleted'] ?? ''),
+                        'durationSeconds' => (int) ($instance['duration'] ?? 0),
+                        'players' => array_values($activityPlayers),
+                    ];
+                    $mostRecentTimestamp = $timestamp;
+                }
+                $raidName = $raidNameById[$activityId] ?? '';
+                if ($raidName === '') continue;
+                if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
+                if ($instanceId !== '') $seenInstances[$instanceId] = true;
+                $raidEvents[] = ['raid' => $raidName, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
+            }
+            $raidHubHistoryLoaded = true;
+        } catch (Throwable $error) {
+            $historyWarnings[] = 'RaidHub history lookup failed: ' . $error->getMessage();
+        }
+    }
+
+    if (!$raidHubHistoryLoaded) {
+      foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
         while ($page < 4) {
             $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
@@ -223,32 +428,80 @@ function radbotBuildData(string $apiKey): array
             if (count($activities) < 250) break;
             $page++;
         }
+        }
     }
 
-    // Resolve each unique raid hash only once after collecting history.
-    $raidNames = [];
-    foreach (array_keys($raidHashes) as $definitionHash) {
-        try {
-            $definition = radbotActivityDefinition((int) $definitionHash, $apiKey, $activityDefinitionCache);
-        } catch (Throwable $ignored) {
-            $definition = [];
+    if (!$raidHubHistoryLoaded) {
+        // Resolve each unique raid hash only once after collecting history.
+        $raidNames = [];
+        foreach (array_keys($raidHashes) as $definitionHash) {
+            try {
+                $definition = radbotActivityDefinition((int) $definitionHash, $apiKey, $activityDefinitionCache);
+            } catch (Throwable $ignored) {
+                $definition = [];
+            }
+            $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
         }
-        $raidNames[$definitionHash] = trim((string) ($definition['displayProperties']['name'] ?? '')) ?: 'Raid ' . $definitionHash;
+        radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
+        foreach ($raidEvents as &$raidEvent) {
+            $raidEvent['raid'] = $raidNames[$raidEvent['raidHash']] ?? 'Raid ' . $raidEvent['raidHash'];
+            unset($raidEvent['raidHash']);
+        }
+        unset($raidEvent);
     }
-    radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
-    foreach ($raidEvents as &$raidEvent) {
-        $raidEvent['raid'] = $raidNames[$raidEvent['raidHash']] ?? 'Raid ' . $raidEvent['raidHash'];
-        unset($raidEvent['raidHash']);
-    }
-    unset($raidEvent);
 
     usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
+
+    if ($recentActivity === null && count($raidEvents) > 0) {
+        // Bungie's activity history includes the instance ID and timestamp;
+        // fetch one PGCR for the newest raid to populate the recent activity panel.
+        $latestRaid = $raidEvents[count($raidEvents) - 1];
+        $instanceId = trim((string) ($latestRaid['instanceId'] ?? ''));
+        if ($instanceId !== '') {
+            try {
+                $report = radbotBungie('/Destiny2/Stats/PostGameCarnageReport/' . rawurlencode($instanceId) . '/', $apiKey);
+                $entries = $report['entries'] ?? [];
+                $activityDetails = $report['activityDetails'] ?? [];
+                $reportPlayers = [];
+                $durationSeconds = 0;
+                foreach (is_array($entries) ? $entries : [] as $entry) {
+                    if (!is_array($entry)) continue;
+                    $player = $entry['player']['destinyUserInfo'] ?? [];
+                    if (is_array($player)) {
+                        $globalName = trim((string) ($player['bungieGlobalDisplayName'] ?? ''));
+                        $globalCode = $player['bungieGlobalDisplayNameCode'] ?? null;
+                        $displayName = trim((string) ($player['displayName'] ?? ''));
+                        if ($globalName !== '' && is_numeric($globalCode)) $reportPlayers[] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
+                        elseif ($displayName !== '') $reportPlayers[] = $displayName;
+                    }
+                    $entryDuration = $entry['values']['activityDurationSeconds']['basic']['value'] ?? 0;
+                    if (is_numeric($entryDuration)) $durationSeconds = max($durationSeconds, (int) round((float) $entryDuration));
+                }
+                $period = trim((string) ($report['period'] ?? ''));
+                $startedAt = $period !== '' ? $period : gmdate(DATE_ATOM, (int) $latestRaid['timestamp']);
+                $completedAt = $durationSeconds > 0
+                    ? gmdate(DATE_ATOM, (strtotime($startedAt) ?: (int) $latestRaid['timestamp']) + $durationSeconds)
+                    : gmdate(DATE_ATOM, (int) $latestRaid['timestamp']);
+                natcasesort($reportPlayers);
+                $recentActivity = [
+                    'name' => (string) ($latestRaid['raid'] ?? 'Raid'),
+                    'startedAt' => $startedAt,
+                    'completedAt' => $completedAt,
+                    'durationSeconds' => $durationSeconds,
+                    'players' => array_values(array_unique($reportPlayers)),
+                ];
+            } catch (Throwable $error) {
+                $historyWarnings[] = $error->getMessage();
+            }
+        }
+    }
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? ISHRADBOT_NAME)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? ISHRADBOT_CODE), 4, '0', STR_PAD_LEFT);
     return [
         'player' => ['displayName' => $playerName, 'membershipType' => ISHRADBOT_MEMBERSHIP_TYPE],
         'status' => $status,
         'activityName' => $activityName,
+        'recentActivity' => $recentActivity,
         'partyMembers' => $partyNames,
         'raidEvents' => $raidEvents,
         'updatedAt' => gmdate(DATE_ATOM),

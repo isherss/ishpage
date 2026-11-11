@@ -1,4 +1,9 @@
 config.php
 accounts.php
 bungie.php
+raidhub.php
 ishradbot-cache.json
+ishradbot-cache.json.lock
+ishradbot-definitions.json
+ishradbot-raidhub-manifest.json
+ishradbot-player-names.json
