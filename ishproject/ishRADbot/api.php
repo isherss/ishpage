@@ -149,7 +149,9 @@ function radbotBungie(string $path, string $apiKey, ?array $body = null): array
     if (!function_exists('curl_init')) {
         throw new RuntimeException('The site PHP setup needs the cURL extension enabled for Bungie API requests.');
     }
-    $handle = curl_init('https://www.bungie.net/Platform' . $path);
+    // Bungie's stats host serves historical PGCR routes directly over HTTPS;
+    // the www host redirects those requests to HTTP, which the client blocks.
+    $handle = curl_init('https://stats.bungie.net/Platform' . $path);
     if ($handle === false) {
         throw new RuntimeException('Could not start the Bungie API request.');
     }
@@ -577,7 +579,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 13,
+        'schemaVersion' => 14,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -614,8 +616,9 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after enabling Bungie's HTTPS PGCR redirects.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 13) radbotReply(200, $cached);
+// Force one refresh after switching historical API requests to Bungie's
+// HTTPS stats host.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 14) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
