@@ -464,18 +464,22 @@ function radbotBuildData(string $apiKey): array
             try {
                 $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
                     . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
-                    . http_build_query(['count' => 1, 'mode' => 0, 'page' => 0]);
+                    . http_build_query(['count' => 25, 'mode' => 0, 'page' => 0]);
                 $latestHistory = radbotBungie($historyPath, $apiKey);
-                $latestEntry = $latestHistory['activities'][0] ?? null;
-                if (!is_array($latestEntry)) continue;
-                $completion = $latestEntry['values']['completed']['basic']['value'] ?? null;
-                $period = (string) ($latestEntry['period'] ?? '');
-                $timestamp = strtotime($period);
-                $details = $latestEntry['activityDetails'] ?? [];
-                $candidateId = trim((string) ($details['instanceId'] ?? ''));
-                if (!is_numeric($completion) || (float) $completion < 1 || $timestamp === false || $candidateId === '') continue;
-                if ($latestActivityCandidate === null || $timestamp > $latestActivityCandidate['timestamp']) {
-                    $latestActivityCandidate = ['instanceId' => $candidateId, 'timestamp' => $timestamp];
+                $latestEntries = $latestHistory['activities'] ?? [];
+                foreach (is_array($latestEntries) ? $latestEntries : [] as $latestEntry) {
+                    if (!is_array($latestEntry)) continue;
+                    $completion = $latestEntry['values']['completed']['basic']['value'] ?? null;
+                    $period = (string) ($latestEntry['period'] ?? '');
+                    $timestamp = strtotime($period);
+                    $details = $latestEntry['activityDetails'] ?? [];
+                    $candidateId = trim((string) ($details['instanceId'] ?? ''));
+                    if (!is_numeric($completion) || (float) $completion < 1 || $timestamp === false || $candidateId === '') continue;
+                    if ($latestActivityCandidate === null || $timestamp > $latestActivityCandidate['timestamp']) {
+                        $latestActivityCandidate = ['instanceId' => $candidateId, 'timestamp' => $timestamp];
+                    }
+                    // History is returned newest first; one completed entry per character is enough.
+                    break;
                 }
             } catch (Throwable $error) {
                 $historyWarnings[] = $error->getMessage();
@@ -535,7 +539,7 @@ function radbotBuildData(string $apiKey): array
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? ISHRADBOT_NAME)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? ISHRADBOT_CODE), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 2,
+        'schemaVersion' => 3,
         'player' => ['displayName' => $playerName, 'membershipType' => ISHRADBOT_MEMBERSHIP_TYPE],
         'status' => $status,
         'activityName' => $activityName,
@@ -562,7 +566,7 @@ if (is_file($cachePath)) {
 // Serve stale data immediately. The page requests a refresh in the background.
 // Older cached payloads did not include an all-modes recent activity lookup.
 // Force one refresh after this version is deployed so the panel can populate.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 2) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 3) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
