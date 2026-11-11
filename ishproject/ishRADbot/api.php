@@ -440,8 +440,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
 
-    // Independently fetch the newest completed raid for the recent-activity
-    // panel. This query is not limited by the chart's seven-day window.
+    // Independently fetch the newest raid that ended for the recent-activity
+    // panel. Bungie's history includes both clears and ended attempts; a PGCR
+    // instance ID is the reliable link to the activity report.
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         try {
             $latestRaidPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
@@ -450,10 +451,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             $latestRaidHistory = radbotBungie($latestRaidPath, $apiKey);
             foreach (($latestRaidHistory['activities'] ?? []) as $raidEntry) {
                 if (!is_array($raidEntry)) continue;
-                $completion = $raidEntry['values']['completed']['basic']['value'] ?? null;
                 $timestamp = strtotime((string) ($raidEntry['period'] ?? ''));
                 $raidInstanceId = trim((string) ($raidEntry['activityDetails']['instanceId'] ?? ''));
-                if (!is_numeric($completion) || (float) $completion < 1 || $timestamp === false || $raidInstanceId === '') continue;
+                if ($timestamp === false || $raidInstanceId === '') continue;
                 if ($latestRaidCandidate === null || $timestamp > $latestRaidCandidate['timestamp']) {
                     $historyDuration = $raidEntry['values']['activityDurationSeconds']['basic']['value'] ?? 0;
                     $latestRaidCandidate = [
@@ -521,7 +521,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     try { $activityDefinition = radbotActivityDefinition($activityHash, $apiKey, $activityDefinitionCache); }
                     catch (Throwable $ignored) { $activityDefinition = []; }
                 }
-                if ($durationSeconds <= 0) throw new RuntimeException('The completed raid report did not include an activity duration.');
+                if ($durationSeconds <= 0) throw new RuntimeException('The raid report did not include an activity duration.');
                 $recentActivity = [
                     'name' => trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Completed activity',
                     'startedAt' => $startedAt,
@@ -538,7 +538,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 7,
+        'schemaVersion' => 8,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -574,9 +574,9 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Older cached payloads did not include an all-modes recent activity lookup.
-// Force one refresh after this version is deployed so the panel can populate.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 7) radbotReply(200, $cached);
+// Force one refresh after the recent raid lookup changes to include ended
+// attempts as well as clears.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 8) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.

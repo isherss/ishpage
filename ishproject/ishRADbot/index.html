@@ -104,7 +104,7 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRecentHeading">
-      <h2 id="radRecentHeading">Most Recent Completed Raid</h2>
+      <h2 id="radRecentHeading">Most Recent Raid Activity</h2>
       <p class="rad-recent-name" id="radRecentName" hidden></p>
       <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
       <ul class="rad-party" id="radRecentPlayers" hidden></ul>
@@ -213,7 +213,7 @@
           (Array.isArray(recent.players)?recent.players:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;recentPlayers.appendChild(item);});
           recentPlayers.hidden=recentPlayers.children.length===0;byId("radRecentEmpty").textContent=recentPlayers.children.length?"":"Guardian names were not included in this raid report.";byId("radRecentEmpty").hidden=recentPlayers.children.length>0;
         }else{
-          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No completed raid with start, end, and duration details was returned.";byId("radRecentEmpty").hidden=false;
+          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No ended raid activity with start, end, and duration details was returned.";byId("radRecentEmpty").hidden=false;
         }
         raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
         const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();const allOption=document.createElement("option");allOption.value="__all__";allOption.textContent="All raids";raidSelect.appendChild(allOption);raidNames.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(previous==="__all__"||raidNames.includes(previous))raidSelect.value=previous;else raidSelect.value="__all__";
