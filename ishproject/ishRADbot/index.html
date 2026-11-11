@@ -23,6 +23,7 @@
     .rad-status{display:inline-flex;align-items:center;gap:8px;color:#39ff78;font-size:12px}
     .rad-status:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
     .rad-status[data-state="orbit"]{color:#27F5F5}
+    .rad-status[data-state="unknown"]{color:var(--rad-muted)}
     .rad-activity{margin:10px 0 0;color:var(--rad-muted);font-size:11px;line-height:1.6}
     .rad-refresh{min-height:34px;padding:6px 10px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#46bf46;font:11px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
     .rad-refresh:hover{border-color:var(--rad-green);color:var(--rad-green)}
@@ -103,7 +104,7 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRecentHeading">
-      <h2 id="radRecentHeading">Most Recent Completed Activity</h2>
+      <h2 id="radRecentHeading">Most Recent Completed Raid</h2>
       <p class="rad-recent-name" id="radRecentName" hidden></p>
       <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
       <ul class="rad-party" id="radRecentPlayers" hidden></ul>
@@ -193,11 +194,12 @@
         latestData=data;
         byId("radPlayer").textContent=data.player?.displayName||"ish#7419";
         const status=byId("radStatus");
-        status.textContent=data.status||"Status unavailable";
-        status.dataset.state=(data.status||"").toLowerCase().includes("orbit")?"orbit":"activity";
+        const dataAge=data.updatedAt?Date.now()-Date.parse(data.updatedAt):Infinity,statusIsStale=!Number.isFinite(dataAge)||dataAge>300000;
+        status.textContent=statusIsStale?"Status may be outdated":(data.status||"Status unavailable");
+        status.dataset.state=statusIsStale?"unknown":((data.status||"").toLowerCase().includes("orbit")?"orbit":"activity");
         const activity=byId("radActivity");
         activity.hidden=!data.activityName;
-        activity.textContent=data.activityName?"Activity: "+data.activityName:"";
+        activity.textContent=data.activityName?(statusIsStale?"Last known activity: ":"Activity: ")+data.activityName:"";
         const party=byId("radParty");party.replaceChildren();
         const partyNames=Array.isArray(data.partyMembers)?data.partyMembers:[];
         partyNames.forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});
@@ -206,12 +208,12 @@
         const recent=data.recentActivity, recentPlayers=byId("radRecentPlayers");recentPlayers.replaceChildren();
         if(recent&&recent.name){
           byId("radRecentName").textContent=recent.name;byId("radRecentName").hidden=false;
-          const completed=recent.completedAt?new Date(recent.completedAt).toLocaleString():"Completion time unavailable";
-          byId("radRecentMeta").textContent="Completed "+completed+" · "+durationLabel(Number(recent.durationSeconds));byId("radRecentMeta").hidden=false;
+          const started=recent.startedAt?new Date(recent.startedAt).toLocaleString():"Start time unavailable",completed=recent.completedAt?new Date(recent.completedAt).toLocaleString():"End time unavailable";
+          byId("radRecentMeta").textContent="Started "+started+" · Ended "+completed+" · "+durationLabel(Number(recent.durationSeconds));byId("radRecentMeta").hidden=false;
           (Array.isArray(recent.players)?recent.players:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;recentPlayers.appendChild(item);});
-          recentPlayers.hidden=recentPlayers.children.length===0;byId("radRecentEmpty").hidden=true;
+          recentPlayers.hidden=recentPlayers.children.length===0;byId("radRecentEmpty").textContent=recentPlayers.children.length?"":"Guardian names were not included in this raid report.";byId("radRecentEmpty").hidden=recentPlayers.children.length>0;
         }else{
-          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No recent completed raid details were returned.";byId("radRecentEmpty").hidden=false;
+          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No completed raid with start, end, and duration details was returned.";byId("radRecentEmpty").hidden=false;
         }
         raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
         const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();const allOption=document.createElement("option");allOption.value="__all__";allOption.textContent="All raids";raidSelect.appendChild(allOption);raidNames.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(previous==="__all__"||raidNames.includes(previous))raidSelect.value=previous;else raidSelect.value="__all__";
@@ -230,7 +232,7 @@
       async function refreshInBackground(){
         if(backgroundRefreshRunning)return;
         const age=latestData?.updatedAt?Date.now()-Date.parse(latestData.updatedAt):Infinity;
-        if(age<900000)return;
+        if(age<300000)return;
         backgroundRefreshRunning=true;
         try{const response=await fetch(apiUrl(true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();render(data);}
         catch(ignored){}

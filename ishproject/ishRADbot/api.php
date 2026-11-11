@@ -246,7 +246,13 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $definitionsCachePath = $privateCacheDir . '/ishradbot-definitions.json';
     $activityDefinitionCache = radbotLoadDefinitionCache($definitionsCachePath);
     $activeCharacter = null;
-    foreach ($characterActivities as $characterId => $activityData) {
+    $transitoryActivity = $transitory['currentActivity'] ?? null;
+    $transitoryActivityStart = is_array($transitoryActivity) ? strtotime((string) ($transitoryActivity['startTime'] ?? '')) : false;
+    $transitoryActivityEnd = is_array($transitoryActivity) ? trim((string) ($transitoryActivity['endTime'] ?? '')) : '';
+    $hasCurrentActivitySignal = $transitoryActivityStart !== false
+        && $transitoryActivityStart <= time() + 60
+        && $transitoryActivityEnd === '';
+    foreach ($hasCurrentActivitySignal ? $characterActivities : [] as $characterId => $activityData) {
         if (!is_array($activityData) || (int) ($activityData['currentActivityHash'] ?? 0) === 0) continue;
         if ($activeCharacter === null || (string) ($activityData['dateActivityStarted'] ?? '') > (string) ($activeCharacter['started'] ?? '')) {
             $activeCharacter = [
@@ -320,7 +326,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $raidEvents = [];
     $recentActivity = null;
     $raidHashes = [];
-    $latestActivityCandidate = null;
+    $latestRaidCandidate = null;
     $seenInstances = [];
     $historyWarnings = [];
     $raidHubHistoryLoaded = false;
@@ -336,12 +342,10 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 @file_put_contents($manifestPath, json_encode($manifestCache, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
             }
             $raidNameById = [];
-            $activityNameById = [];
             foreach (($manifestCache['activityDefinitions'] ?? []) as $definition) {
                 if (!is_array($definition)) continue;
                 $activityId = (string) ($definition['id'] ?? '');
                 $activityName = trim((string) ($definition['name'] ?? ''));
-                if ($activityId !== '' && $activityName !== '') $activityNameById[$activityId] = $activityName;
                 if ($activityId !== '' && $activityName !== '' && !empty($definition['isRaid'])) $raidNameById[$activityId] = $activityName;
             }
             $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query([
@@ -352,35 +356,17 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
             $instances = $instanceResponse['instances'] ?? $instanceResponse;
             if (!is_array($instances)) throw new RuntimeException('RaidHub returned an invalid instance list.');
-            $mostRecentTimestamp = 0;
             foreach ($instances as $instance) {
                 if (!is_array($instance) || (isset($instance['completed']) && !$instance['completed'])) continue;
                 $timestamp = strtotime((string) ($instance['dateCompleted'] ?? ''));
                 if ($timestamp === false || $timestamp < $historyStart) continue;
                 $instanceId = (string) ($instance['instanceId'] ?? '');
                 $activityId = (string) ($instance['activityId'] ?? '');
-                $activityName = trim((string) ($instance['metadata']['activityName'] ?? '')) ?: ($activityNameById[$activityId] ?? '');
-                if ($timestamp > $mostRecentTimestamp && $activityName !== '') {
-                    $activityPlayers = [];
-                    foreach (($instance['players'] ?? []) as $activityPlayer) {
-                        if (!is_array($activityPlayer)) continue;
-                        $playerName = trim((string) ($activityPlayer['bungieGlobalDisplayName'] ?? ''));
-                        $playerCode = $activityPlayer['bungieGlobalDisplayNameCode'] ?? null;
-                        if ($playerName !== '' && is_numeric($playerCode)) $activityPlayers[] = $playerName . '#' . str_pad((string) $playerCode, 4, '0', STR_PAD_LEFT);
-                        elseif (trim((string) ($activityPlayer['displayName'] ?? '')) !== '') $activityPlayers[] = trim((string) $activityPlayer['displayName']);
-                    }
-                    natcasesort($activityPlayers);
-                    $recentActivity = [
-                        'name' => $activityName,
-                        'startedAt' => (string) ($instance['dateStarted'] ?? ''),
-                        'completedAt' => (string) ($instance['dateCompleted'] ?? ''),
-                        'durationSeconds' => (int) ($instance['duration'] ?? 0),
-                        'players' => array_values($activityPlayers),
-                    ];
-                    $mostRecentTimestamp = $timestamp;
-                }
                 $raidName = $raidNameById[$activityId] ?? '';
                 if ($raidName === '') continue;
+                if ($instanceId !== '' && ($latestRaidCandidate === null || $timestamp > $latestRaidCandidate['timestamp'])) {
+                    $latestRaidCandidate = ['instanceId' => $instanceId, 'timestamp' => $timestamp, 'durationSeconds' => (int) ($instance['duration'] ?? 0)];
+                }
                 if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
                 if ($instanceId !== '') $seenInstances[$instanceId] = true;
                 $raidEvents[] = ['raid' => $raidName, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
@@ -419,9 +405,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
                 $completion = $entry['values']['completed']['basic']['value'] ?? null;
                 if (!is_numeric($completion) || (float) $completion < 1) continue;
-                if ($instanceId !== '' && ($latestActivityCandidate === null || $timestamp > $latestActivityCandidate['timestamp'])) {
-                    $latestActivityCandidate = ['instanceId' => $instanceId, 'timestamp' => $timestamp];
-                }
                 $definitionHash = (int) ($activityDetails['directorActivityHash'] ?? 0);
                 if ($definitionHash === 0) $definitionHash = (int) ($activityDetails['referenceId'] ?? 0);
                 if ($definitionHash === 0) continue;
@@ -457,47 +440,46 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
 
-    {
-        // The chart history is raid-only. Query the latest completed activity
-        // separately so the recent panel can show any mode without expanding
-        // the chart's seven-day raid data.
-        foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
-            try {
-                $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
-                    . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
-                    . http_build_query(['count' => 25, 'mode' => 0, 'page' => 0]);
-                $latestHistory = radbotBungie($historyPath, $apiKey);
-                $latestEntries = $latestHistory['activities'] ?? [];
-                foreach (is_array($latestEntries) ? $latestEntries : [] as $latestEntry) {
-                    if (!is_array($latestEntry)) continue;
-                    $completion = $latestEntry['values']['completed']['basic']['value'] ?? null;
-                    $period = (string) ($latestEntry['period'] ?? '');
-                    $timestamp = strtotime($period);
-                    $details = $latestEntry['activityDetails'] ?? [];
-                    $candidateId = trim((string) ($details['instanceId'] ?? ''));
-                    if (!is_numeric($completion) || (float) $completion < 1 || $timestamp === false || $candidateId === '') continue;
-                    if ($latestActivityCandidate === null || $timestamp > $latestActivityCandidate['timestamp']) {
-                        $latestActivityCandidate = ['instanceId' => $candidateId, 'timestamp' => $timestamp];
-                    }
-                    // History is returned newest first; one completed entry per character is enough.
-                    break;
+    // Independently fetch the newest completed raid for the recent-activity
+    // panel. This query is not limited by the chart's seven-day window.
+    foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
+        try {
+            $latestRaidPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
+                . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
+                . http_build_query(['count' => 25, 'mode' => ISHRADBOT_RAID_MODE, 'page' => 0]);
+            $latestRaidHistory = radbotBungie($latestRaidPath, $apiKey);
+            foreach (($latestRaidHistory['activities'] ?? []) as $raidEntry) {
+                if (!is_array($raidEntry)) continue;
+                $completion = $raidEntry['values']['completed']['basic']['value'] ?? null;
+                $timestamp = strtotime((string) ($raidEntry['period'] ?? ''));
+                $raidInstanceId = trim((string) ($raidEntry['activityDetails']['instanceId'] ?? ''));
+                if (!is_numeric($completion) || (float) $completion < 1 || $timestamp === false || $raidInstanceId === '') continue;
+                if ($latestRaidCandidate === null || $timestamp > $latestRaidCandidate['timestamp']) {
+                    $historyDuration = $raidEntry['values']['activityDurationSeconds']['basic']['value'] ?? 0;
+                    $latestRaidCandidate = [
+                        'instanceId' => $raidInstanceId,
+                        'timestamp' => $timestamp,
+                        'durationSeconds' => is_numeric($historyDuration) ? (int) round((float) $historyDuration) : 0,
+                    ];
                 }
-            } catch (Throwable $error) {
-                $historyWarnings[] = $error->getMessage();
+                break;
             }
+        } catch (Throwable $error) {
+            $historyWarnings[] = $error->getMessage();
         }
     }
 
-    $raidHubRecentTimestamp = is_array($recentActivity) ? strtotime((string) ($recentActivity['completedAt'] ?? '')) : false;
-    if ($latestActivityCandidate !== null && ($raidHubRecentTimestamp === false || $latestActivityCandidate['timestamp'] > $raidHubRecentTimestamp)) {
-        $instanceId = (string) $latestActivityCandidate['instanceId'];
+    if ($latestRaidCandidate !== null) {
+        $instanceId = (string) $latestRaidCandidate['instanceId'];
         if ($instanceId !== '') {
             try {
                 $report = radbotBungie('/Destiny2/Stats/PostGameCarnageReport/' . rawurlencode($instanceId) . '/', $apiKey);
                 $entries = $report['entries'] ?? [];
                 $activityDetails = $report['activityDetails'] ?? [];
                 $reportPlayers = [];
-                $durationSeconds = 0;
+                $reportPlayerMembershipTypes = [];
+                $reportDurationSeconds = 0;
+                $fallbackDurationSeconds = 0;
                 foreach (is_array($entries) ? $entries : [] as $entry) {
                     if (!is_array($entry)) continue;
                     $player = $entry['player']['destinyUserInfo'] ?? [];
@@ -505,17 +487,32 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                         $globalName = trim((string) ($player['bungieGlobalDisplayName'] ?? ''));
                         $globalCode = $player['bungieGlobalDisplayNameCode'] ?? null;
                         $displayName = trim((string) ($player['displayName'] ?? ''));
-                        if ($globalName !== '' && is_numeric($globalCode)) $reportPlayers[] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
-                        elseif ($displayName !== '') $reportPlayers[] = $displayName;
+                        $reportMembershipId = trim((string) ($player['membershipId'] ?? ''));
+                        $reportMembershipType = (int) ($player['membershipType'] ?? 0);
+                        $playerKey = $reportMembershipId !== '' ? $reportMembershipId : 'name:' . $displayName;
+                        if ($globalName !== '' && is_numeric($globalCode)) $reportPlayers[$playerKey] = $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT);
+                        elseif ($displayName !== '') $reportPlayers[$playerKey] = $displayName;
+                        if ($reportMembershipId !== '' && $reportMembershipType > 0) $reportPlayerMembershipTypes[$reportMembershipId] = $reportMembershipType;
                     }
                     $entryDuration = $entry['values']['activityDurationSeconds']['basic']['value'] ?? 0;
-                    if (is_numeric($entryDuration)) $durationSeconds = max($durationSeconds, (int) round((float) $entryDuration));
+                    if (is_numeric($entryDuration) && (int) round((float) $entryDuration) > 0) {
+                        $entryDuration = (int) round((float) $entryDuration);
+                        if ($fallbackDurationSeconds === 0) $fallbackDurationSeconds = $entryDuration;
+                        if ((string) ($player['membershipId'] ?? '') === $membershipId) $reportDurationSeconds = $entryDuration;
+                    }
                 }
+                if (count($reportPlayerMembershipTypes) > 0) {
+                    $resolvedReportNames = radbotResolveBungiePlayerNames($reportPlayerMembershipTypes, $apiKey, $privateCacheDir . '/ishradbot-player-names.json');
+                    foreach ($resolvedReportNames as $reportMembershipId => $reportName) $reportPlayers[$reportMembershipId] = $reportName;
+                }
+                $durationSeconds = $reportDurationSeconds > 0
+                    ? $reportDurationSeconds
+                    : ($fallbackDurationSeconds > 0 ? $fallbackDurationSeconds : (int) ($latestRaidCandidate['durationSeconds'] ?? 0));
                 $period = trim((string) ($report['period'] ?? ''));
-                $startedAt = $period !== '' ? $period : gmdate(DATE_ATOM, (int) $latestActivityCandidate['timestamp']);
+                $startedAt = $period !== '' ? $period : gmdate(DATE_ATOM, (int) $latestRaidCandidate['timestamp']);
                 $completedAt = $durationSeconds > 0
-                    ? gmdate(DATE_ATOM, (strtotime($startedAt) ?: (int) $latestActivityCandidate['timestamp']) + $durationSeconds)
-                    : gmdate(DATE_ATOM, (int) $latestActivityCandidate['timestamp']);
+                    ? gmdate(DATE_ATOM, (strtotime($startedAt) ?: (int) $latestRaidCandidate['timestamp']) + $durationSeconds)
+                    : gmdate(DATE_ATOM, (int) $latestRaidCandidate['timestamp']);
                 natcasesort($reportPlayers);
                 $activityHash = (int) ($activityDetails['directorActivityHash'] ?? 0);
                 if ($activityHash === 0) $activityHash = (int) ($activityDetails['referenceId'] ?? 0);
@@ -524,6 +521,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     try { $activityDefinition = radbotActivityDefinition($activityHash, $apiKey, $activityDefinitionCache); }
                     catch (Throwable $ignored) { $activityDefinition = []; }
                 }
+                if ($durationSeconds <= 0) throw new RuntimeException('The completed raid report did not include an activity duration.');
                 $recentActivity = [
                     'name' => trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Completed activity',
                     'startedAt' => $startedAt,
@@ -540,7 +538,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 4,
+        'schemaVersion' => 7,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -578,7 +576,7 @@ if (is_file($cachePath)) {
 // Serve stale data immediately. The page requests a refresh in the background.
 // Older cached payloads did not include an all-modes recent activity lookup.
 // Force one refresh after this version is deployed so the panel can populate.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 4) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 7) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
