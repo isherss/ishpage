@@ -335,6 +335,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
     $historyStart = $allTime ? 0 : $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
+    $raidCatalog = [];
     $recentActivity = null;
     $recentActivityError = '';
     $raidHashes = [];
@@ -360,6 +361,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 $activityName = trim((string) ($definition['name'] ?? ''));
                 if ($activityId !== '' && $activityName !== '' && !empty($definition['isRaid'])) $raidNameById[$activityId] = $activityName;
             }
+            $raidCatalog = array_values(array_unique(array_values($raidNameById)));
             $instanceQuery = [
                 'completed' => 'true',
                 'maxDate' => gmdate(DATE_ATOM, $now->getTimestamp()),
@@ -576,7 +578,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 18,
+        'schemaVersion' => 19,
         'allTimeHistory' => $allTime,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
@@ -585,6 +587,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         'recentActivityError' => $recentActivityError,
         'partyMembers' => $partyNames,
         'raidEvents' => $raidEvents,
+        'raidCatalog' => $raidCatalog,
         'updatedAt' => gmdate(DATE_ATOM),
         'historyWarning' => count($historyWarnings) > 0 ? 'Some character activity histories could not be loaded. Public stats/privacy settings may limit access.' : '',
     ];
@@ -616,7 +619,7 @@ if (is_file($cachePath)) {
 }
 // Serve stale data immediately. The page requests a refresh in the background.
 // Keep separate cached datasets for the default recent window and all-time history.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 18) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 19) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
