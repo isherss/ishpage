@@ -20,6 +20,7 @@
     .rad-status{display:inline-flex;align-items:center;gap:8px;color:#39ff78;font-size:12px}
     .rad-status:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
     .rad-status[data-state="orbit"]{color:#27F5F5}
+    .rad-status[data-state="online"]{color:#39ff78}
     .rad-status[data-state="offline"]{color:#ff7777}
     .rad-status[data-state="unknown"]{color:var(--rad-muted)}
     .rad-activity{margin:10px 0 0;color:var(--rad-muted);font-size:11px;line-height:1.6}
@@ -38,8 +39,8 @@
     .rad-empty{margin:0;color:var(--rad-muted);font-size:12px;line-height:1.6}
     .rad-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:stretch}
     .rad-overview-grid>.rad-panel{min-width:0}
-    .rad-chart-wrap{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
-    .rad-chart{display:block;width:100%;min-width:620px;height:auto;overflow:visible}
+    .rad-chart-wrap{width:100%;overflow-x:hidden;overscroll-behavior-x:contain}
+    .rad-chart{display:block;width:100%;max-width:100%;min-width:0;height:auto;overflow:visible}
     .rad-chart text{fill:var(--rad-muted);font:10px "Lucida Console",monospace}
     .rad-chart .rad-grid{stroke:#102d18;stroke-width:1}
     .rad-chart .rad-axis{stroke:#286333;stroke-width:1}

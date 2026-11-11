@@ -254,14 +254,16 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $activeCharacter = null;
     $joinability = $transitory['joinability'] ?? [];
     $closedReasons = is_array($joinability) ? (int) ($joinability['closedReasons'] ?? 0) : 0;
-    $isOffline = ($closedReasons & 32768) !== 0;
+    $hasPresenceSignal = is_array($joinability) && array_key_exists('closedReasons', $joinability);
+    $isOffline = $hasPresenceSignal && ($closedReasons & 32768) !== 0;
     $transitoryActivity = $transitory['currentActivity'] ?? null;
     $transitoryActivityStart = is_array($transitoryActivity) ? strtotime((string) ($transitoryActivity['startTime'] ?? '')) : false;
-    $transitoryActivityEnd = is_array($transitoryActivity) ? trim((string) ($transitoryActivity['endTime'] ?? '')) : '';
+    // Bungie can set endTime after an encounter completes while the player is
+    // still in the activity space, so a recent currentActivity is still a
+    // positive in-game signal even when endTime is populated.
     $hasCurrentActivitySignal = $transitoryActivityStart !== false
-        && $transitoryActivityStart <= time() + 60
-        && $transitoryActivityEnd === '';
-    foreach ($hasCurrentActivitySignal ? $characterActivities : [] as $characterId => $activityData) {
+        && $transitoryActivityStart <= time() + 60;
+    foreach (is_array($characterActivities) ? $characterActivities : [] as $characterId => $activityData) {
         if (!is_array($activityData) || (int) ($activityData['currentActivityHash'] ?? 0) === 0) continue;
         if ($activeCharacter === null || (string) ($activityData['dateActivityStarted'] ?? '') > (string) ($activeCharacter['started'] ?? '')) {
             $activeCharacter = [
@@ -273,17 +275,20 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     // No current activity does not prove the player is in orbit: Bungie's
     // transitory profile data may omit the offline flag or be stale.
-    $status = $isOffline ? 'Offline' : 'Presence unavailable';
+    $status = $isOffline ? 'Offline' : ($hasPresenceSignal ? 'Online (activity unavailable)' : 'Status unavailable');
     $activityName = '';
-    if (!$isOffline && $activeCharacter !== null) {
+    // A nonzero currentActivityHash is a direct in-game signal, so prefer it
+    // over a possibly stale Offline bit from transitory joinability data.
+    if ($activeCharacter !== null || $hasCurrentActivitySignal) {
         $status = 'In an activity';
         try {
+            if ($activeCharacter === null) throw new RuntimeException('Bungie did not return an activity hash.');
             $activityDefinition = radbotActivityDefinition($activeCharacter['hash'], $apiKey, $activityDefinitionCache);
             $activityName = trim((string) ($activityDefinition['displayProperties']['name'] ?? ''));
         } catch (Throwable $ignored) {
             $activityName = '';
         }
-    } elseif (!$isOffline && (!is_array($characters) || count($characters) === 0)) {
+    } elseif (!$isOffline && !$hasPresenceSignal) {
         $status = 'Status unavailable';
     }
 

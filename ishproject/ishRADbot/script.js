@@ -96,8 +96,8 @@
         byId("radPlayer").textContent=data.player?.displayName||"ish#7419";
         const status=byId("radStatus");
         const normalizedStatus=(data.status||"").toLowerCase();
-        status.textContent=normalizedStatus==="presence unavailable"?"Offline":(data.status||"Status unavailable");
-        status.dataset.state=(normalizedStatus==="offline"||normalizedStatus==="presence unavailable")?"offline":(normalizedStatus.includes("orbit")?"orbit":"activity");
+        status.textContent=data.status||"Status unavailable";
+        status.dataset.state=normalizedStatus==="offline"?"offline":(normalizedStatus.includes("orbit")?"orbit":(normalizedStatus.startsWith("online")?"online":(normalizedStatus.includes("activity")?"activity":"unknown")));
         const activity=byId("radActivity");
         activity.hidden=!data.activityName;
         activity.textContent=data.activityName?"Activity: "+data.activityName:"";
@@ -133,10 +133,8 @@
       }
       async function refreshInBackground(){
         if(backgroundRefreshRunning||document.visibilityState!=="visible"||!latestData)return;
-        const knownStatus=String(latestData.status||"").toLowerCase();
-        if(knownStatus==="offline"||knownStatus==="presence unavailable")return;
         backgroundRefreshRunning=true;
-        try{const response=await fetch(apiUrl(true,true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();if(!data.presenceOnly)return;latestData={...latestData,...data};const normalized=String(data.status||"").toLowerCase(),status=byId("radStatus");status.textContent=normalized==="presence unavailable"?"Offline":(data.status||"Status unavailable");status.dataset.state=(normalized==="offline"||normalized==="presence unavailable")?"offline":(normalized.includes("orbit")?"orbit":"activity");const activity=byId("radActivity");activity.hidden=!data.activityName;activity.textContent=data.activityName?"Activity: "+data.activityName:"";const party=byId("radParty");party.replaceChildren();(Array.isArray(data.partyMembers)?data.partyMembers:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});byId("radPartyEmpty").textContent=party.children.length?"":"its empty";byId("radPartyEmpty").hidden=party.children.length>0;byId("radUpdated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleString():"";}
+        try{const response=await fetch(apiUrl(true,true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();if(!data.presenceOnly)return;latestData={...latestData,...data};const normalized=String(data.status||"").toLowerCase(),status=byId("radStatus");status.textContent=data.status||"Status unavailable";status.dataset.state=normalized==="offline"?"offline":(normalized.includes("orbit")?"orbit":(normalized.startsWith("online")?"online":(normalized.includes("activity")?"activity":"unknown")));const activity=byId("radActivity");activity.hidden=!data.activityName;activity.textContent=data.activityName?"Activity: "+data.activityName:"";const party=byId("radParty");party.replaceChildren();(Array.isArray(data.partyMembers)?data.partyMembers:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;party.appendChild(item);});byId("radPartyEmpty").textContent=party.children.length?"":"its empty";byId("radPartyEmpty").hidden=party.children.length>0;byId("radUpdated").textContent=data.updatedAt?"Updated "+new Date(data.updatedAt).toLocaleString():"";}
         catch(ignored){}
         finally{backgroundRefreshRunning=false;}
       }
