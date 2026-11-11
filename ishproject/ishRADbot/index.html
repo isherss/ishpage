@@ -75,9 +75,12 @@
     .rad-table th:first-child,.rad-table td:first-child{text-align:left;position:sticky;left:0;background:#010401}
     .rad-table td:first-child{color:#a7ffbb}
     .rad-table tbody tr:nth-child(odd){background:#010401}
-    .rad-table tbody tr:nth-child(even){background:#001C0C}
+    .rad-table tbody tr:nth-child(even){background:#000F07}
     .rad-table tbody tr:nth-child(odd) td:first-child{background:#010401}
-    .rad-table tbody tr:nth-child(even) td:first-child{background:#001C0C}
+    .rad-table tbody tr:nth-child(even) td:first-child{background:#000F07}
+    .rad-table tbody tr.rad-grand-total,.rad-table tbody tr.rad-grand-total:hover{background:#00A64F;color:#000}
+    .rad-table tbody tr.rad-grand-total td,.rad-table tbody tr.rad-grand-total td:first-child{background:#00A64F;color:#000}
+    .rad-table tbody tr.rad-grand-total .rad-total{color:#000}
     .rad-table tbody tr:hover{background:#041006}
     .rad-table .rad-zero{color:#F31FFF}
     .rad-table .rad-count{color:#27F5F5}
@@ -215,14 +218,14 @@
           const heading=document.createElement("tr");addSortHeader(heading,"Raid","raid");addSortHeader(heading,"All-time clears","clears");head.appendChild(heading);
           let grandTotal=0;
           rows.forEach(raid=>{const count=raidEvents.filter(event=>raidInfo(event.raid).name===raid).length;grandTotal+=count;const row=document.createElement("tr");addCell(row,raid);addCell(row,String(count)).className="rad-total";body.appendChild(row);});
-          if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");addCell(totalRow,"All raids total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
+          if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");totalRow.className="rad-grand-total";addCell(totalRow,"All raids total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
           byId("radTableScroll").hidden=rows.length===0;byId("radNoRaids").hidden=raidEvents.length>0;return;
         }
         const periodDays=[];if(valid){let cursor=start;while(cursor<=end&&periodDays.length<367){periodDays.push(cursor);cursor=shiftDay(cursor,1);}}
         const heading=document.createElement("tr");addCell(heading,"Raid","th");periodDays.forEach(day=>addCell(heading,dateLabel(day),"th"));addCell(heading,"Total","th");head.appendChild(heading);
         const totalsByDay=periodDays.map(()=>0);let grandTotal=0;
         rows.forEach(raid=>{const events=valid?eventsInRange(start,end,raid):[];const row=document.createElement("tr");addCell(row,raid);let total=0;periodDays.forEach((day,index)=>{const count=events.filter(event=>centralDay(event.timestamp)===day).length;total+=count;totalsByDay[index]+=count;addCell(row,String(count)).className=count===0?"rad-zero":"rad-count";});grandTotal+=total;addCell(row,String(total)).className="rad-total";body.appendChild(row);});
-        if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");addCell(totalRow,"All raids total");totalsByDay.forEach(count=>addCell(totalRow,String(count)).className="rad-total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
+        if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");totalRow.className="rad-grand-total";addCell(totalRow,"All raids total");totalsByDay.forEach(count=>addCell(totalRow,String(count)).className="rad-total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
         byId("radTableScroll").hidden=!selected||!valid||rows.length===0;byId("radNoRaids").hidden=raidEvents.length>0;
       }
       function render(data){
