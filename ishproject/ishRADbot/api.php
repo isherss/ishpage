@@ -537,6 +537,20 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 ];
             } catch (Throwable $error) {
                 $historyWarnings[] = $error->getMessage();
+                // RaidHub's history can still identify the PGCR even when
+                // Bungie's detailed carnage-report endpoint is unavailable.
+                foreach ($raidEvents as $raidEvent) {
+                    if ((string) ($raidEvent['instanceId'] ?? '') !== $instanceId) continue;
+                    $eventTimestamp = (int) ($raidEvent['timestamp'] ?? 0);
+                    $recentActivity = [
+                        'name' => trim((string) ($raidEvent['raid'] ?? '')) ?: 'Raid activity',
+                        'startedAt' => $eventTimestamp > 0 ? gmdate(DATE_ATOM, $eventTimestamp) : '',
+                        'completedAt' => '',
+                        'durationSeconds' => 0,
+                        'players' => [],
+                    ];
+                    break;
+                }
             }
         }
     }
@@ -544,7 +558,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 9,
+        'schemaVersion' => 10,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -580,8 +594,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after the recent PGCR fallback changed.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 9) radbotReply(200, $cached);
+// Force one refresh after the recent card gained an instance metadata fallback.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 10) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
