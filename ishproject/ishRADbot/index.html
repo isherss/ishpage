@@ -74,6 +74,10 @@
     .rad-sort-button{padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer}
     .rad-table th:first-child,.rad-table td:first-child{text-align:left;position:sticky;left:0;background:#010401}
     .rad-table td:first-child{color:#a7ffbb}
+    .rad-table tbody tr:nth-child(odd){background:#010401}
+    .rad-table tbody tr:nth-child(even){background:#00612B}
+    .rad-table tbody tr:nth-child(odd) td:first-child{background:#010401}
+    .rad-table tbody tr:nth-child(even) td:first-child{background:#00612B}
     .rad-table tbody tr:hover{background:#041006}
     .rad-table .rad-zero{color:#F31FFF}
     .rad-table .rad-count{color:#27F5F5}
@@ -176,7 +180,7 @@
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
       function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;const available=raidEvents.map(event=>centralDay(event.timestamp));if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="alltime"){start=available.length?available.reduce((left,right)=>left<right?left:right):today;}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}if(span!=="alltime"&&available.length){const earliest=available.reduce((left,right)=>left<right?left:right);if(start<earliest)start=earliest;}return {start,end};}
       function shiftDay(day,amount){const date=new Date(day+"T12:00:00Z");date.setUTCDate(date.getUTCDate()+amount);return date.toISOString().slice(0,10);}
-      function raidInfo(rawName){let name=String(rawName||"").trim(),difficulty="N";const marker=name.match(/\s*(?:\(|\[|:|-)?\s*(prestige|master|normal|standard)(?:\s*(?:mode|difficulty))?\s*(?:\)|\])?\s*$/i);if(marker){difficulty=/prestige|master/i.test(marker[1])?"P":"N";name=name.slice(0,marker.index).trim().replace(/[:\-–—]+$/,"" ).trim();}return {name:name||String(rawName||"Unknown raid"),difficulty};}
+      function raidInfo(rawName){let name=String(rawName||"").trim(),difficulty="N";const marker=name.match(/\s*(?:\(|\[|:|-)?\s*(prestige|master|expert|normal|standard)(?:\s*(?:mode|difficulty))?\s*(?:\)|\])?\s*$/i);if(marker){difficulty=/prestige|master|expert/i.test(marker[1])?"P":"N";name=name.slice(0,marker.index).trim().replace(/[:\-–—]+$/,"" ).trim();}return {name:name||String(rawName||"Unknown raid"),difficulty};}
       function raidNamesAvailable(){return [...new Set([...raidCatalog,...raidEvents.map(event=>raidInfo(event.raid).name)])].sort((a,b)=>a.localeCompare(b));}
       function eventsInRange(start,end,raid){return raidEvents.filter(event=>raidInfo(event.raid).name===raid&&centralDay(event.timestamp)>=start&&centralDay(event.timestamp)<=end);}
       function difficultyCounts(events){return events.reduce((counts,event)=>{const difficulty=raidInfo(event.raid).difficulty;counts[difficulty]++;return counts;},{N:0,P:0});}
