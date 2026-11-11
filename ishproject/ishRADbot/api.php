@@ -220,7 +220,7 @@ function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
     @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
 }
 
-function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false, bool $presenceOnly = false, bool $monthly = false, ?array $customRange = null, bool $forceRefresh = false): array
+function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false, bool $presenceOnly = false, bool $monthly = false, ?array $customRange = null): array
 {
     $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/-1/', $apiKey, [
         'displayName' => $requestedName,
@@ -230,13 +230,18 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         throw new RuntimeException('Could not find ' . $requestedName . '#' . str_pad((string) $requestedCode, 4, '0', STR_PAD_LEFT) . '. Check the Bungie name and code.');
     }
     $member = null;
+    $fallbackMember = null;
     foreach ($search as $candidate) {
         if (!is_array($candidate)) continue;
         if (isset($candidate['bungieGlobalDisplayName']) && strcasecmp((string) $candidate['bungieGlobalDisplayName'], $requestedName) !== 0) continue;
         if (isset($candidate['bungieGlobalDisplayNameCode']) && (int) $candidate['bungieGlobalDisplayNameCode'] !== $requestedCode) continue;
-        $member = $candidate;
-        break;
+        if ($fallbackMember === null) $fallbackMember = $candidate;
+        if ((int) ($candidate['membershipType'] ?? 0) === ISHRADBOT_MEMBERSHIP_TYPE) {
+            $member = $candidate;
+            break;
+        }
     }
+    if ($member === null) $member = $fallbackMember;
     if (!is_array($member) || empty($member['membershipId'])) {
         throw new RuntimeException('Bungie found the name, but did not return a Destiny membership for it.');
     }
@@ -384,7 +389,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 'completed' => 'true',
                 'maxDate' => gmdate(DATE_ATOM, $historyEnd),
             ];
-            if ($forceRefresh) $instanceQuery['fresh'] = 'true';
             if (!$allTime) $instanceQuery['minDate'] = gmdate(DATE_ATOM, $historyStart);
             $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
             $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
@@ -604,7 +608,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 22,
+        'schemaVersion' => 23,
         'allTimeHistory' => $allTime,
         'monthlyHistory' => $monthly,
         'customHistory' => $customRange !== null,
@@ -678,9 +682,11 @@ if (is_file($cachePath)) {
     $cached = json_decode((string) file_get_contents($cachePath), true);
     if (!is_array($cached)) $cached = null;
 }
+// Rebuild prior history caches after correcting platform membership selection.
+if (is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) < 23) $cached = null;
 // Serve stale data immediately. The page requests a refresh in the background.
 // Keep separate cached datasets for the default recent window and all-time history.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 22) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 23) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
@@ -694,7 +700,7 @@ if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime, false, $monthly, $customRange, $forceRefresh);
+    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime, false, $monthly, $customRange);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);
