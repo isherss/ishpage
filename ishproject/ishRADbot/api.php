@@ -220,7 +220,7 @@ function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
     @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
 }
 
-function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false, bool $presenceOnly = false, bool $monthly = false, ?array $customRange = null): array
+function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false, bool $presenceOnly = false, bool $monthly = false, ?array $customRange = null, bool $forceRefresh = false): array
 {
     $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/-1/', $apiKey, [
         'displayName' => $requestedName,
@@ -384,6 +384,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 'completed' => 'true',
                 'maxDate' => gmdate(DATE_ATOM, $historyEnd),
             ];
+            if ($forceRefresh) $instanceQuery['fresh'] = 'true';
             if (!$allTime) $instanceQuery['minDate'] = gmdate(DATE_ATOM, $historyStart);
             $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
             $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
@@ -693,7 +694,7 @@ if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime, false, $monthly, $customRange);
+    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime, false, $monthly, $customRange, $forceRefresh);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);
