@@ -271,7 +271,9 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
-    $status = $isOffline ? 'Offline' : 'In orbit';
+    // No current activity does not prove the player is in orbit: Bungie's
+    // transitory profile data may omit the offline flag or be stale.
+    $status = $isOffline ? 'Offline' : 'Presence unavailable';
     $activityName = '';
     if (!$isOffline && $activeCharacter !== null) {
         $status = 'In an activity';
@@ -582,7 +584,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 15,
+        'schemaVersion' => 16,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -619,8 +621,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after adding the offline signal to Guardian status.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 15) radbotReply(200, $cached);
+// Force one refresh after removing the unsupported orbit default.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 16) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
