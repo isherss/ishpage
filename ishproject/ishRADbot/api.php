@@ -501,6 +501,11 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             $latestRaidHistory = radbotBungie($latestRaidPath, $apiKey);
             foreach (($latestRaidHistory['activities'] ?? []) as $raidEntry) {
                 if (!is_array($raidEntry)) continue;
+                // The recent-activity panel is for clears only. Bungie's
+                // history also includes ended attempts, so skip entries that
+                // do not report a successful completion.
+                $completion = $raidEntry['values']['completed']['basic']['value'] ?? null;
+                if (!is_numeric($completion) || (float) $completion < 1) continue;
                 $period = (string) ($raidEntry['period'] ?? $raidEntry[' period'] ?? '');
                 $timestamp = strtotime($period);
                 $raidInstanceId = trim((string) ($raidEntry['activityDetails']['instanceId'] ?? ''));
