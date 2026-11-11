@@ -220,7 +220,7 @@ function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
     @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
 }
 
-function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false): array
+function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false, bool $presenceOnly = false, bool $monthly = false, ?array $customRange = null): array
 {
     $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/-1/', $apiKey, [
         'displayName' => $requestedName,
@@ -327,13 +327,26 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     natcasesort($partyNames);
     $partyNames = array_values($partyNames);
 
+    if ($presenceOnly) {
+        $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
+        return [
+            'presenceOnly' => true,
+            'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
+            'status' => $status,
+            'activityName' => $activityName,
+            'partyMembers' => $partyNames,
+            'updatedAt' => gmdate(DATE_ATOM),
+        ];
+    }
+
     $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
     // The default chart only needs seven reporting days. Its date boundary is
     // 03:00 America/Chicago; subtract seven days from that boundary.
     $central = new DateTimeZone('America/Chicago');
     $chartBoundary = $now->setTimezone($central)->setTime(3, 0);
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
-    $historyStart = $allTime ? 0 : $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
+    $historyStart = $customRange['start'] ?? ($allTime ? 0 : $chartBoundary->modify($monthly ? '-35 days' : '-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp());
+    $historyEnd = $customRange['end'] ?? $now->getTimestamp();
     $raidEvents = [];
     $raidCatalog = [];
     $recentActivity = null;
@@ -364,7 +377,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             $raidCatalog = array_values(array_unique(array_values($raidNameById)));
             $instanceQuery = [
                 'completed' => 'true',
-                'maxDate' => gmdate(DATE_ATOM, $now->getTimestamp()),
+                'maxDate' => gmdate(DATE_ATOM, $historyEnd),
             ];
             if (!$allTime) $instanceQuery['minDate'] = gmdate(DATE_ATOM, $historyStart);
             $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
@@ -374,7 +387,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
             foreach ($instances as $instance) {
                 if (!is_array($instance) || (isset($instance['completed']) && !$instance['completed'])) continue;
                 $timestamp = strtotime((string) ($instance['dateCompleted'] ?? ''));
-                if ($timestamp === false || $timestamp < $historyStart) continue;
+                if ($timestamp === false || $timestamp < $historyStart || $timestamp > $historyEnd) continue;
                 $instanceId = (string) ($instance['instanceId'] ?? '');
                 $activityId = (string) ($instance['activityId'] ?? '');
                 $raidName = $raidNameById[$activityId] ?? '';
@@ -395,7 +408,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     if (!$raidHubHistoryLoaded) {
       foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
-        while ($allTime || $page < 4) {
+        while ($allTime || $customRange !== null || $page < 4) {
             $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
@@ -414,7 +427,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 $timestamp = strtotime($period);
                 if ($timestamp === false) continue;
                 $oldestPeriod = $timestamp;
-                if ($timestamp < $historyStart) continue;
+                if ($timestamp < $historyStart || $timestamp > $historyEnd) continue;
                 $activityDetails = $entry['activityDetails'] ?? [];
                 $instanceId = (string) ($activityDetails['instanceId'] ?? '');
                 if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
@@ -453,6 +466,13 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         unset($raidEvent);
     }
 
+    // Keep the full RaidHub catalog alongside the player's observed raids.
+    // The all-time table uses catalog entries to render zero-clear rows.
+    $raidCatalog = array_values(array_unique(array_merge(
+        $raidCatalog,
+        array_map(static fn(array $event): string => trim((string) ($event['raid'] ?? '')), $raidEvents)
+    )));
+    $raidCatalog = array_values(array_filter($raidCatalog, static fn(string $name): bool => $name !== ''));
     usort($raidEvents, static fn(array $left, array $right): int => $left['timestamp'] <=> $right['timestamp']);
 
     // Independently fetch the newest raid that ended for the recent-activity
@@ -578,8 +598,12 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 19,
+        'schemaVersion' => 22,
         'allTimeHistory' => $allTime,
+        'monthlyHistory' => $monthly,
+        'customHistory' => $customRange !== null,
+        'customStartDate' => $customRange['startDate'] ?? null,
+        'customEndDate' => $customRange['endDate'] ?? null,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -609,9 +633,40 @@ if ($requestedName === '' || mb_strlen($requestedName) > 50 || $requestedCode < 
 }
 $canonicalNameTag = mb_strtolower($requestedName) . '#' . $requestedCode;
 $allTime = isset($_GET['allTime']) && $_GET['allTime'] === '1';
-$cacheSuffix = substr(hash('sha256', $canonicalNameTag . ($allTime ? '|all-time' : '|recent')), 0, 20);
-$cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache-' . $cacheSuffix . '.json';
+$monthly = isset($_GET['history']) && $_GET['history'] === 'monthly';
+$customRange = null;
+if (isset($_GET['timeframe']) && $_GET['timeframe'] === 'custom') {
+    $startDate = (string) ($_GET['startDate'] ?? '');
+    $endDate = (string) ($_GET['endDate'] ?? '');
+    $timezone = new DateTimeZone('America/Chicago');
+    $start = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $startDate . ' 03:00:00', $timezone);
+    $end = DateTimeImmutable::createFromFormat('!Y-m-d H:i:s', $endDate . ' 03:00:00', $timezone);
+    $startErrors = DateTimeImmutable::getLastErrors();
+    if ($startDate === '' || $endDate === '' || !$start || !$end
+        || ($startErrors !== false && ($startErrors['warning_count'] > 0 || $startErrors['error_count'] > 0))
+        || $start->format('Y-m-d') !== $startDate || $end->format('Y-m-d') !== $endDate || $start > $end) {
+        radbotReply(400, ['error' => 'Choose a valid start date and end date for the custom timeframe.']);
+    }
+    $end = $end->modify('+1 day');
+    $customRange = [
+        'start' => $start->getTimestamp(),
+        'end' => min($end->getTimestamp(), time()),
+        'startDate' => $startDate,
+        'endDate' => $endDate,
+    ];
+}
+$presenceOnly = isset($_GET['presence']) && $_GET['presence'] === '1';
 $forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
+if ($presenceOnly) {
+    try {
+        radbotReply(200, radbotBuildData($apiKey, $requestedName, $requestedCode, false, true));
+    } catch (Throwable $error) {
+        radbotReply(502, ['error' => 'Could not refresh guardian presence: ' . $error->getMessage()]);
+    }
+}
+$rangeCacheKey = $allTime ? '|all-time' : ($monthly ? '|monthly' : ($customRange !== null ? '|custom:' . $customRange['startDate'] . ':' . $customRange['endDate'] : '|recent'));
+$cacheSuffix = substr(hash('sha256', $canonicalNameTag . $rangeCacheKey), 0, 20);
+$cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache-' . $cacheSuffix . '.json';
 $cached = null;
 if (is_file($cachePath)) {
     $cached = json_decode((string) file_get_contents($cachePath), true);
@@ -619,7 +674,7 @@ if (is_file($cachePath)) {
 }
 // Serve stale data immediately. The page requests a refresh in the background.
 // Keep separate cached datasets for the default recent window and all-time history.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 19) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 22) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
@@ -633,7 +688,7 @@ if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime);
+    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime, false, $monthly, $customRange);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);
