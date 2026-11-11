@@ -1,0 +1,83 @@
+:root{--rad-green:#39ff78;--rad-dark:#061007;--rad-line:#145214;--rad-copy:#a7ffbb;--rad-muted:#679477}
+    *{box-sizing:border-box}
+    body.ish-radbot{margin:0;min-height:100vh;background:#000;color:var(--rad-copy);font-family:"Lucida Console",monospace;text-align:center}
+    .rad-wrap{width:min(1120px,calc(100% - 28px));margin:0 auto;padding:20px 0 48px}
+    .rad-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:12px;border-bottom:1px dotted green}
+    .rad-nav a,.rad-back{color:#46bf46;text-decoration:none;font:12px "Lucida Console",monospace;letter-spacing:.05em;text-transform:uppercase}
+    .rad-nav a:hover,.rad-back:hover{color:var(--rad-green)}
+    h1{margin:24px 0 8px;color:#46bf46;font:clamp(32px,7vw,68px)/1 "BlueScreenV1","Lucida Console",monospace}
+    .rad-tagline{margin:0 0 24px;color:var(--rad-muted);font-size:12px}
+    .rad-panel{margin:14px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--rad-line);background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);text-align:left}
+    .rad-panel h2{margin:0 0 14px;color:#46bf46;font:18px "BlueScreenV1","Lucida Console",monospace;letter-spacing:.06em;text-transform:uppercase}
+    .rad-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .rad-guardian-status-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+    .rad-guardian-status-row .rad-player{justify-self:start}
+    .rad-guardian-status-row .rad-status{justify-self:start}
+    .rad-guardian-status-row .rad-refresh{justify-self:end}
+    .rad-player{color:#a7ffbb;font-size:14px;overflow-wrap:anywhere}
+    .rad-status{display:inline-flex;align-items:center;gap:8px;color:#39ff78;font-size:12px}
+    .rad-status:before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 9px currentColor}
+    .rad-status[data-state="orbit"]{color:#27F5F5}
+    .rad-status[data-state="offline"]{color:#ff7777}
+    .rad-status[data-state="unknown"]{color:var(--rad-muted)}
+    .rad-activity{margin:10px 0 0;color:var(--rad-muted);font-size:11px;line-height:1.6}
+    .rad-refresh{min-height:34px;padding:6px 10px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#46bf46;font:11px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
+    .rad-refresh:hover{border-color:var(--rad-green);color:var(--rad-green)}
+    .rad-lookup-form{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .rad-lookup-form input{width:min(300px,70vw);min-height:34px;padding:6px 9px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#a7ffbb;font:11px "Lucida Console",monospace}
+    .rad-party{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;list-style:none}
+    .rad-party li{padding:8px 10px;border:1px solid #102d18;background:#020803;color:#a7ffbb;font-size:12px;overflow-wrap:anywhere}
+    .rad-recent-name{margin:0 0 8px;color:#a7ffbb;font-size:15px}
+    .rad-recent-summary{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .rad-recent-summary .rad-recent-name{margin:0}
+    .rad-recent-meta{margin:0;color:#27F5F5;font-size:11px;line-height:1.6}
+    .rad-recent-started{flex-basis:100%;margin:0;color:var(--rad-muted);font-size:11px;line-height:1.6}
+    .rad-empty{margin:0;color:var(--rad-muted);font-size:12px;line-height:1.6}
+    .rad-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:stretch}
+    .rad-overview-grid>.rad-panel{min-width:0}
+    .rad-chart-wrap{width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+    .rad-chart{display:block;width:100%;min-width:620px;height:auto;overflow:visible}
+    .rad-chart text{fill:var(--rad-muted);font:10px "Lucida Console",monospace}
+    .rad-chart .rad-grid{stroke:#102d18;stroke-width:1}
+    .rad-chart .rad-axis{stroke:#286333;stroke-width:1}
+    .rad-chart .rad-series{fill:none;stroke-width:2.5;vector-effect:non-scaling-stroke}
+    .rad-chart .rad-point{stroke:#010401;stroke-width:1.5;vector-effect:non-scaling-stroke}
+    .rad-chart .rad-point{cursor:crosshair}
+    .rad-chart-tooltip{position:absolute;z-index:2;max-width:220px;padding:7px 9px;border:1px solid #39ff78;background:#010401;color:#a7ffbb;font:11px "Lucida Console",monospace;line-height:1.5;pointer-events:none;white-space:nowrap}
+    .rad-chart-tooltip[hidden]{display:none}
+    .rad-chart .rad-total-series{stroke-width:4}
+    .rad-chart .rad-total-point{stroke-width:2}
+    .rad-chart .rad-value{fill:#e8ffe8;font-size:12px;font-weight:bold;paint-order:stroke;stroke:#010401;stroke-width:3px;stroke-linejoin:round}
+    .rad-chart-legend{display:flex;flex-wrap:wrap;gap:8px 16px;padding:0;margin:12px 0 0;list-style:none}
+    .rad-chart-legend li{display:flex;align-items:center;gap:7px;color:#a7ffbb;font-size:10px}
+    .rad-legend-toggle{display:inline-flex;align-items:center;gap:7px;padding:4px 6px;border:1px solid transparent;background:transparent;color:#a7ffbb;font:10px "Lucida Console",monospace;cursor:pointer;opacity:.48}
+    .rad-legend-toggle[aria-pressed="true"]{border-color:#145214;opacity:1}
+    .rad-legend-swatch{width:11px;height:3px;flex:none}
+    .rad-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:14px 0}
+    .rad-controls label{display:grid;gap:5px;color:var(--rad-muted);font-size:10px;text-transform:uppercase}
+    .rad-controls select,.rad-controls input{min-height:34px;padding:6px 9px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#a7ffbb;font:11px "Lucida Console",monospace}
+    .rad-controls [hidden]{display:none}
+    .rad-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+    .rad-table{width:100%;border-collapse:collapse;color:#a7ffbb;font-size:11px;white-space:nowrap}
+    .rad-table th,.rad-table td{padding:9px 10px;border-bottom:1px solid #102d18;text-align:center}
+    .rad-table thead th{color:#46bf46;font-size:10px;letter-spacing:.04em;text-transform:uppercase}
+    .rad-sort-button{padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer}
+    .rad-table th:first-child,.rad-table td:first-child{text-align:left;position:sticky;left:0;background:#010401}
+    .rad-table td:first-child{color:#a7ffbb}
+    .rad-table tbody tr:nth-child(odd){background:#010401}
+    .rad-table tbody tr:nth-child(even){background:#001F0E}
+    .rad-table tbody tr:nth-child(odd) td:first-child{background:#010401}
+    .rad-table tbody tr:nth-child(even) td:first-child{background:#001F0E}
+    .rad-table tbody tr.rad-grand-total,.rad-table tbody tr.rad-grand-total:hover{background:#00A32B;color:#000}
+    .rad-table tbody tr.rad-grand-total td,.rad-table tbody tr.rad-grand-total td:first-child{background:#00A32B;color:#000}
+    .rad-table tbody tr.rad-grand-total .rad-total{color:#000}
+    .rad-table .rad-zero{color:#a7ffbb}
+    .rad-table .rad-count{color:#27F5F5}
+    .rad-table .rad-total{color:#EDF25E;font-weight:bold}
+    .rad-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--rad-muted);font-size:10px;line-height:1.5}
+    .rad-error{color:#ff7d7d}
+    .rad-loading{color:var(--rad-muted);font-size:12px;line-height:1.6}
+    @media(max-width:640px){.rad-overview-grid{grid-template-columns:1fr}}
+    @media(max-width:420px){.rad-guardian-status-row{grid-template-columns:auto 1fr auto;gap:8px}.rad-guardian-status-row .rad-refresh{grid-column:3;grid-row:1}}
+    @media(max-width:560px){.rad-wrap{width:calc(100% - 20px);padding-top:12px}.rad-nav a,.rad-back{font-size:10px}.rad-panel{padding:12px}.rad-table th,.rad-table td{padding:8px 7px}.rad-table{font-size:10px}}
