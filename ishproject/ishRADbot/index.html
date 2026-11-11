@@ -41,6 +41,7 @@
     .rad-recent-summary{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}
     .rad-recent-summary .rad-recent-name{margin:0}
     .rad-recent-meta{margin:0;color:#27F5F5;font-size:11px;line-height:1.6}
+    .rad-recent-started{flex-basis:100%;margin:0;color:var(--rad-muted);font-size:11px;line-height:1.6}
     .rad-empty{margin:0;color:var(--rad-muted);font-size:12px;line-height:1.6}
     .rad-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:stretch}
     .rad-overview-grid>.rad-panel{min-width:0}
@@ -73,7 +74,9 @@
     .rad-table th:first-child,.rad-table td:first-child{text-align:left;position:sticky;left:0;background:#010401}
     .rad-table td:first-child{color:#a7ffbb}
     .rad-table tbody tr:hover{background:#041006}
-    .rad-table .rad-total{color:#39ff78;font-weight:bold}
+    .rad-table .rad-zero{color:#F31FFF}
+    .rad-table .rad-count{color:#27F5F5}
+    .rad-table .rad-total{color:#EDF25E;font-weight:bold}
     .rad-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--rad-muted);font-size:10px;line-height:1.5}
     .rad-error{color:#ff7d7d}
     .rad-loading{color:var(--rad-muted);font-size:12px;line-height:1.6}
@@ -118,6 +121,7 @@
       <div class="rad-recent-summary">
         <p class="rad-recent-name" id="radRecentName" hidden></p>
         <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
+        <p class="rad-recent-started" id="radRecentStarted" hidden></p>
       </div>
       <ul class="rad-party" id="radRecentPlayers" hidden></ul>
       <p class="rad-empty" id="radRecentEmpty">Loading recent activity…</p>
@@ -134,7 +138,7 @@
       <ul class="rad-chart-legend" id="radChartLegend"></ul>
       <div class="rad-controls" id="radRaidControls" hidden>
         <label>Raid<select id="radRaidSelect"></select></label>
-        <label>Timespan<select id="radSpanSelect"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly" disabled>Monthly (needs more history)</option><option value="custom" disabled>Custom (needs more history)</option></select></label>
+        <label>Timespan<select id="radSpanSelect"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="alltime">All-time</option><option value="monthly" disabled>Monthly (needs more history)</option><option value="custom" disabled>Custom (needs more history)</option></select></label>
         <label id="radStartWrap" hidden>Start date<input id="radStartDate" type="date"></label>
         <label id="radEndWrap" hidden>End date<input id="radEndDate" type="date"></label>
       </div>
@@ -163,11 +167,11 @@
       function readSavedName(){const entry=document.cookie.split(";").map(value=>value.trim()).find(value=>value.startsWith("ishradbotGuardian="));if(!entry)return defaultNameTag;try{return decodeURIComponent(entry.slice("ishradbotGuardian=".length));}catch(ignored){return defaultNameTag;}}
       function saveName(name){document.cookie="ishradbotGuardian="+encodeURIComponent(name)+"; Max-Age=31536000; Path=/ishproject/ishRADbot; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");}
       let currentNameTag=readSavedName();lookupInput.value=currentNameTag;
-      function apiUrl(force){const query=new URLSearchParams({name:currentNameTag});if(force)query.set("refresh","1");return "/ishproject/ishRADbot/api.php?"+query.toString();}
+      function apiUrl(force){const query=new URLSearchParams({name:currentNameTag});if(force)query.set("refresh","1");if(byId("radSpanSelect").value==="alltime")query.set("allTime","1");return "/ishproject/ishRADbot/api.php?"+query.toString();}
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
       function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
-      function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}const available=raidEvents.map(event=>centralDay(event.timestamp));if(available.length){const earliest=available.reduce((left,right)=>left<right?left:right);if(start<earliest)start=earliest;}return {start,end};}
+      function dateRange(span){const today=centralDay(Date.now()/1000);let start,end=today;const available=raidEvents.map(event=>centralDay(event.timestamp));if(span==="daily")start=today;else if(span==="weekly"){start=shiftDay(today,-6);}else if(span==="alltime"){start=available.length?available.reduce((left,right)=>left<right?left:right):today;}else if(span==="monthly"){start=shiftDay(today,-29);}else{start=byId("radStartDate").value;end=byId("radEndDate").value;}if(span!=="alltime"&&available.length){const earliest=available.reduce((left,right)=>left<right?left:right);if(start<earliest)start=earliest;}return {start,end};}
       function shiftDay(day,amount){const date=new Date(day+"T12:00:00Z");date.setUTCDate(date.getUTCDate()+amount);return date.toISOString().slice(0,10);}
       function eventsInRange(start,end,raid){return raidEvents.filter(event=>event.raid===raid&&centralDay(event.timestamp)>=start&&centralDay(event.timestamp)<=end);}
       function durationLabel(seconds){if(!Number.isFinite(seconds)||seconds<=0)return "Duration unavailable";const hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),remaining=seconds%60;return (hours?hours+"h ":"")+(hours?String(minutes).padStart(2,"0"):minutes)+"m "+String(remaining).padStart(2,"0")+"s";}
@@ -193,13 +197,20 @@
         const head=byId("radTableHead"),body=byId("radTableBody");head.replaceChildren();body.replaceChildren();
         const selected=byId("radRaidSelect").value,span=byId("radSpanSelect").value;
         const {start,end}=dateRange(span),valid=!!start&&!!end&&start<=end;
+        const raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));
+        const rows=(selected==="__all__"?raidNames:[selected]).filter(raid=>valid&&eventsInRange(start,end,raid).length>0);
+        if(span==="alltime"){
+          const heading=document.createElement("tr");addCell(heading,"Raid","th");addCell(heading,"All-time clears","th");head.appendChild(heading);
+          let grandTotal=0;
+          rows.forEach(raid=>{const count=raidEvents.filter(event=>event.raid===raid).length;grandTotal+=count;const row=document.createElement("tr");addCell(row,raid);addCell(row,String(count)).className="rad-total";body.appendChild(row);});
+          if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");addCell(totalRow,"All raids total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
+          byId("radTableScroll").hidden=rows.length===0;byId("radNoRaids").hidden=raidEvents.length>0;return;
+        }
         const periodDays=[];if(valid){let cursor=start;while(cursor<=end&&periodDays.length<367){periodDays.push(cursor);cursor=shiftDay(cursor,1);}}
         const heading=document.createElement("tr");addCell(heading,"Raid","th");periodDays.forEach(day=>addCell(heading,dateLabel(day),"th"));addCell(heading,"Total","th");head.appendChild(heading);
-        const raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));
-        const rows=selected==="__all__"?raidNames:[selected];
         const totalsByDay=periodDays.map(()=>0);let grandTotal=0;
-        rows.forEach(raid=>{const events=valid?eventsInRange(start,end,raid):[];const row=document.createElement("tr");addCell(row,raid);let total=0;periodDays.forEach((day,index)=>{const count=events.filter(event=>centralDay(event.timestamp)===day).length;total+=count;totalsByDay[index]+=count;addCell(row,String(count));});grandTotal+=total;addCell(row,String(total)).className="rad-total";body.appendChild(row);});
-        if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");addCell(totalRow,"All raids total");totalsByDay.forEach(count=>addCell(totalRow,String(count)));addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
+        rows.forEach(raid=>{const events=valid?eventsInRange(start,end,raid):[];const row=document.createElement("tr");addCell(row,raid);let total=0;periodDays.forEach((day,index)=>{const count=events.filter(event=>centralDay(event.timestamp)===day).length;total+=count;totalsByDay[index]+=count;addCell(row,String(count)).className=count===0?"rad-zero":"rad-count";});grandTotal+=total;addCell(row,String(total)).className="rad-total";body.appendChild(row);});
+        if(selected==="__all__"&&rows.length>0){const totalRow=document.createElement("tr");addCell(totalRow,"All raids total");totalsByDay.forEach(count=>addCell(totalRow,String(count)).className="rad-total");addCell(totalRow,String(grandTotal)).className="rad-total";body.appendChild(totalRow);}
         byId("radTableScroll").hidden=!selected||!valid||rows.length===0;byId("radNoRaids").hidden=raidEvents.length>0;
       }
       function render(data){
@@ -222,10 +233,12 @@
         if(recent&&recent.name){
           byId("radRecentName").textContent=recent.name;byId("radRecentName").hidden=false;
           byId("radRecentMeta").textContent=durationLabel(Number(recent.durationSeconds));byId("radRecentMeta").hidden=false;
+          const startedAt=recent.startedAt?new Date(recent.startedAt):null,startedLabel=startedAt&&!Number.isNaN(startedAt.getTime())?startedAt.toLocaleString():"Start time unavailable";
+          byId("radRecentStarted").textContent="Started "+startedLabel;byId("radRecentStarted").hidden=false;
           (Array.isArray(recent.players)?recent.players:[]).forEach(name=>{if(typeof name!=="string"||!name.trim())return;const item=document.createElement("li");item.textContent=name;recentPlayers.appendChild(item);});
           recentPlayers.hidden=recentPlayers.children.length===0;byId("radRecentEmpty").textContent=recentPlayers.children.length?"":"Guardian names were not included in this raid report.";byId("radRecentEmpty").hidden=recentPlayers.children.length>0;
         }else{
-          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No recent raid report details were returned.";byId("radRecentEmpty").hidden=false;
+          byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentStarted").hidden=true;recentPlayers.hidden=true;byId("radRecentEmpty").textContent="No recent raid report details were returned.";byId("radRecentEmpty").hidden=false;
         }
         raidEvents=Array.isArray(data.raidEvents)?data.raidEvents:[];
         const raidSelect=byId("radRaidSelect"),previous=raidSelect.value,raidNames=[...new Set(raidEvents.map(event=>event.raid))].sort((a,b)=>a.localeCompare(b));raidSelect.replaceChildren();const allOption=document.createElement("option");allOption.value="__all__";allOption.textContent="All raids";raidSelect.appendChild(allOption);raidNames.forEach(name=>{const option=document.createElement("option");option.value=name;option.textContent=name;raidSelect.appendChild(option);});if(previous==="__all__"||raidNames.includes(previous))raidSelect.value=previous;else raidSelect.value="__all__";
@@ -238,7 +251,7 @@
       async function load(){
         refresh.disabled=true;refresh.textContent="Loading…";error.hidden=true;byId("radRaidLoading").hidden=false;byId("radRaidLoading").textContent="Loading player and raid data…";
         try{const response=await fetch(apiUrl(forceRefreshNext),{cache:"no-store",headers:{"Accept":"application/json"}});forceRefreshNext=false;const data=await response.json();if(!response.ok)throw new Error(data.error||"Bungie data is unavailable.");render(data);}
-        catch(reason){error.textContent=reason.message||"Bungie data is unavailable.";error.hidden=false;byId("radRaidLoading").hidden=true;byId("radPartyEmpty").textContent="Fireteam data is unavailable.";byId("radStatus").textContent="Status unavailable";byId("radStatus").dataset.state="unknown";byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentPlayers").hidden=true;byId("radRecentEmpty").textContent="Recent activity data is unavailable.";}
+        catch(reason){error.textContent=reason.message||"Bungie data is unavailable.";error.hidden=false;byId("radRaidLoading").hidden=true;byId("radPartyEmpty").textContent="Fireteam data is unavailable.";byId("radStatus").textContent="Status unavailable";byId("radStatus").dataset.state="unknown";byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentStarted").hidden=true;byId("radRecentPlayers").hidden=true;byId("radRecentEmpty").textContent="Recent activity data is unavailable.";}
         finally{refresh.disabled=false;refresh.textContent="Refresh";}
       }
       async function refreshInBackground(){
@@ -253,7 +266,7 @@
       lookupForm.addEventListener("submit",event=>{event.preventDefault();const name=lookupInput.value.trim();if(!lookupForm.reportValidity())return;currentNameTag=name;lookupInput.value=name;saveName(name);forceRefreshNext=true;load();});
       refresh.addEventListener("click",()=>{forceRefreshNext=true;load();});
       byId("radRaidSelect").addEventListener("change",renderTable);
-      byId("radSpanSelect").addEventListener("change",()=>{const custom=byId("radSpanSelect").value==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;renderTable();});
+      byId("radSpanSelect").addEventListener("change",()=>{const span=byId("radSpanSelect").value,custom=span==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;if(span==="alltime"&&!latestData?.allTimeHistory){load();return;}renderTable();});
       ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",renderTable));
       load();
       window.setInterval(refreshInBackground,120000);

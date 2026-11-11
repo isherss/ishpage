@@ -220,7 +220,7 @@ function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
     @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
 }
 
-function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode): array
+function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode, bool $allTime = false): array
 {
     $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/-1/', $apiKey, [
         'displayName' => $requestedName,
@@ -333,7 +333,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $central = new DateTimeZone('America/Chicago');
     $chartBoundary = $now->setTimezone($central)->setTime(3, 0);
     if ($now->setTimezone($central) < $chartBoundary) $chartBoundary = $chartBoundary->modify('-1 day');
-    $historyStart = $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
+    $historyStart = $allTime ? 0 : $chartBoundary->modify('-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp();
     $raidEvents = [];
     $recentActivity = null;
     $recentActivityError = '';
@@ -360,11 +360,12 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 $activityName = trim((string) ($definition['name'] ?? ''));
                 if ($activityId !== '' && $activityName !== '' && !empty($definition['isRaid'])) $raidNameById[$activityId] = $activityName;
             }
-            $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query([
+            $instanceQuery = [
                 'completed' => 'true',
-                'minDate' => gmdate(DATE_ATOM, $historyStart),
                 'maxDate' => gmdate(DATE_ATOM, $now->getTimestamp()),
-            ], '', '&', PHP_QUERY_RFC3986);
+            ];
+            if (!$allTime) $instanceQuery['minDate'] = gmdate(DATE_ATOM, $historyStart);
+            $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
             $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
             $instances = $instanceResponse['instances'] ?? $instanceResponse;
             if (!is_array($instances)) throw new RuntimeException('RaidHub returned an invalid instance list.');
@@ -392,7 +393,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     if (!$raidHubHistoryLoaded) {
       foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
-        while ($page < 4) {
+        while ($allTime || $page < 4) {
             $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
@@ -575,7 +576,8 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 17,
+        'schemaVersion' => 18,
+        'allTimeHistory' => $allTime,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -603,7 +605,8 @@ if ($requestedName === '' || mb_strlen($requestedName) > 50 || $requestedCode < 
     radbotReply(400, ['error' => 'Enter a valid Bungie name in Name#1234 format.']);
 }
 $canonicalNameTag = mb_strtolower($requestedName) . '#' . $requestedCode;
-$cacheSuffix = substr(hash('sha256', $canonicalNameTag), 0, 20);
+$allTime = isset($_GET['allTime']) && $_GET['allTime'] === '1';
+$cacheSuffix = substr(hash('sha256', $canonicalNameTag . ($allTime ? '|all-time' : '|recent')), 0, 20);
 $cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache-' . $cacheSuffix . '.json';
 $forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
 $cached = null;
@@ -612,8 +615,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after removing the pinned PGCR candidate.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 17) radbotReply(200, $cached);
+// Keep separate cached datasets for the default recent window and all-time history.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 18) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
@@ -627,7 +630,7 @@ if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $data = radbotBuildData($apiKey, $requestedName, $requestedCode);
+    $data = radbotBuildData($apiKey, $requestedName, $requestedCode, $allTime);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);
