@@ -98,7 +98,7 @@ function radbotResolveBungiePlayerNames(array $membershipTypesById, string $apiK
     $handles = [];
     foreach (array_keys($pending) as $membershipId) {
         $membershipType = (int) ($membershipTypesById[$membershipId] ?? ISHRADBOT_MEMBERSHIP_TYPE);
-        $url = 'https://www.bungie.net/Platform/User/GetMembershipsById/' . rawurlencode($membershipId) . '/' . $membershipType . '/';
+        $url = 'https://www.bungie.net/Platform/User/GetMembershipsById/' . rawurlencode((string) $membershipId) . '/' . $membershipType . '/';
         $handle = curl_init($url);
         if ($handle === false) continue;
         curl_setopt_array($handle, [
@@ -243,7 +243,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $membershipId = (string) $member['membershipId'];
     $targetMembershipType = (int) ($member['membershipType'] ?? ISHRADBOT_MEMBERSHIP_TYPE);
-    $profile = radbotBungie('/Destiny2/' . $targetMembershipType . '/Profile/' . rawurlencode($membershipId) . '/?components=100,200,204,1000', $apiKey);
+    $profile = radbotBungie('/Destiny2/' . $targetMembershipType . '/Profile/' . rawurlencode((string) $membershipId) . '/?components=100,200,204,1000', $apiKey);
     $characters = $profile['characters']['data'] ?? [];
     $characterActivities = $profile['characterActivities']['data'] ?? [];
     $transitory = $profile['profileTransitoryData']['data'] ?? [];
@@ -388,7 +388,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 'maxDate' => gmdate(DATE_ATOM, $historyEnd),
             ];
             if (!$allTime) $instanceQuery['minDate'] = gmdate(DATE_ATOM, $historyStart);
-            $instancesPath = '/player/' . rawurlencode($membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
+            $instancesPath = '/player/' . rawurlencode((string) $membershipId) . '/instances?' . http_build_query($instanceQuery, '', '&', PHP_QUERY_RFC3986);
             $instanceResponse = radbotRaidHub($instancesPath, $raidHubApiKey);
             $instances = $instanceResponse['instances'] ?? $instanceResponse;
             if (!is_array($instances)) throw new RuntimeException('RaidHub returned an invalid instance list.');
@@ -416,7 +416,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
         while ($allTime || $customRange !== null || $page < 4) {
-            $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
+            $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode((string) $membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
             try {
@@ -486,7 +486,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     // instance ID is the reliable link to the activity report.
     foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         try {
-            $latestRaidPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
+            $latestRaidPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode((string) $membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 25, 'mode' => ISHRADBOT_RAID_MODE, 'page' => 0]);
             $latestRaidHistory = radbotBungie($latestRaidPath, $apiKey);
@@ -514,7 +514,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         $instanceId = (string) $latestRaidCandidate['instanceId'];
         if ($instanceId !== '') {
             try {
-                $report = radbotBungie('/Destiny2/Stats/PostGameCarnageReport/' . rawurlencode($instanceId) . '/', $apiKey);
+                $report = radbotBungie('/Destiny2/Stats/PostGameCarnageReport/' . rawurlencode((string) $instanceId) . '/', $apiKey);
                 $entries = $report['entries'] ?? [];
                 $activityDetails = $report['activityDetails'] ?? [];
                 $reportPlayers = [];
