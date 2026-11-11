@@ -19,8 +19,9 @@
     .rad-panel{margin:14px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--rad-line);background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);text-align:left}
     .rad-panel h2{margin:0 0 14px;color:#46bf46;font:18px "BlueScreenV1","Lucida Console",monospace;letter-spacing:.06em;text-transform:uppercase}
     .rad-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .rad-guardian-status-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
-    .rad-guardian-status-row .rad-status{justify-self:center}
+    .rad-guardian-status-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
+    .rad-guardian-status-row .rad-player{justify-self:start}
+    .rad-guardian-status-row .rad-status{justify-self:start}
     .rad-guardian-status-row .rad-refresh{justify-self:end}
     .rad-player{color:#a7ffbb;font-size:14px;overflow-wrap:anywhere}
     .rad-status{display:inline-flex;align-items:center;gap:8px;color:#39ff78;font-size:12px}
@@ -37,7 +38,9 @@
     .rad-party{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;list-style:none}
     .rad-party li{padding:8px 10px;border:1px solid #102d18;background:#020803;color:#a7ffbb;font-size:12px;overflow-wrap:anywhere}
     .rad-recent-name{margin:0 0 8px;color:#a7ffbb;font-size:15px}
-    .rad-recent-meta{margin:0 0 12px;color:var(--rad-muted);font-size:11px;line-height:1.6}
+    .rad-recent-summary{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .rad-recent-summary .rad-recent-name{margin:0}
+    .rad-recent-meta{margin:0;color:#27F5F5;font-size:11px;line-height:1.6}
     .rad-empty{margin:0;color:var(--rad-muted);font-size:12px;line-height:1.6}
     .rad-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px;align-items:stretch}
     .rad-overview-grid>.rad-panel{min-width:0}
@@ -75,7 +78,7 @@
     .rad-error{color:#ff7d7d}
     .rad-loading{color:var(--rad-muted);font-size:12px;line-height:1.6}
     @media(max-width:640px){.rad-overview-grid{grid-template-columns:1fr}}
-    @media(max-width:420px){.rad-guardian-status-row{grid-template-columns:minmax(0,1fr) auto;row-gap:10px}.rad-guardian-status-row .rad-status{grid-column:1;grid-row:2;justify-self:start}.rad-guardian-status-row .rad-refresh{grid-column:2;grid-row:2}}
+    @media(max-width:420px){.rad-guardian-status-row{grid-template-columns:auto 1fr auto;gap:8px}.rad-guardian-status-row .rad-refresh{grid-column:3;grid-row:1}}
     @media(max-width:560px){.rad-wrap{width:calc(100% - 20px);padding-top:12px}.rad-nav a,.rad-back{font-size:10px}.rad-panel{padding:12px}.rad-table th,.rad-table td{padding:8px 7px}.rad-table{font-size:10px}}
   </style>
 </head>
@@ -112,8 +115,10 @@
 
     <section class="rad-panel" aria-labelledby="radRecentHeading">
       <h2 class="page-title" id="radRecentHeading">LAST RAID</h2>
-      <p class="rad-recent-name" id="radRecentName" hidden></p>
-      <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
+      <div class="rad-recent-summary">
+        <p class="rad-recent-name" id="radRecentName" hidden></p>
+        <p class="rad-recent-meta" id="radRecentMeta" hidden></p>
+      </div>
       <ul class="rad-party" id="radRecentPlayers" hidden></ul>
       <p class="rad-empty" id="radRecentEmpty">Loading recent activity…</p>
     </section>
