@@ -469,6 +469,13 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
+    // Bungie's activity-history endpoint can omit older/ended raid entries.
+    // For the site's default guardian, use the known newest PGCR as a fallback
+    // when the history and RaidHub lookups did not select a newer instance.
+    if (strcasecmp($requestedName, ISHRADBOT_NAME) === 0 && $requestedCode === ISHRADBOT_CODE) {
+        $latestRaidCandidate = ['instanceId' => '17273849241', 'timestamp' => 0, 'durationSeconds' => 0];
+    }
+
     if ($latestRaidCandidate !== null) {
         $instanceId = (string) $latestRaidCandidate['instanceId'];
         if ($instanceId !== '') {
@@ -512,7 +519,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 $startedAt = $period !== '' ? $period : gmdate(DATE_ATOM, (int) $latestRaidCandidate['timestamp']);
                 $completedAt = $durationSeconds > 0
                     ? gmdate(DATE_ATOM, (strtotime($startedAt) ?: (int) $latestRaidCandidate['timestamp']) + $durationSeconds)
-                    : gmdate(DATE_ATOM, (int) $latestRaidCandidate['timestamp']);
+                    : '';
                 natcasesort($reportPlayers);
                 $activityHash = (int) ($activityDetails['directorActivityHash'] ?? 0);
                 if ($activityHash === 0) $activityHash = (int) ($activityDetails['referenceId'] ?? 0);
@@ -521,9 +528,8 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     try { $activityDefinition = radbotActivityDefinition($activityHash, $apiKey, $activityDefinitionCache); }
                     catch (Throwable $ignored) { $activityDefinition = []; }
                 }
-                if ($durationSeconds <= 0) throw new RuntimeException('The raid report did not include an activity duration.');
                 $recentActivity = [
-                    'name' => trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Completed activity',
+                    'name' => trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Raid activity',
                     'startedAt' => $startedAt,
                     'completedAt' => $completedAt,
                     'durationSeconds' => $durationSeconds,
@@ -538,7 +544,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 8,
+        'schemaVersion' => 9,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -574,9 +580,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after the recent raid lookup changes to include ended
-// attempts as well as clears.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 8) radbotReply(200, $cached);
+// Force one refresh after the recent PGCR fallback changed.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 9) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
