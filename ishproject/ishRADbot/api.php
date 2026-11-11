@@ -159,6 +159,7 @@ function radbotBungie(string $path, string $apiKey, ?array $body = null): array
         CURLOPT_FOLLOWLOCATION => false,
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_TIMEOUT => 18,
+        CURLOPT_ENCODING => '',
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_USERAGENT => 'ishRADbot/1.0',
     ];
@@ -176,13 +177,14 @@ function radbotBungie(string $path, string $apiKey, ?array $body = null): array
     $responseText = curl_exec($handle);
     $curlError = curl_error($handle);
     $httpStatus = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+    $contentType = (string) curl_getinfo($handle, CURLINFO_CONTENT_TYPE);
     curl_close($handle);
     if (!is_string($responseText)) {
         throw new RuntimeException('Bungie API request failed: ' . ($curlError ?: 'no response received'));
     }
-    $decoded = json_decode($responseText, true);
+    $decoded = json_decode($responseText, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
     if (!is_array($decoded)) {
-        throw new RuntimeException('Bungie returned a response that could not be read.');
+        throw new RuntimeException('Bungie returned unreadable JSON (HTTP ' . $httpStatus . ', ' . ($contentType ?: 'unknown content type') . '; ' . json_last_error_msg() . ').');
     }
     if ($httpStatus < 200 || $httpStatus >= 300 || (int) ($decoded['ErrorCode'] ?? 0) !== 1) {
         $message = trim((string) ($decoded['Message'] ?? 'Bungie API request was rejected.'));
@@ -573,7 +575,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 11,
+        'schemaVersion' => 12,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -610,8 +612,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after PGCR parsing was expanded to preserve player times.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 11) radbotReply(200, $cached);
+// Force one refresh after PGCR response decoding was made more tolerant.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 12) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
