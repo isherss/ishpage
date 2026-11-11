@@ -481,15 +481,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
-    // Bungie's activity-history endpoint can omit older/ended raid entries.
-    // For the site's default guardian, use the known newest PGCR as a fallback
-    // when the history and RaidHub lookups did not select a newer instance.
-    if (strcasecmp($requestedName, ISHRADBOT_NAME) === 0 && $requestedCode === ISHRADBOT_CODE) {
-        if ((string) ($latestRaidCandidate['instanceId'] ?? '') !== '17273849241') {
-            $latestRaidCandidate = ['instanceId' => '17273849241', 'timestamp' => 0, 'durationSeconds' => 0];
-        }
-    }
-
     if ($latestRaidCandidate !== null) {
         $instanceId = (string) $latestRaidCandidate['instanceId'];
         if ($instanceId !== '') {
@@ -584,7 +575,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 16,
+        'schemaVersion' => 17,
         'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
@@ -621,8 +612,8 @@ if (is_file($cachePath)) {
     if (!is_array($cached)) $cached = null;
 }
 // Serve stale data immediately. The page requests a refresh in the background.
-// Force one refresh after removing the unsupported orbit default.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 16) radbotReply(200, $cached);
+// Force one refresh after removing the pinned PGCR candidate.
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 17) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
