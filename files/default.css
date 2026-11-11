@@ -108,6 +108,12 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
     font-size: clamp(64px, 20vw, 112px) !important;
     line-height: .95 !important;
   }
+  body.ish-radbot .rad-panel .page-title,
+  body.ish-subpage .project-card .page-title {
+    display: block;
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+  }
   body.ish-subpage .page-title { font-size:clamp(28px, 11vw, 64px) !important; white-space:nowrap; }
   body .column > .page-navigation { flex-direction: column; gap: 4px; }
   body .page-navigation {
@@ -178,6 +184,7 @@ url('/files/fonts/Hachicro/Hachicro.ttf')  format('truetype');
   body .project-card-list { width: 94vw !important; grid-template-columns: 1fr !important; }
   body .project-card h2,
   body .album-table th { font-size: clamp(18px, 5vw, 24px) !important; }
+  body.ish-subpage .project-card h2.page-title { font-size:18px !important; }
   body .music-content { width: 94vw !important; }
   body .column > .page-navigation span { font-size: clamp(38px, 11.5vw, 64px) !important; }
   body pre {
