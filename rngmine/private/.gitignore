@@ -3,6 +3,8 @@ accounts.php
 bungie.php
 raidhub.php
 ishradbot-cache.json
+ishradbot-cache-*.json
+ishradbot-cache-*.json.lock
 ishradbot-cache.json.lock
 ishradbot-definitions.json
 ishradbot-raidhub-manifest.json

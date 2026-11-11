@@ -75,14 +75,14 @@ function radbotRaidHub(string $path, string $apiKey, ?array $body = null): array
     return is_array($response) ? $response : [];
 }
 
-function radbotResolveBungiePlayerNames(array $membershipIds, string $apiKey, string $cachePath): array
+function radbotResolveBungiePlayerNames(array $membershipTypesById, string $apiKey, string $cachePath): array
 {
     $cache = is_file($cachePath) ? json_decode((string) file_get_contents($cachePath), true) : [];
     if (!is_array($cache)) $cache = [];
     $now = time();
     $resolved = [];
     $pending = [];
-    foreach (array_unique($membershipIds) as $membershipId) {
+    foreach (array_keys($membershipTypesById) as $membershipId) {
         $membershipId = trim((string) $membershipId);
         if ($membershipId === '') continue;
         $cached = $cache[$membershipId] ?? null;
@@ -97,7 +97,8 @@ function radbotResolveBungiePlayerNames(array $membershipIds, string $apiKey, st
     $multi = curl_multi_init();
     $handles = [];
     foreach (array_keys($pending) as $membershipId) {
-        $url = 'https://www.bungie.net/Platform/User/GetMembershipsById/' . rawurlencode($membershipId) . '/' . ISHRADBOT_MEMBERSHIP_TYPE . '/';
+        $membershipType = (int) ($membershipTypesById[$membershipId] ?? ISHRADBOT_MEMBERSHIP_TYPE);
+        $url = 'https://www.bungie.net/Platform/User/GetMembershipsById/' . rawurlencode($membershipId) . '/' . $membershipType . '/';
         $handle = curl_init($url);
         if ($handle === false) continue;
         curl_setopt_array($handle, [
@@ -213,30 +214,30 @@ function radbotSaveDefinitionCache(string $cachePath, array $definitions): void
     @file_put_contents($cachePath, json_encode($definitions, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
 }
 
-function radbotBuildData(string $apiKey): array
+function radbotBuildData(string $apiKey, string $requestedName, int $requestedCode): array
 {
-    $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/' . ISHRADBOT_MEMBERSHIP_TYPE . '/', $apiKey, [
-        'displayName' => ISHRADBOT_NAME,
-        'displayNameCode' => ISHRADBOT_CODE,
+    $search = radbotBungie('/Destiny2/SearchDestinyPlayerByBungieName/-1/', $apiKey, [
+        'displayName' => $requestedName,
+        'displayNameCode' => $requestedCode,
     ]);
     if (!is_array($search) || count($search) === 0) {
-        throw new RuntimeException('Could not find ish#7419 on Steam. Check the Bungie name and platform.');
+        throw new RuntimeException('Could not find ' . $requestedName . '#' . str_pad((string) $requestedCode, 4, '0', STR_PAD_LEFT) . '. Check the Bungie name and code.');
     }
     $member = null;
     foreach ($search as $candidate) {
         if (!is_array($candidate)) continue;
-        if ((int) ($candidate['membershipType'] ?? -1) !== ISHRADBOT_MEMBERSHIP_TYPE) continue;
-        if (isset($candidate['bungieGlobalDisplayName']) && strcasecmp((string) $candidate['bungieGlobalDisplayName'], ISHRADBOT_NAME) !== 0) continue;
-        if (isset($candidate['bungieGlobalDisplayNameCode']) && (int) $candidate['bungieGlobalDisplayNameCode'] !== ISHRADBOT_CODE) continue;
+        if (isset($candidate['bungieGlobalDisplayName']) && strcasecmp((string) $candidate['bungieGlobalDisplayName'], $requestedName) !== 0) continue;
+        if (isset($candidate['bungieGlobalDisplayNameCode']) && (int) $candidate['bungieGlobalDisplayNameCode'] !== $requestedCode) continue;
         $member = $candidate;
         break;
     }
     if (!is_array($member) || empty($member['membershipId'])) {
-        throw new RuntimeException('Bungie found the name, but did not return a Steam membership for it.');
+        throw new RuntimeException('Bungie found the name, but did not return a Destiny membership for it.');
     }
 
     $membershipId = (string) $member['membershipId'];
-    $profile = radbotBungie('/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Profile/' . rawurlencode($membershipId) . '/?components=100,200,204,1000', $apiKey);
+    $targetMembershipType = (int) ($member['membershipType'] ?? ISHRADBOT_MEMBERSHIP_TYPE);
+    $profile = radbotBungie('/Destiny2/' . $targetMembershipType . '/Profile/' . rawurlencode($membershipId) . '/?components=100,200,204,1000', $apiKey);
     $characters = $profile['characters']['data'] ?? [];
     $characterActivities = $profile['characterActivities']['data'] ?? [];
     $transitory = $profile['profileTransitoryData']['data'] ?? [];
@@ -279,7 +280,7 @@ function radbotBuildData(string $apiKey): array
         if ($name === '' && $partyMembershipId === '') continue;
         $key = $partyMembershipId !== '' ? $partyMembershipId : mb_strtolower($name);
         $partyNames[$key] = $name !== '' ? $name : 'Guardian ' . substr($partyMembershipId, -6);
-        if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = true;
+        if ($partyMembershipId !== '') $partyMemberIds[$partyMembershipId] = (int) ($partyMember['membershipType'] ?? $targetMembershipType);
     }
     $raidHubApiKey = radbotRaidHubApiKey();
     if ($raidHubApiKey !== '' && count($partyMemberIds) > 0) {
@@ -394,7 +395,7 @@ function radbotBuildData(string $apiKey): array
       foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
         $page = 0;
         while ($page < 4) {
-            $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
+            $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
                 . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                 . http_build_query(['count' => 250, 'mode' => ISHRADBOT_RAID_MODE, 'page' => $page]);
             try {
@@ -462,7 +463,7 @@ function radbotBuildData(string $apiKey): array
         // the chart's seven-day raid data.
         foreach (array_keys(is_array($characters) ? $characters : []) as $characterId) {
             try {
-                $historyPath = '/Destiny2/' . ISHRADBOT_MEMBERSHIP_TYPE . '/Account/' . rawurlencode($membershipId)
+                $historyPath = '/Destiny2/' . $targetMembershipType . '/Account/' . rawurlencode($membershipId)
                     . '/Character/' . rawurlencode((string) $characterId) . '/Stats/Activities/?'
                     . http_build_query(['count' => 25, 'mode' => 0, 'page' => 0]);
                 $latestHistory = radbotBungie($historyPath, $apiKey);
@@ -537,10 +538,10 @@ function radbotBuildData(string $apiKey): array
     }
     radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);
 
-    $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? ISHRADBOT_NAME)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? ISHRADBOT_CODE), 4, '0', STR_PAD_LEFT);
+    $playerName = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
     return [
-        'schemaVersion' => 3,
-        'player' => ['displayName' => $playerName, 'membershipType' => ISHRADBOT_MEMBERSHIP_TYPE],
+        'schemaVersion' => 4,
+        'player' => ['displayName' => $playerName, 'membershipType' => $targetMembershipType],
         'status' => $status,
         'activityName' => $activityName,
         'recentActivity' => $recentActivity,
@@ -556,7 +557,18 @@ if ($apiKey === '') {
     radbotReply(503, ['error' => 'Bungie API key is not configured. Add it to BUNGIE_API_KEY on the server or to rngmine/private/bungie.php.']);
 }
 
-$cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache.json';
+$requestedNameTag = trim((string) ($_GET['name'] ?? (ISHRADBOT_NAME . '#' . ISHRADBOT_CODE)));
+if (!preg_match('/^(.+)#([0-9]{1,4})$/u', $requestedNameTag, $nameParts)) {
+    radbotReply(400, ['error' => 'Enter a Bungie name in Name#1234 format.']);
+}
+$requestedName = trim($nameParts[1]);
+$requestedCode = (int) $nameParts[2];
+if ($requestedName === '' || mb_strlen($requestedName) > 50 || $requestedCode < 0 || $requestedCode > 9999) {
+    radbotReply(400, ['error' => 'Enter a valid Bungie name in Name#1234 format.']);
+}
+$canonicalNameTag = mb_strtolower($requestedName) . '#' . $requestedCode;
+$cacheSuffix = substr(hash('sha256', $canonicalNameTag), 0, 20);
+$cachePath = dirname(__DIR__, 2) . '/rngmine/private/ishradbot-cache-' . $cacheSuffix . '.json';
 $forceRefresh = isset($_GET['refresh']) && $_GET['refresh'] === '1';
 $cached = null;
 if (is_file($cachePath)) {
@@ -566,7 +578,7 @@ if (is_file($cachePath)) {
 // Serve stale data immediately. The page requests a refresh in the background.
 // Older cached payloads did not include an all-modes recent activity lookup.
 // Force one refresh after this version is deployed so the panel can populate.
-if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 3) radbotReply(200, $cached);
+if (!$forceRefresh && is_array($cached) && (int) ($cached['schemaVersion'] ?? 0) >= 4) radbotReply(200, $cached);
 
 // If another request is already refreshing, reuse the saved response instead
 // of making every visitor wait on its own serial Bungie request chain.
@@ -580,7 +592,7 @@ if ($lock !== false && !flock($lock, LOCK_EX | LOCK_NB)) {
 }
 
 try {
-    $data = radbotBuildData($apiKey);
+    $data = radbotBuildData($apiKey, $requestedName, $requestedCode);
     @file_put_contents($cachePath, json_encode($data, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), LOCK_EX);
     if (is_resource($lock)) { flock($lock, LOCK_UN); fclose($lock); }
     radbotReply(200, $data);

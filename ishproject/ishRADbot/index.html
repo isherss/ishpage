@@ -26,6 +26,9 @@
     .rad-activity{margin:10px 0 0;color:var(--rad-muted);font-size:11px;line-height:1.6}
     .rad-refresh{min-height:34px;padding:6px 10px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#46bf46;font:11px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
     .rad-refresh:hover{border-color:var(--rad-green);color:var(--rad-green)}
+    .rad-lookup-form{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+    .rad-lookup-form label{display:grid;gap:5px;color:var(--rad-muted);font-size:10px;text-transform:uppercase}
+    .rad-lookup-form input{width:min(300px,70vw);min-height:34px;padding:6px 9px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:#a7ffbb;font:11px "Lucida Console",monospace}
     .rad-party{display:flex;flex-wrap:wrap;gap:8px;padding:0;margin:0;list-style:none}
     .rad-party li{padding:8px 10px;border:1px solid #102d18;background:#020803;color:#a7ffbb;font-size:12px;overflow-wrap:anywhere}
     .rad-recent-name{margin:0 0 8px;color:#a7ffbb;font-size:15px}
@@ -77,6 +80,11 @@
     <p class="rad-tagline">See tracked raid and dungeon clears in Destiny 2</p>
 
     <section class="rad-panel" aria-labelledby="radPlayerHeading">
+      <form class="rad-lookup-form" id="radLookupForm">
+        <label for="radLookupName">Bungie name</label>
+        <input id="radLookupName" name="name" type="text" value="ish#7419" placeholder="Name#1234" pattern=".+#[0-9]{1,4}" maxlength="56" autocomplete="off" required>
+        <button class="rad-refresh" type="submit">Look up</button>
+      </form>
       <div class="rad-status-row">
         <div>
           <h2 id="radPlayerHeading">Guardian Status</h2>
@@ -131,12 +139,18 @@
     (function(){
       const byId=id=>document.getElementById(id);
       const refresh=byId("radRefresh");
+      const lookupForm=byId("radLookupForm"),lookupInput=byId("radLookupName");
+      const defaultNameTag="ish#7419";
       const error=byId("radError");
       const chartColors=["#39ff78","#27f5f5","#ffce5c","#f785ff","#ff7777","#87aaff","#d6ff68","#ffa66b","#86e0cb","#c8a4ff"];
       let raidEvents=[];
       const activeRaidSeries=new Set();
       let forceRefreshNext=false;
       let latestData=null,backgroundRefreshRunning=false;
+      function readSavedName(){const entry=document.cookie.split(";").map(value=>value.trim()).find(value=>value.startsWith("ishradbotGuardian="));if(!entry)return defaultNameTag;try{return decodeURIComponent(entry.slice("ishradbotGuardian=".length));}catch(ignored){return defaultNameTag;}}
+      function saveName(name){document.cookie="ishradbotGuardian="+encodeURIComponent(name)+"; Max-Age=31536000; Path=/ishproject/ishRADbot; SameSite=Lax"+(location.protocol==="https:"?"; Secure":"");}
+      let currentNameTag=readSavedName();lookupInput.value=currentNameTag;
+      function apiUrl(force){const query=new URLSearchParams({name:currentNameTag});if(force)query.set("refresh","1");return "/ishproject/ishRADbot/api.php?"+query.toString();}
       function addCell(row,text,tag){const cell=document.createElement(tag||"td");cell.textContent=text;row.appendChild(cell);return cell;}
       function dateLabel(day){const date=new Date(day+"T12:00:00Z");return date.toLocaleDateString(undefined,{weekday:"short",month:"numeric",day:"numeric",timeZone:"UTC"});}
       function centralDay(timestamp){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"America/Chicago",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"}).formatToParts(new Date(timestamp*1000));const value=Object.fromEntries(parts.map(part=>[part.type,part.value]));let date=new Date(Date.UTC(Number(value.year),Number(value.month)-1,Number(value.day)));if(Number(value.hour)<3)date.setUTCDate(date.getUTCDate()-1);return date.toISOString().slice(0,10);}
@@ -209,7 +223,7 @@
       }
       async function load(){
         refresh.disabled=true;refresh.textContent="Loading…";error.hidden=true;byId("radRaidLoading").hidden=false;byId("radRaidLoading").textContent="Loading player and raid data…";
-        try{const refreshParam=forceRefreshNext?"?refresh=1":"";forceRefreshNext=false;const response=await fetch("/ishproject/ishRADbot/api.php"+refreshParam,{cache:"no-store",headers:{"Accept":"application/json"}});const data=await response.json();if(!response.ok)throw new Error(data.error||"Bungie data is unavailable.");render(data);}
+        try{const response=await fetch(apiUrl(forceRefreshNext),{cache:"no-store",headers:{"Accept":"application/json"}});forceRefreshNext=false;const data=await response.json();if(!response.ok)throw new Error(data.error||"Bungie data is unavailable.");render(data);}
         catch(reason){error.textContent=reason.message||"Bungie data is unavailable.";error.hidden=false;byId("radRaidLoading").hidden=true;byId("radPartyEmpty").textContent="Fireteam data is unavailable.";byId("radStatus").textContent="Status unavailable";byId("radStatus").dataset.state="unknown";byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentPlayers").hidden=true;byId("radRecentEmpty").textContent="Recent activity data is unavailable.";}
         finally{refresh.disabled=false;refresh.textContent="Refresh";}
       }
@@ -218,10 +232,11 @@
         const age=latestData?.updatedAt?Date.now()-Date.parse(latestData.updatedAt):Infinity;
         if(age<900000)return;
         backgroundRefreshRunning=true;
-        try{const response=await fetch("/ishproject/ishRADbot/api.php?refresh=1",{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();render(data);}
+        try{const response=await fetch(apiUrl(true),{cache:"no-store",headers:{"Accept":"application/json"}});if(!response.ok)return;const data=await response.json();render(data);}
         catch(ignored){}
         finally{backgroundRefreshRunning=false;}
       }
+      lookupForm.addEventListener("submit",event=>{event.preventDefault();const name=lookupInput.value.trim();if(!lookupForm.reportValidity())return;currentNameTag=name;lookupInput.value=name;saveName(name);forceRefreshNext=true;load();});
       refresh.addEventListener("click",()=>{forceRefreshNext=true;load();});
       byId("radRaidSelect").addEventListener("change",renderTable);
       byId("radSpanSelect").addEventListener("change",()=>{const custom=byId("radSpanSelect").value==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;renderTable();});
