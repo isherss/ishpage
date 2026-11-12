@@ -12,11 +12,13 @@
     .rad-panel{margin:14px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--rad-line);background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);text-align:left}
     .rad-panel h2{margin:0 0 14px;color:#46bf46;font:18px "BlueScreenV1","Lucida Console",monospace;letter-spacing:.06em;text-transform:uppercase}
     .rad-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .rad-chart-modes{display:inline-flex;gap:0}
-    .rad-mode-button{min-height:32px;padding:6px 12px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:var(--rad-muted);font:10px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
-    .rad-mode-button+.rad-mode-button{border-left:0}
-    .rad-mode-button[aria-pressed="true"]{background:#08200d;color:var(--rad-green);border-color:var(--rad-green)}
-    .rad-mode-button:focus-visible{outline:1px solid var(--rad-green);outline-offset:2px}
+    .rad-chart-modes{position:relative;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:0;width:176px;min-height:38px;padding:4px;border:1px solid #286333;border-radius:3px;background:#000;isolation:isolate}
+    .rad-chart-modes:before{position:absolute;z-index:-1;top:4px;bottom:4px;left:4px;width:calc(50% - 2px);border:1px solid #39ff78;border-radius:2px;background:#0a3516;box-shadow:0 0 8px rgba(57,255,120,.24);content:"";transition:transform .18s ease}
+    .rad-chart-modes:has(#radStaticMode[aria-pressed="true"]):before{transform:translateX(100%)}
+    .rad-mode-button{position:relative;z-index:1;min-height:28px;padding:5px 8px;border:0;border-radius:0;background:transparent;color:var(--rad-muted);font:10px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
+    .rad-mode-button[aria-pressed="true"]{color:var(--rad-green);text-shadow:0 0 7px rgba(57,255,120,.45)}
+    .rad-mode-button:focus-visible{outline:1px solid var(--rad-green);outline-offset:1px}
+    @media(prefers-reduced-motion:reduce){.rad-chart-modes:before{transition:none}}
     .rad-guardian-status-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
     .rad-guardian-status-row .rad-player{justify-self:start}
     .rad-guardian-status-row .rad-status{justify-self:start}
