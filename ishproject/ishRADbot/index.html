@@ -6,7 +6,7 @@
   <title>ishRADbot</title>
   <link rel="icon" href="/files/favicon.ico">
   <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
-  <link rel="stylesheet" href="/ishproject/ishRADbot/styles.css?v=20261111-presence-detection">
+  <link rel="stylesheet" href="/ishproject/ishRADbot/styles.css?v=20261112-chart-mode-switch">
 </head>
 <body class="ish-radbot">
   <main class="rad-wrap">
@@ -51,7 +51,7 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRaidHeading">
-      <div class="rad-status-row"><h2 class="page-title" id="radRaidHeading">WEEKLY RAID CLEARS</h2><div class="rad-chart-modes" role="group" aria-label="Weekly raid clears chart mode"><button type="button" class="rad-mode-button" id="radRollingMode" aria-pressed="true">Rolling</button><button type="button" class="rad-mode-button" id="radStaticMode" aria-pressed="false">Static</button></div></div>
+      <div class="rad-status-row"><h2 class="page-title" id="radRaidHeading">WEEKLY RAID CLEARS</h2><div class="rad-chart-modes" id="radChartModes" role="group" aria-label="Weekly raid clears chart mode"><button type="button" class="rad-mode-button" id="radRollingMode" aria-pressed="true">Rolling</button><button type="button" class="rad-mode-button" id="radStaticMode" aria-pressed="false">Static</button></div></div>
       <p class="rad-loading" id="radRaidLoading">Loading raid clear history…</p>
       <p class="rad-empty rad-error" id="radError" hidden></p>
       <div class="rad-chart-wrap" id="radChartWrap" hidden style="position:relative">
