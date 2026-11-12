@@ -12,6 +12,11 @@
     .rad-panel{margin:14px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--rad-line);background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06);text-align:left}
     .rad-panel h2{margin:0 0 14px;color:#46bf46;font:18px "BlueScreenV1","Lucida Console",monospace;letter-spacing:.06em;text-transform:uppercase}
     .rad-status-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .rad-chart-modes{display:inline-flex;gap:0}
+    .rad-mode-button{min-height:32px;padding:6px 12px;border:1px solid var(--rad-line);border-radius:0;background:#000;color:var(--rad-muted);font:10px "Lucida Console",monospace;text-transform:uppercase;cursor:pointer}
+    .rad-mode-button+.rad-mode-button{border-left:0}
+    .rad-mode-button[aria-pressed="true"]{background:#08200d;color:var(--rad-green);border-color:var(--rad-green)}
+    .rad-mode-button:focus-visible{outline:1px solid var(--rad-green);outline-offset:2px}
     .rad-guardian-status-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
     .rad-guardian-status-row .rad-player{justify-self:start}
     .rad-guardian-status-row .rad-status{justify-self:start}

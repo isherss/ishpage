@@ -51,7 +51,7 @@
     </section>
 
     <section class="rad-panel" aria-labelledby="radRaidHeading">
-      <div class="rad-status-row"><h2 class="page-title" id="radRaidHeading">WEEKLY RAID CLEARS</h2><span class="rad-tagline">Total clears per day · 3:00 a.m. to 3:00 a.m. Central</span></div>
+      <div class="rad-status-row"><h2 class="page-title" id="radRaidHeading">WEEKLY RAID CLEARS</h2><div class="rad-chart-modes" role="group" aria-label="Weekly raid clears chart mode"><button type="button" class="rad-mode-button" id="radRollingMode" aria-pressed="true">Rolling</button><button type="button" class="rad-mode-button" id="radStaticMode" aria-pressed="false">Static</button></div></div>
       <p class="rad-loading" id="radRaidLoading">Loading raid clear history…</p>
       <p class="rad-empty rad-error" id="radError" hidden></p>
       <div class="rad-chart-wrap" id="radChartWrap" hidden style="position:relative">
@@ -74,6 +74,6 @@
       <div class="rad-meta"><span>Live activity details refresh from Bungie’s API.</span><span id="radUpdated"></span></div>
     </section>
   </main>
-  <script src="/ishproject/ishRADbot/script.js?v=20261111-activity-duration-timer"></script>
+  <script src="/ishproject/ishRADbot/script.js?v=20261112-weekly-chart-modes"></script>
 </body>
 </html>
