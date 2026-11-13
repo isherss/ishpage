@@ -2,7 +2,7 @@
       const byId=id=>document.getElementById(id);
       const refresh=byId("radRefresh");
       const guardianButtons=[...document.querySelectorAll(".rad-guardian")];
-      const defaultNameTag="ish#4719";
+      const defaultNameTag="ish#7419";
       const error=byId("radError");
       const chartColors=["#39ff78","#27f5f5","#ffce5c","#f785ff","#ff7777","#87aaff","#d6ff68","#ffa66b","#86e0cb","#c8a4ff"];
       let raidEvents=[],chartRaidEvents=[],chartModel=null,chartMode="rolling";
@@ -97,7 +97,6 @@
       }
       function render(data){
         latestData=data;
-        if(data.historyWarning){error.textContent=data.historyWarning;error.hidden=false;}
         setGuardianStatus(currentNameTag,data.status);
         renderActivity(data);
         const party=byId("radParty");party.replaceChildren();
@@ -137,12 +136,12 @@
         catch(ignored){}
         finally{backgroundRefreshRunning=false;}
       }
-      guardianButtons.forEach(button=>button.addEventListener("click",()=>{const name=button.dataset.name;if(name===currentNameTag)return;selectGuardian(name);activityStartedAtMs=null;latestData=null;byId("radActivity").hidden=true;byId("radParty").replaceChildren();byId("radPartyEmpty").textContent="Loading fireteam…";byId("radPartyEmpty").hidden=false;byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentStarted").hidden=true;byId("radRecentPlayers").hidden=true;byId("radRecentEmpty").textContent="Loading recent activity…";byId("radRecentEmpty").hidden=false;forceRefreshNext=false;load();}));
+      guardianButtons.forEach(button=>button.addEventListener("click",()=>{const name=button.dataset.name;if(name===currentNameTag)return;selectGuardian(name);activityStartedAtMs=null;latestData=null;byId("radActivity").hidden=true;byId("radParty").replaceChildren();byId("radPartyEmpty").textContent="Loading fireteam…";byId("radPartyEmpty").hidden=false;byId("radRecentName").hidden=true;byId("radRecentMeta").hidden=true;byId("radRecentStarted").hidden=true;byId("radRecentPlayers").hidden=true;byId("radRecentEmpty").textContent="Loading recent activity…";byId("radRecentEmpty").hidden=false;forceRefreshNext=true;load();}));
       refresh.addEventListener("click",()=>{forceRefreshNext=true;load();});
-      byId("radSpanSelect").addEventListener("change",()=>{const span=byId("radSpanSelect").value,custom=span==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;if(custom&&!hasCustomDates()){renderTable();return;}if(!historyMatches(span)){load();return;}renderTable();});
-      ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",()=>{if(byId("radSpanSelect").value!=="custom")return;if(!hasCustomDates()){renderTable();return;}if(!historyMatches("custom")){load();return;}renderTable();}));
+      byId("radSpanSelect").addEventListener("change",()=>{const span=byId("radSpanSelect").value,custom=span==="custom";byId("radStartWrap").hidden=!custom;byId("radEndWrap").hidden=!custom;if(custom&&!hasCustomDates()){renderTable();return;}forceRefreshNext=true;load();});
+      ["radStartDate","radEndDate"].forEach(id=>byId(id).addEventListener("change",()=>{if(byId("radSpanSelect").value!=="custom")return;if(!hasCustomDates()){renderTable();return;}forceRefreshNext=true;load();}));
       [["radRollingMode","rolling"],["radStaticMode","static"]].forEach(([id,mode])=>byId(id).addEventListener("click",()=>{if(chartMode===mode)return;chartMode=mode;byId("radRollingMode").setAttribute("aria-pressed",mode==="rolling"?"true":"false");byId("radStaticMode").setAttribute("aria-pressed",mode==="static"?"true":"false");byId("radChartModes").classList.toggle("is-static",mode==="static");byId("radChart").setAttribute("aria-label",mode==="static"?"Raid clears this Monday through Sunday, Central time":"Raid clears over the last seven days");chartModel=null;renderChart();}));
-      load();
+      forceRefreshNext=true;load();
       refreshGuardianStatuses();
       window.setInterval(refreshInBackground,30000);
       window.setInterval(()=>{if(latestData)renderActivity(latestData);},1000);
