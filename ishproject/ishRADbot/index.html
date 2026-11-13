@@ -6,7 +6,7 @@
   <title>ishRADbot</title>
   <link rel="icon" href="/files/favicon.ico">
   <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
-  <link rel="stylesheet" href="/ishproject/ishRADbot/styles.css?v=20261112-chart-mode-switch">
+  <link rel="stylesheet" href="/ishproject/ishRADbot/styles.css?v=20261113-guardian-presets">
 </head>
 <body class="ish-radbot">
   <main class="rad-wrap">
@@ -18,17 +18,14 @@
 
     <div class="rad-overview-grid">
       <section class="rad-panel" aria-labelledby="radPlayerHeading">
-        <form class="rad-lookup-form" id="radLookupForm">
-          <label class="sr-only" for="radLookupName">Bungie name</label>
-          <input id="radLookupName" name="name" type="text" value="ish#7419" placeholder="Name#1234" pattern=".+#[0-9]{1,4}" maxlength="56" autocomplete="off" required>
-          <button class="rad-refresh" type="submit">Look up</button>
-        </form>
-        <h2 class="page-title" id="radPlayerHeading">Guardian Status</h2>
-        <div class="rad-status-row rad-guardian-status-row">
-          <div class="rad-player" id="radPlayer">ish#7419</div>
-          <div class="rad-status" id="radStatus" data-state="loading">Loading status…</div>
-          <button class="rad-refresh" id="radRefresh" type="button">Refresh</button>
-        </div>
+        <h2 class="page-title" id="radPlayerHeading">Guardians</h2>
+        <ul class="rad-guardians" id="radGuardians" aria-label="Select a guardian">
+          <li><button class="rad-guardian is-selected" type="button" data-name="ish#4719" aria-pressed="true"><span class="rad-player">ish#4719</span><span class="rad-status" data-state="loading">Loading status…</span></button></li>
+          <li><button class="rad-guardian" type="button" data-name="lynx#8674" aria-pressed="false"><span class="rad-player">lynx#8674</span><span class="rad-status" data-state="loading">Loading status…</span></button></li>
+          <li><button class="rad-guardian" type="button" data-name="augton#0538" aria-pressed="false"><span class="rad-player">augton#0538</span><span class="rad-status" data-state="loading">Loading status…</span></button></li>
+          <li><button class="rad-guardian" type="button" data-name="creechy#4779" aria-pressed="false"><span class="rad-player">creechy#4779</span><span class="rad-status" data-state="loading">Loading status…</span></button></li>
+        </ul>
+        <button class="rad-refresh" id="radRefresh" type="button">Refresh</button>
         <p class="rad-activity" id="radActivity" hidden></p>
       </section>
 
@@ -74,6 +71,6 @@
       <div class="rad-meta"><span>Live activity details refresh from Bungie’s API.</span><span id="radUpdated"></span></div>
     </section>
   </main>
-  <script src="/ishproject/ishRADbot/script.js?v=20261112-weekly-chart-modes"></script>
+  <script src="/ishproject/ishRADbot/script.js?v=20261113-guardian-presets"></script>
 </body>
 </html>
