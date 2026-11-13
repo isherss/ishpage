@@ -627,7 +627,6 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         'raidEvents' => $raidEvents,
         'raidCatalog' => $raidCatalog,
         'updatedAt' => gmdate(DATE_ATOM),
-        'historyWarning' => count($historyWarnings) > 0 ? 'Some character activity histories could not be loaded. Public stats/privacy settings may limit access.' : '',
     ];
 }
 
