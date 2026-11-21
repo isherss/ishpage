@@ -19,7 +19,7 @@
             screen.appendChild(image);
           }
           const originalPath=image.getAttribute("src")||"";
-          const photoMatch=new URL(originalPath,document.baseURI).pathname.match(/\/ishproject\/keyboards\/photos\/([^/]+)$/i);
+          const photoMatch=new URL(originalPath,document.baseURI).pathname.match(/\/ishStuff\/keyboards\/photos\/([^/]+)$/i);
           if(photoMatch){
             const originalName=photoMatch[1];
             const extension=originalName.match(/\.(jpe?g|png)$/i)?.[1]?.toLowerCase();
@@ -32,7 +32,7 @@
                 screen.insertBefore(source,image);
               }
               source.type=compressedExtension==="png"?"image/png":"image/jpeg";
-              source.srcset=`/ishproject/keyboards/photos/compressed/${originalName.replace(/\.[^.]+$/,"").toLowerCase()}.${compressedExtension}`;
+              source.srcset=`/ishStuff/keyboards/photos/compressed/${originalName.replace(/\.[^.]+$/,"").toLowerCase()}.${compressedExtension}`;
             }
           }
           const caption=image.dataset.caption?.trim();
@@ -70,7 +70,7 @@
         if(!article||!link)return showPage("keyboardAbout",false);
         articles.forEach(item=>{item.hidden=item!==article;});
         links.forEach(item=>{if(item===link)item.setAttribute("aria-current","page");else item.removeAttribute("aria-current");});
-        document.title=(id==="keyboardAbout"?"Keyboards":link.firstChild.textContent)+" — Ish Projects";
+        document.title=(id==="keyboardAbout"?"Keyboards":link.firstChild.textContent)+" — ishStuff";
         if(updateHistory)history.replaceState(null,"","#"+id);
       }
       links.forEach(link=>link.addEventListener("click",event=>{event.preventDefault();showPage(link.dataset.page,true);}));

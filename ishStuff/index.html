@@ -9,7 +9,7 @@
   <!-- Stylesheet link -->
   <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
 
-  <title>Ish Project</title>
+  <title>ishStuff</title>
 
   <!-- unique page styles -->
   <style>
@@ -50,14 +50,19 @@
     }
     .project-card p { margin: 11px 0 0; font-size: 13px; line-height: 1.65; }
     .project-card-hint { display: block; margin-top: 12px; color: #679477; font-size: 10px; }
+    .stuff-heading { margin: 24px auto; color: green; font: clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace; white-space: pre; overflow-x: auto; }
+    @media(max-width:640px) { .stuff-heading { width:100%; font-size:clamp(4px,1.65vw,10px); } }
   </style>
   <link rel="icon" href="/files/favicon.ico">
 </head>
 
 <body class="ish-subpage" style="background-color:#000000; color: green;  text-align: center;">
-  <span class="page-title" style="font-family: 'BlueScreenV1'; line-height: 80%; font-size: 10vw; display: inline-block;">
-ishProjects
-  </span>
+  <pre class="stuff-heading" aria-label="ishStuff">██╗███████╗██╗  ██╗██████╗  █████╗  ██████╗ ███████╗
+██║╚════██║██║  ██║██╔══██╗██╔══██╗██║  ██╗╚════██║
+██║███████║███████║██████╔╝███████║██║  ██║███████║
+██║╚════██║██╔══██║██╔═══╝ ██╔══██║██║  ██║╚════██║
+██║███████║██║  ██║██║     ██║  ██║╚██████╔╝███████║
+╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝</pre>
   <br><br>
   <span>
       <!-- home button -->
@@ -74,13 +79,8 @@ ishProjects
 about
           </span>
           </a>
-          <a href="/ishmusic">
-              <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;margin-right:2vw;'>
-music
-              </span>
-          </a>
               <span style='font-family: "BlueScreenV1";line-height: 0.2vw;font-size: 3vw;display: inline-block;text-align: center;color:#46bf46;'>
-projects
+ishStuff
               </span>
       </p>
   </span>
@@ -109,13 +109,19 @@ projects
     {
       title: "Mechanical Keyboards",
       description: "I like making mechanical keyboard designs and firmware, specfically for 40% or smaller. Check them out!",
-      href: "/ishproject/keyboards/",
+      href: "/ishStuff/keyboards/",
       linkText: "Open ishKeyboards"
+    },
+    {
+      title: "ishMusic",
+      description: "Album recommendations and a favorite song.",
+      href: "/ishStuff/ishMusic/",
+      linkText: "Open ishMusic"
     },
     {
       title: "ishRADbot",
       description: "See tracked raid and dungeon clears in Destiny 2",
-      href: "/ishproject/ishRADbot/",
+      href: "/ishStuff/ishRADbot/",
       linkText: "Open ishRADbot"
     }
   ];
