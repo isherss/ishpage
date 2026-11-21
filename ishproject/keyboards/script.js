@@ -44,6 +44,23 @@
           image.loading="lazy";
           image.decoding="async";
         });
+        document.querySelectorAll("[data-article]").forEach(article=>{
+          let group=[];
+          const flush=()=>{
+            if(group.length>1){
+              const gallery=document.createElement("div");
+              gallery.className="kb-photo-gallery";
+              group[0].before(gallery);
+              group.forEach(figure=>gallery.appendChild(figure));
+            }
+            group=[];
+          };
+          [...article.children].forEach(child=>{
+            if(child.matches("figure.kb-photo"))group.push(child);
+            else flush();
+          });
+          flush();
+        });
       }
       const links=[...document.querySelectorAll("#keyboardNav a[data-page]")];
       const articles=[...document.querySelectorAll("[data-article]")];

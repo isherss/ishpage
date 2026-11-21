@@ -19,12 +19,14 @@
     .kb-content h2{margin:0 0 16px;color:#91e99e;font:clamp(25px,4vw,38px)/1.15 "BlueScreenV1",Consolas,monospace}
     .kb-content h3{margin:28px 0 10px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace;letter-spacing:.04em}
     .kb-content p{width:100%;margin:0 0 15px;font-size:14px;line-height:1.85}
-    .kb-photo{position:relative;width:fit-content;max-width:calc(100% - 24px);margin:24px auto 28px;padding:8px;overflow:hidden;border:1px solid #287b38;background:#020602;box-shadow:0 0 18px rgba(57,255,120,.12)}
+    .kb-photo{position:relative;width:fit-content;max-width:calc(100% - 40px);margin:24px auto 28px;padding:8px;overflow:hidden;border:1px solid #287b38;background:#020602;box-shadow:0 0 18px rgba(57,255,120,.12)}
     .kb-photo-screen{position:relative;display:block;max-width:100%;overflow:hidden;background:#030904}
-    .kb-photo-screen img{display:block;width:auto;max-width:100%;max-height:72vh;height:auto;filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
+    .kb-photo-screen img{display:block;width:auto;max-width:100%;max-height:62vh;height:auto;filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
     .kb-photo-screen:after{position:absolute;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0,rgba(0,0,0,.28) 1px,transparent 1px,transparent 4px),linear-gradient(110deg,rgba(38,255,90,.10),rgba(0,20,4,.08));box-shadow:inset 0 0 26px rgba(0,0,0,.48);content:"";pointer-events:none}
     .kb-photo figcaption{margin:9px 2px 1px;color:var(--kb-muted);font-size:10px;line-height:1.6;text-align:center}
-    @media(min-width:980px){.kb-content:has(.kb-photo:nth-of-type(2)) .kb-photo{display:inline-block;vertical-align:top;width:calc(50% - 14px);margin:18px 6px 22px;max-width:calc(50% - 14px)}}
+    .kb-photo-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin:24px 0 28px;padding:0 12px}
+    .kb-photo-gallery .kb-photo{width:100%;max-width:100%;margin:0;padding:7px}
+    .kb-photo-gallery .kb-photo-screen img{width:100%;max-height:52vh;object-fit:contain}
     .kb-hero-figure{margin:24px 0 28px;padding:14px;border:1px solid #143d1d;background:radial-gradient(ellipse at center,#0a1b0d 0,#030804 70%)}
     .kb-hero-figure svg{display:block;width:min(100%,760px);height:auto;margin:0 auto}
     .kb-hero-figure figcaption{margin:10px 0 0;color:var(--kb-muted);font-size:10px;line-height:1.6;text-align:center}
@@ -33,5 +35,5 @@
     .kb-placeholder strong{display:block;margin-bottom:7px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace}
     .kb-placeholder span{font-size:11px;line-height:1.7}
     [hidden]{display:none!important}
-    @media(max-width:720px){.kb-shell{width:calc(100% - 20px);padding-top:12px}.kb-layout{grid-template-columns:1fr;gap:12px}.kb-sidebar{position:static;padding:10px}.kb-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.kb-nav a{min-width:max-content;padding:9px}.kb-content{padding:20px 16px}.kb-content p{font-size:13px}.kb-photo{padding:5px;max-width:calc(100% - 12px)}}
+    @media(max-width:720px){.kb-shell{width:calc(100% - 20px);padding-top:12px}.kb-layout{grid-template-columns:1fr;gap:12px}.kb-sidebar{position:static;padding:10px}.kb-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.kb-nav a{min-width:max-content;padding:9px}.kb-content{padding:20px 16px}.kb-content p{font-size:13px}.kb-photo{padding:5px;max-width:calc(100% - 24px)}.kb-photo-gallery{grid-template-columns:1fr;gap:10px;padding:0 6px}}
     @media(prefers-reduced-motion:reduce){.kb-nav a{transition:none}}
