@@ -144,6 +144,179 @@ function radbotResolveBungiePlayerNames(array $membershipTypesById, string $apiK
     return $resolved;
 }
 
+function radbotEncounterDb(): PDO
+{
+    static $pdo = null;
+    static $schemaReady = false;
+    if ($pdo instanceof PDO && $schemaReady) return $pdo;
+
+    $configPath = dirname(__DIR__, 2) . '/rngmine/private/config.php';
+    if (!is_file($configPath)) throw new RuntimeException('Hostinger database is not configured.');
+    $config = require $configPath;
+    foreach (['host', 'database', 'username', 'password'] as $key) {
+        if (!is_array($config) || !isset($config[$key]) || !is_string($config[$key]) || $config[$key] === '') {
+            throw new RuntimeException('Hostinger database is not configured.');
+        }
+    }
+    $charset = (string) ($config['charset'] ?? 'utf8mb4');
+    $dsn = sprintf('mysql:host=%s;dbname=%s;charset=%s', $config['host'], $config['database'], $charset);
+    $pdo = new PDO($dsn, $config['username'], $config['password'], [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ]);
+    $pdo->exec("CREATE TABLE IF NOT EXISTS ishradbot_player_encounters (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        membership_id VARCHAR(32) NOT NULL,
+        membership_type SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+        bungie_name VARCHAR(128) NULL,
+        display_name VARCHAR(128) NULL,
+        tracked_guardian VARCHAR(64) NOT NULL,
+        activity_name VARCHAR(255) NOT NULL,
+        played_at DATETIME NULL,
+        instance_id VARCHAR(64) NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY ishradbot_encounter_unique (membership_id, instance_id, tracked_guardian),
+        KEY ishradbot_encounter_player_time (membership_id, played_at),
+        KEY ishradbot_encounter_guardian_time (tracked_guardian, played_at),
+        KEY ishradbot_encounter_instance (instance_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS ishradbot_known_guardians (
+        membership_id VARCHAR(32) NOT NULL PRIMARY KEY,
+        membership_type SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+        bungie_name VARCHAR(128) NOT NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS ishradbot_migrations (
+        version INT UNSIGNED NOT NULL PRIMARY KEY,
+        completed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    radbotImportEncounterJson($pdo, dirname(__DIR__, 2) . '/rngmine/private/ishradbot-player-encounters.json');
+    $schemaReady = true;
+    return $pdo;
+}
+
+function radbotImportEncounterJson(PDO $pdo, string $path): void
+{
+    $version = 1;
+    $check = $pdo->prepare('SELECT version FROM ishradbot_migrations WHERE version = ?');
+    $check->execute([$version]);
+    if ($check->fetchColumn() !== false) return;
+    $handle = @fopen($path, 'r');
+    if ($handle === false) {
+        $pdo->prepare('INSERT IGNORE INTO ishradbot_migrations (version) VALUES (?)')->execute([$version]);
+        return;
+    }
+    if (!flock($handle, LOCK_SH)) { fclose($handle); return; }
+    $data = json_decode((string) stream_get_contents($handle), true);
+    flock($handle, LOCK_UN);
+    fclose($handle);
+    $insert = $pdo->prepare('INSERT INTO ishradbot_player_encounters (membership_id, membership_type, bungie_name, display_name, tracked_guardian, activity_name, played_at, instance_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE bungie_name = COALESCE(VALUES(bungie_name), bungie_name), display_name = COALESCE(VALUES(display_name), display_name)');
+    if (is_array($data) && is_array($data['players'] ?? null)) {
+        foreach ($data['players'] as $membershipId => $player) {
+            if (!is_array($player)) continue;
+            foreach (($player['activities'] ?? []) as $activityKey => $activity) {
+                if (!is_array($activity)) continue;
+                $instanceId = trim((string) ($activity['instanceId'] ?? ''));
+                if ($instanceId === '') $instanceId = 'legacy:' . substr(hash('sha256', (string) $membershipId . ':' . (string) $activityKey), 0, 48);
+                $playedAt = trim((string) ($activity['playedAt'] ?? ''));
+                $playedAt = $playedAt !== '' ? gmdate('Y-m-d H:i:s', strtotime($playedAt) ?: time()) : null;
+                $insert->execute([
+                    (string) $membershipId,
+                    (int) ($player['membershipType'] ?? 0),
+                    trim((string) ($player['bungieName'] ?? '')) ?: null,
+                    trim((string) ($player['displayName'] ?? '')) ?: null,
+                    trim((string) ($activity['guardian'] ?? 'Unknown')),
+                    trim((string) ($activity['activity'] ?? 'Unknown activity')),
+                    $playedAt,
+                    $instanceId,
+                ]);
+            }
+        }
+    }
+    $pdo->prepare('INSERT IGNORE INTO ishradbot_migrations (version) VALUES (?)')->execute([$version]);
+}
+
+function radbotLoadEncounterNames(PDO $pdo, array $membershipIds): array
+{
+    $membershipIds = array_values(array_unique(array_filter(array_map('strval', $membershipIds), static fn(string $id): bool => $id !== '')));
+    if (count($membershipIds) === 0) return [];
+    $placeholders = implode(',', array_fill(0, count($membershipIds), '?'));
+    $names = [];
+    $knownQuery = $pdo->prepare("SELECT membership_id, bungie_name FROM ishradbot_known_guardians WHERE membership_id IN ($placeholders)");
+    $knownQuery->execute($membershipIds);
+    foreach ($knownQuery as $row) $names[(string) $row['membership_id']] = (string) $row['bungie_name'];
+    $query = $pdo->prepare("SELECT membership_id, bungie_name, display_name FROM ishradbot_player_encounters WHERE membership_id IN ($placeholders) ORDER BY (bungie_name IS NOT NULL AND bungie_name <> '') DESC, played_at DESC, id DESC");
+    $query->execute($membershipIds);
+    foreach ($query as $row) {
+        $id = (string) $row['membership_id'];
+        if (isset($names[$id])) continue;
+        $name = trim((string) ($row['bungie_name'] ?? '')) ?: trim((string) ($row['display_name'] ?? ''));
+        if ($name !== '') $names[$id] = $name;
+    }
+    return $names;
+}
+
+function radbotSaveKnownGuardian(PDO $pdo, string $membershipId, int $membershipType, string $bungieName): void
+{
+    $query = $pdo->prepare('INSERT INTO ishradbot_known_guardians (membership_id, membership_type, bungie_name) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE membership_type = VALUES(membership_type), bungie_name = VALUES(bungie_name)');
+    $query->execute([$membershipId, $membershipType, $bungieName]);
+}
+
+function radbotLoadEncounteredInstances(PDO $pdo, array $instanceIds, string $guardianName): array
+{
+    $instanceIds = array_values(array_unique(array_filter(array_map('strval', $instanceIds), static fn(string $id): bool => $id !== '')));
+    if (count($instanceIds) === 0) return [];
+    $placeholders = implode(',', array_fill(0, count($instanceIds), '?'));
+    $query = $pdo->prepare("SELECT DISTINCT instance_id FROM ishradbot_player_encounters WHERE tracked_guardian = ? AND instance_id IN ($placeholders)");
+    $query->execute(array_merge([$guardianName], $instanceIds));
+    $instances = [];
+    foreach ($query->fetchAll(PDO::FETCH_COLUMN) as $instanceId) $instances[(string) $instanceId] = true;
+    return $instances;
+}
+
+function radbotRecordPartyReport(PDO $pdo, array $report, string $activityName, int $playedAt, string $guardianName, string $reportedInstanceId, string $apiKey): void
+{
+    $instanceId = trim($reportedInstanceId) ?: trim((string) ($report['activityDetails']['instanceId'] ?? ''));
+    if ($instanceId === '') return;
+    $playedAtValue = $playedAt > 0 ? gmdate('Y-m-d H:i:s', $playedAt) : null;
+    $membershipTypesById = [];
+    foreach (($report['entries'] ?? []) as $entry) {
+        $user = is_array($entry) ? ($entry['player']['destinyUserInfo'] ?? []) : [];
+        $membershipId = is_array($user) ? trim((string) ($user['membershipId'] ?? '')) : '';
+        if ($membershipId !== '') $membershipTypesById[$membershipId] = (int) ($user['membershipType'] ?? ISHRADBOT_MEMBERSHIP_TYPE);
+    }
+    try {
+        $resolvedNames = radbotResolveBungiePlayerNames($membershipTypesById, $apiKey, dirname(__DIR__, 2) . '/rngmine/private/ishradbot-player-names.json');
+    } catch (Throwable $ignored) {
+        $resolvedNames = [];
+    }
+    $insert = $pdo->prepare('INSERT INTO ishradbot_player_encounters (membership_id, membership_type, bungie_name, display_name, tracked_guardian, activity_name, played_at, instance_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE bungie_name = COALESCE(VALUES(bungie_name), bungie_name), display_name = COALESCE(VALUES(display_name), display_name), activity_name = VALUES(activity_name), played_at = VALUES(played_at)');
+    foreach (($report['entries'] ?? []) as $entry) {
+        if (!is_array($entry)) continue;
+        $user = $entry['player']['destinyUserInfo'] ?? [];
+        if (!is_array($user)) continue;
+        $membershipId = trim((string) ($user['membershipId'] ?? ''));
+        if ($membershipId === '') continue;
+        $globalName = trim((string) ($user['bungieGlobalDisplayName'] ?? ''));
+        $globalCode = $user['bungieGlobalDisplayNameCode'] ?? null;
+        $bungieName = $globalName !== '' && is_numeric($globalCode)
+            ? $globalName . '#' . str_pad((string) $globalCode, 4, '0', STR_PAD_LEFT)
+            : ($resolvedNames[$membershipId] ?? null);
+        $displayName = trim((string) ($user['displayName'] ?? '')) ?: null;
+        $insert->execute([
+            $membershipId,
+            (int) ($user['membershipType'] ?? 0),
+            $bungieName,
+            $displayName,
+            $guardianName,
+            $activityName !== '' ? $activityName : 'Unknown activity',
+            $playedAtValue,
+            $instanceId,
+        ]);
+    }
+}
+
 function radbotBungie(string $path, string $apiKey, ?array $body = null): array
 {
     if (!function_exists('curl_init')) {
@@ -243,12 +416,24 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
 
     $membershipId = (string) $member['membershipId'];
     $targetMembershipType = (int) ($member['membershipType'] ?? ISHRADBOT_MEMBERSHIP_TYPE);
+    $requestedGuardianTag = mb_strtolower($requestedName) . '#' . str_pad((string) $requestedCode, 4, '0', STR_PAD_LEFT);
+    $encounterGuardianTags = ['ish#7419', 'lynx#8674', 'augton#0538', 'creechy#4779'];
     $profile = radbotBungie('/Destiny2/' . $targetMembershipType . '/Profile/' . rawurlencode((string) $membershipId) . '/?components=100,200,204,1000', $apiKey);
     $characters = $profile['characters']['data'] ?? [];
     $characterActivities = $profile['characterActivities']['data'] ?? [];
     $transitory = $profile['profileTransitoryData']['data'] ?? [];
 
     $privateCacheDir = dirname(__DIR__, 2) . '/rngmine/private';
+    $encounterDb = null;
+    if (in_array($requestedGuardianTag, $encounterGuardianTags, true)) {
+        try {
+            $encounterDb = radbotEncounterDb();
+            $resolvedGuardianTag = trim((string) ($member['bungieGlobalDisplayName'] ?? $requestedName)) . '#' . str_pad((string) ($member['bungieGlobalDisplayNameCode'] ?? $requestedCode), 4, '0', STR_PAD_LEFT);
+            radbotSaveKnownGuardian($encounterDb, $membershipId, $targetMembershipType, $resolvedGuardianTag);
+        } catch (Throwable $error) {
+            error_log('ishRADbot known guardian lookup save failed: ' . $error->getMessage());
+        }
+    }
     $definitionsCachePath = $privateCacheDir . '/ishradbot-definitions.json';
     $activityDefinitionCache = radbotLoadDefinitionCache($definitionsCachePath);
     $activeCharacter = null;
@@ -333,6 +518,20 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         $bungieNames = radbotResolveBungiePlayerNames($unresolvedIds, $apiKey, $privateCacheDir . '/ishradbot-player-names.json');
         foreach ($bungieNames as $partyMembershipId => $playerName) $partyNames[$partyMembershipId] = $playerName;
     }
+    if (in_array($requestedGuardianTag, $encounterGuardianTags, true)) {
+        try {
+            $encounterDb = radbotEncounterDb();
+            $encounterNames = radbotLoadEncounterNames($encounterDb, array_keys($partyMemberIds));
+            foreach ($partyMemberIds as $partyMembershipId => $_membershipType) {
+                if (isset($encounterNames[$partyMembershipId])
+                    && (!isset($partyNames[$partyMembershipId]) || strpos($partyNames[$partyMembershipId], '#') === false)) {
+                    $partyNames[$partyMembershipId] = $encounterNames[$partyMembershipId];
+                }
+            }
+        } catch (Throwable $error) {
+            error_log('ishRADbot encounter database lookup failed: ' . $error->getMessage());
+        }
+    }
     $partyNames = array_values($partyNames);
     natcasesort($partyNames);
     $partyNames = array_values($partyNames);
@@ -358,6 +557,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
     $historyStart = $customRange['start'] ?? ($allTime ? 0 : $chartBoundary->modify($monthly ? '-35 days' : '-7 days')->setTimezone(new DateTimeZone('UTC'))->getTimestamp());
     $historyEnd = $customRange['end'] ?? $now->getTimestamp();
     $raidEvents = [];
+    $encounterCandidateEvents = [];
     $raidCatalog = [];
     $recentActivity = null;
     $recentActivityError = '';
@@ -439,14 +639,15 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                 if ($timestamp < $historyStart || $timestamp > $historyEnd) continue;
                 $activityDetails = $entry['activityDetails'] ?? [];
                 $instanceId = (string) ($activityDetails['instanceId'] ?? '');
-                if ($instanceId !== '' && isset($seenInstances[$instanceId])) continue;
-                $completion = $entry['values']['completed']['basic']['value'] ?? null;
-                if (!is_numeric($completion) || (float) $completion < 1) continue;
                 $definitionHash = (int) ($activityDetails['directorActivityHash'] ?? 0);
                 if ($definitionHash === 0) $definitionHash = (int) ($activityDetails['referenceId'] ?? 0);
-                if ($definitionHash === 0) continue;
-                if ($instanceId !== '') $seenInstances[$instanceId] = true;
+                if ($definitionHash === 0 || $instanceId === '') continue;
                 $raidHashes[$definitionHash] = true;
+                $encounterCandidateEvents[$instanceId] = ['raidHash' => $definitionHash, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
+                if (isset($seenInstances[$instanceId])) continue;
+                $completion = $entry['values']['completed']['basic']['value'] ?? null;
+                if (!is_numeric($completion) || (float) $completion < 1) continue;
+                if ($instanceId !== '') $seenInstances[$instanceId] = true;
                 $raidEvents[] = ['raidHash' => $definitionHash, 'timestamp' => $timestamp, 'instanceId' => $instanceId];
             }
             if ($oldestPeriod !== null && $oldestPeriod < $historyStart) break;
@@ -473,6 +674,11 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
     unset($raidEvent);
+    foreach ($encounterCandidateEvents as &$encounterEvent) {
+        $encounterEvent['raid'] = $raidNames[$encounterEvent['raidHash']] ?? 'Raid ' . $encounterEvent['raidHash'];
+        unset($encounterEvent['raidHash']);
+    }
+    unset($encounterEvent);
 
     // Keep the full RaidHub catalog alongside the player's observed raids.
     // The all-time table uses catalog entries to render zero-clear rows.
@@ -517,6 +723,7 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
         }
     }
 
+    $latestEncounterRecorded = false;
     if ($latestRaidCandidate !== null) {
         $instanceId = (string) $latestRaidCandidate['instanceId'];
         if ($instanceId !== '') {
@@ -579,6 +786,15 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     try { $activityDefinition = radbotActivityDefinition($activityHash, $apiKey, $activityDefinitionCache); }
                     catch (Throwable $ignored) { $activityDefinition = []; }
                 }
+                if (in_array($requestedGuardianTag, $encounterGuardianTags, true)) {
+                    try {
+                        $encounterDb ??= radbotEncounterDb();
+                        radbotRecordPartyReport($encounterDb, $report, trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Raid activity', (int) $latestRaidCandidate['timestamp'], $requestedGuardianTag, $instanceId, $apiKey);
+                        $latestEncounterRecorded = true;
+                    } catch (Throwable $error) {
+                        error_log('ishRADbot encounter database write failed: ' . $error->getMessage());
+                    }
+                }
                 $recentActivity = [
                     'name' => trim((string) ($activityDefinition['displayProperties']['name'] ?? '')) ?: 'Raid activity',
                     'startedAt' => $startedAt,
@@ -605,6 +821,38 @@ function radbotBuildData(string $apiKey, string $requestedName, int $requestedCo
                     break;
                 }
             }
+        }
+    }
+    if (in_array($requestedGuardianTag, $encounterGuardianTags, true)) {
+        $encounterEventsById = [];
+        foreach (array_merge($raidEvents, array_values($encounterCandidateEvents)) as $event) {
+            $eventId = trim((string) ($event['instanceId'] ?? ''));
+            if ($eventId !== '') $encounterEventsById[$eventId] = $event;
+        }
+        $encounterEvents = array_values($encounterEventsById);
+        usort($encounterEvents, static fn(array $left, array $right): int => (int) $right['timestamp'] <=> (int) $left['timestamp']);
+        $encounterLimit = ($monthly || $customRange !== null) ? 20 : 10;
+        $recorded = 0;
+        try {
+            $encounterDb ??= radbotEncounterDb();
+            $eventIds = array_map(static fn(array $event): string => trim((string) $event['instanceId']), $encounterEvents);
+            $knownEncounterInstances = radbotLoadEncounteredInstances($encounterDb, $eventIds, $requestedGuardianTag);
+            foreach ($encounterEvents as $event) {
+                if ($recorded >= $encounterLimit) break;
+                $eventInstanceId = trim((string) $event['instanceId']);
+                if (isset($knownEncounterInstances[$eventInstanceId]) || ($latestEncounterRecorded && $latestRaidCandidate !== null && $eventInstanceId === (string) $latestRaidCandidate['instanceId'])) continue;
+                try {
+                    $eventReport = radbotBungie('/Destiny2/Stats/PostGameCarnageReport/' . rawurlencode($eventInstanceId) . '/', $apiKey);
+                    if (!is_array($eventReport['entries'] ?? null)) continue;
+                    radbotRecordPartyReport($encounterDb, $eventReport, trim((string) ($event['raid'] ?? '')) ?: 'Raid activity', (int) ($event['timestamp'] ?? 0), $requestedGuardianTag, $eventInstanceId, $apiKey);
+                    $knownEncounterInstances[$eventInstanceId] = true;
+                    $recorded++;
+                } catch (Throwable $ignored) {
+                    // One unavailable report should not prevent saving other encounters.
+                }
+            }
+        } catch (Throwable $error) {
+            error_log('ishRADbot encounter database collection failed: ' . $error->getMessage());
         }
     }
     radbotSaveDefinitionCache($definitionsCachePath, $activityDefinitionCache);

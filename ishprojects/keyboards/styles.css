@@ -1,0 +1,31 @@
+    :root{color-scheme:dark;--kb-green:#46bf46;--kb-bright:#39ff78;--kb-copy:#b8d9bd;--kb-muted:#719279;--kb-line:#174d22;--kb-panel:#030904}
+    *{box-sizing:border-box}
+    body.kb-page{min-height:100vh;margin:0;background:#000;color:var(--kb-copy);font-family:Consolas,"Lucida Console",monospace;text-align:left}
+    .kb-shell{width:min(1280px,100% - 36px);min-height:100vh;margin:0 auto;padding:18px 0 52px}
+    .kb-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 12px;border-bottom:1px dotted var(--kb-green)}
+    .kb-topbar a,.kb-topbar span{color:var(--kb-green);font:12px "Lucida Console",monospace;letter-spacing:.05em;text-decoration:none;text-transform:uppercase}
+    .kb-topbar a:hover{color:var(--kb-bright)}
+    .kb-heading{margin:28px 0 24px;color:var(--kb-green);font:clamp(40px,7vw,72px)/1 "BlueScreenV1",Consolas,monospace;letter-spacing:.025em;text-align:center}
+    .kb-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start}
+    .kb-sidebar{position:sticky;top:16px;padding:12px;border:1px solid var(--kb-line);background:#010401}
+    .kb-sidebar-title{margin:0 0 10px;color:var(--kb-muted);font-size:10px;font-weight:normal;letter-spacing:.14em;text-transform:uppercase}
+    .kb-nav{display:grid;gap:5px}
+    .kb-nav a{display:block;padding:11px 10px;border:1px solid transparent;color:var(--kb-copy);font-size:12px;line-height:1.4;text-decoration:none;transition:background .15s ease,border-color .15s ease,color .15s ease}
+    .kb-nav a:hover,.kb-nav a:focus-visible{border-color:var(--kb-line);background:#061009;color:var(--kb-bright);outline:none}
+    .kb-nav a[aria-current="page"]{border-color:#267b36;background:#07140a;color:var(--kb-bright);box-shadow:inset 3px 0 var(--kb-bright)}
+    .kb-content{min-width:0;padding:clamp(18px,4vw,38px);border:1px solid var(--kb-line);background:var(--kb-panel);box-shadow:0 0 24px rgba(39,245,73,.045)}
+    .kb-article-meta{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--kb-muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+    .kb-article-meta:before{width:20px;height:1px;background:var(--kb-bright);content:""}
+    .kb-content h2{margin:0 0 16px;color:#91e99e;font:clamp(25px,4vw,38px)/1.15 "BlueScreenV1",Consolas,monospace}
+    .kb-content h3{margin:28px 0 10px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace;letter-spacing:.04em}
+    .kb-content p{max-width:72ch;margin:0 0 15px;font-size:14px;line-height:1.85}
+    .kb-hero-figure{margin:24px 0 28px;padding:14px;border:1px solid #143d1d;background:radial-gradient(ellipse at center,#0a1b0d 0,#030804 70%)}
+    .kb-hero-figure svg{display:block;width:min(100%,760px);height:auto;margin:0 auto}
+    .kb-hero-figure figcaption{margin:10px 0 0;color:var(--kb-muted);font-size:10px;line-height:1.6;text-align:center}
+    .kb-callout{margin:22px 0 0;padding:13px 15px;border-left:2px solid var(--kb-bright);background:#061009;color:#9db8a2;font-size:12px;line-height:1.75}
+    .kb-placeholder{min-height:230px;display:grid;place-items:center;margin:22px 0;padding:24px;border:1px dashed #236031;background:linear-gradient(135deg,#030804,#07130a);color:var(--kb-muted);text-align:center}
+    .kb-placeholder strong{display:block;margin-bottom:7px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace}
+    .kb-placeholder span{font-size:11px;line-height:1.7}
+    [hidden]{display:none!important}
+    @media(max-width:720px){.kb-shell{width:calc(100% - 20px);padding-top:12px}.kb-layout{grid-template-columns:1fr;gap:12px}.kb-sidebar{position:static;padding:10px}.kb-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.kb-nav a{min-width:max-content;padding:9px}.kb-content{padding:20px 16px}.kb-content p{font-size:13px}}
+    @media(prefers-reduced-motion:reduce){.kb-nav a{transition:none}}
