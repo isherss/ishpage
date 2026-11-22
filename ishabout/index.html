@@ -95,7 +95,11 @@
     <style>
         .stuff-heading { width:fit-content;max-width:96vw;margin:8px auto 0!important;color:green;font:clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace;text-align:left;white-space:pre;overflow-x:auto; }
         @media(max-width:640px) { .stuff-heading { font-size:clamp(4px,1.65vw,10px); } }
-        .terminal-divider { display:block;width:40vw;height:4px;margin:0 auto;padding:0;background:radial-gradient(circle,#46bf46 1.4px,transparent 1.6px) left center/9px 4px repeat-x; }
+        .terminal-divider { display:block;width:40vw;height:4px;margin:0 auto 32px;padding:0;background:radial-gradient(circle,#46bf46 1.4px,transparent 1.6px) left center/9px 4px repeat-x; }
+        .about-terminal { width:min(900px,88vw);margin:0 auto;color:#b8d9bd;font:14px/1.85 Consolas,"Lucida Console",monospace;text-align:left; }
+        .about-terminal p { position:relative;margin:0 0 1em;padding-left:1.2em; }
+        .about-terminal p:before { position:absolute;left:0;color:#39ff78;content:">"; }
+        @media(max-width:640px) { .about-terminal { width:94vw;font-size:13px; } }
     </style>
 </head>
 <!-- <div> -->
@@ -114,9 +118,8 @@
 </pre>
     <!-- top row button links -->
         <p class="page-navigation" style="color: green;display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,22px);margin:0!important;padding:0;">
-            <a href="/" aria-label="Home" style="display:flex;flex-direction:column;align-items:center;font-size:clamp(15px,3vw,42px);line-height:1;text-decoration:none;">
-                <span aria-hidden="true" style="position:relative;display:inline-block;flex:0 0 2.3em;width:2.3em;height:1em;font-size:clamp(15px,3vw,42px);line-height:1;vertical-align:middle;"><span style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.24);font-family:"Lucida Console",monospace!important;font-size:inherit!important;line-height:1!important;color:#46bf46;white-space:pre;text-align:left;'>
-  ____||____
+            <a href="/" aria-label="Home" style="display:flex;flex-direction:column;align-items:center;font-size:clamp(12px,2vw,28px)!important;line-height:1;text-decoration:none;">
+                <span aria-hidden="true" style="position:relative;display:inline-block;flex:0 0 2.3em;width:2.3em;height:1em;font-size:clamp(12px,2vw,28px)!important;line-height:1;vertical-align:middle;"><span style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.24);font-family:"Lucida Console",monospace!important;font-size:inherit!important;line-height:1!important;color:#46bf46;white-space:pre;text-align:left;'>
  ///////////\
 ///////////  \
 |    _    |  |
@@ -124,11 +127,11 @@
 |   | |   |  |
 time to go home!</span></span>
             </a>
-            <span style='font-family: "BlueScreenV1";line-height:1;font-size: 3vw;display: inline-block;text-align: center;color:#46bf46;'>
+            <span style='font-family: "BlueScreenV1";line-height:1;font-size:clamp(12px,2vw,28px)!important;display: inline-block;text-align: center;color:#46bf46;'>
 about
             </span>
             <a href="/ishStuff">
-                <span style='font-family: "BlueScreenV1";line-height:1;font-size: 3vw;display: inline-block;text-align: center;'>
+                <span style='font-family: "BlueScreenV1";line-height:1;font-size:clamp(12px,2vw,28px)!important;display: inline-block;text-align: center;'>
 stuff
                 </span>
             </a>
@@ -137,22 +140,15 @@ stuff
     <!-- end button links -->
 
     <!-- Text -->
-        <div class="what">
-            <span style='font-family: "BlueScreenV1";font-size: 2vw; display: inline-block; text-align: center;'>
-                <!-- Main Body of text-->
-                Hello webpage browser!
-                <br><br>
-                I'm <strong>Ish</strong>! Currently, I am a Transportation Engineer... I do things like designing highways, bus shelters, and drainage systems in various computer aided design (CAD) softwares!
-                In my spare time, I like tinkering with tech like mechanical keyboards, cassette decks, and computers! Check out some of my ishStuff :]
-                <br><br>
-                <br><br>
-                <br><br>
-                ヽ(*・ω・)ﾉ
-            </span>
-            <span style='font-family: "BlueScreenV1";font-size: 1vw; display: inline-block; text-align: center;'>
+        <div class="what about-terminal">
+            <p>Hello webpage browser!</p>
+            <p>I'm <strong>Ish</strong>! Currently, I am a Transportation Engineer... I do things like designing highways, bus shelters, and drainage systems in various computer aided design (CAD) softwares!</p>
+            <p>In my spare time, I like tinkering with tech like mechanical keyboards, cassette decks, and computers! Check out some of my ishStuff :]</p>
+            <div style="margin:12px 0;text-align:center;"><span style='font-family: "BlueScreenV1";font-size: 2vw; display: inline-block; text-align: center;'>ヽ(*・ω・)ﾉ</span></div>
+            <div style="text-align:center;"><span style='font-family: "BlueScreenV1";font-size: 1vw; display: inline-block; text-align: center;'>
                 <br>
                 contact me if you have my contact already
-            </span>
+            </span></div>
         </div>
 
     <!-- script src attribute -->
