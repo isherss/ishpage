@@ -21,7 +21,7 @@
       width: min(1000px, 88vw);
       font-family: "Lucida Console", monospace;
       text-align: left;
-      margin: 1rem auto 4rem;
+      margin: 2.5rem auto 4rem;
     }
     .project-card {
       position: relative;
@@ -45,12 +45,14 @@
     .project-card h2 {
       margin: 0;
       color: #46bf46;
-      font: 18px "BlueScreenV1", monospace;
+      font: 14px "Lucida Console", monospace;
       letter-spacing: .05em;
       text-transform: none;
     }
     .project-card p { margin: 6px 0 0; font-size: 13px; line-height: 1.65; }
     .project-card-hint { display: block; margin-top: 4px; color: #679477; font-size: 10px; }
+    body.ish-subpage .project-card h2.page-title { font-size:14px!important; }
+    .terminal-divider { display:block;width:40vw;height:4px;margin:0 auto;padding:0;background:radial-gradient(circle,#46bf46 1.4px,transparent 1.6px) left center/9px 4px repeat-x; }
     .stuff-heading { width:fit-content;max-width:96vw;margin:8px auto 0!important;color:green;font:clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace;text-align:left;white-space:pre;overflow-x:auto; }
     @media(max-width:640px) { .stuff-heading { font-size:clamp(4px,1.65vw,10px); } }
   </style>
@@ -86,9 +88,7 @@ about
 stuff
               </span>
       </p>
-  <span style="display:block;width:40vw;height:0;margin:0 auto;padding:0;border-top:1px dotted green;line-height:0;">
-
-  </span>
+  <span class="terminal-divider" aria-hidden="true"></span>
   <!-- end button links -->
 
   <!-- text -->
