@@ -7,15 +7,17 @@
     .kb-topbar a:hover{color:var(--kb-bright)}
     .kb-heading{margin:28px 0 24px;color:var(--kb-green);font:clamp(40px,7vw,72px)/1 "BlueScreenV1",Consolas,monospace;letter-spacing:.025em;text-align:center}
     .kb-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;align-items:start}
-    .kb-sidebar{position:sticky;top:16px;padding:12px;border:1px solid var(--kb-line);background:#010401}
-    .kb-sidebar-title{margin:0 0 10px;color:var(--kb-muted);font-size:10px;font-weight:normal;letter-spacing:.14em;text-transform:uppercase}
-    .kb-nav{display:grid;gap:5px}
-    .kb-nav a{display:block;padding:11px 10px;border:1px solid transparent;color:var(--kb-copy);font-size:12px;line-height:1.4;text-decoration:none;transition:background .15s ease,border-color .15s ease,color .15s ease}
-    .kb-nav a:hover,.kb-nav a:focus-visible{border-color:var(--kb-line);background:#061009;color:var(--kb-bright);outline:none}
-    .kb-nav a[aria-current="page"]{border-color:#267b36;background:#07140a;color:var(--kb-bright);box-shadow:inset 3px 0 var(--kb-bright)}
-    .kb-content{min-width:0;padding:clamp(18px,4vw,38px);border:1px solid var(--kb-line);background:var(--kb-panel);box-shadow:0 0 24px rgba(39,245,73,.045)}
-    .kb-article-meta{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--kb-muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase}
-    .kb-article-meta:before{width:20px;height:1px;background:var(--kb-bright);content:""}
+    .kb-sidebar{position:sticky;top:16px;padding:12px 0;border:0;background:#000}
+    .kb-sidebar-title{display:none}
+    .kb-nav{display:grid;gap:8px}
+    .kb-nav a{position:relative;display:block;padding:4px 0 4px 1.25em;border:0;background:transparent;color:var(--kb-copy);font-size:12px;line-height:1.5;text-decoration:none;transition:color .15s ease}
+    .kb-nav a:before{position:absolute;left:0;color:var(--kb-bright);content:">";opacity:0}
+    .kb-nav a:hover,.kb-nav a:focus-visible{background:transparent;color:var(--kb-bright);outline:none}
+    .kb-nav a[aria-current="page"]{border:0;background:transparent;color:var(--kb-bright);box-shadow:none}
+    .kb-nav a[aria-current="page"]:before{opacity:1}
+    .kb-content{min-width:0;padding:10px 0 10px clamp(22px,3vw,38px);border:0;border-left:1px dotted var(--kb-green);background:transparent;box-shadow:none}
+    .kb-article-meta{display:flex;align-items:center;gap:6px;margin:0 0 14px;color:var(--kb-muted);font-size:10px;letter-spacing:.08em}
+    .kb-article-meta:before{width:auto;height:auto;background:none;color:var(--kb-bright);content:"> man"}
     .kb-content h2{margin:0 0 16px;color:#91e99e;font:clamp(25px,4vw,38px)/1.15 "BlueScreenV1",Consolas,monospace}
     .kb-content h3{margin:28px 0 10px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace;letter-spacing:.04em}
     .kb-content p{width:100%;margin:0 0 15px;font-size:14px;line-height:1.85}
@@ -35,5 +37,5 @@
     .kb-placeholder strong{display:block;margin-bottom:7px;color:var(--kb-green);font:18px "BlueScreenV1",Consolas,monospace}
     .kb-placeholder span{font-size:11px;line-height:1.7}
     [hidden]{display:none!important}
-    @media(max-width:720px){.kb-shell{width:calc(100% - 20px);padding-top:12px}.kb-layout{grid-template-columns:1fr;gap:12px}.kb-sidebar{position:static;padding:10px}.kb-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.kb-nav a{min-width:max-content;padding:9px}.kb-content{padding:20px 16px}.kb-content p{font-size:13px}.kb-photo{padding:5px;max-width:calc(100% - 24px)}.kb-photo-gallery{grid-template-columns:1fr;gap:10px;padding:0 6px}}
+    @media(max-width:720px){.kb-shell{width:calc(100% - 20px);padding-top:12px}.kb-layout{grid-template-columns:1fr;gap:12px}.kb-sidebar{position:static;padding:10px}.kb-nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}.kb-nav a{min-width:max-content;padding:9px}.kb-content{padding:18px 0 0;border-left:0;border-top:1px dotted var(--kb-green)}.kb-content p{font-size:13px}.kb-photo{padding:5px;max-width:calc(100% - 24px)}.kb-photo-gallery{grid-template-columns:1fr;gap:10px;padding:0 6px}}
     @media(prefers-reduced-motion:reduce){.kb-nav a{transition:none}}

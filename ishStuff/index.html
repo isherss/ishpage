@@ -15,42 +15,43 @@
   <style>
     /* Project descriptions: edit the PROJECT_CARDS array below. */
     .project-card-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-      gap: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
       width: min(1000px, 88vw);
       font-family: "Lucida Console", monospace;
       text-align: left;
       margin: 1rem auto 4rem;
     }
     .project-card {
+      position: relative;
       display: block;
       text-align: left;
-      min-height: 110px;
-      padding: 16px;
-      border: 1px solid #145214;
-      background: #020803;
+      min-height: 0;
+      padding: 0 0 0 1.3em;
+      border: 0;
+      background: transparent;
       color: #a7ffbb;
       text-decoration: none;
-      transition: border-color .15s ease, background .15s ease, transform .15s ease;
+      transition: color .15s ease;
     }
     .project-card:link, .project-card:visited { color: #a7ffbb; }
     .project-card:hover, .project-card:focus-visible {
-      border-color: #27f549;
-      background: #041006;
-      transform: translateY(-2px);
-      outline: none;
+      color: #39ff78;
+      outline: 1px dotted #174d22;
+      outline-offset: 4px;
     }
+    .project-card:before { position:absolute;left:0;color:#39ff78;content:">"; }
     .project-card h2 {
       margin: 0;
       color: #46bf46;
       font: 18px "BlueScreenV1", monospace;
       letter-spacing: .05em;
-      text-transform: uppercase;
+      text-transform: none;
     }
-    .project-card p { margin: 11px 0 0; font-size: 13px; line-height: 1.65; }
-    .project-card-hint { display: block; margin-top: 12px; color: #679477; font-size: 10px; }
-    .stuff-heading { width:fit-content;max-width:96vw;margin:24px auto 0;color:green;font:clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace;text-align:left;white-space:pre;overflow-x:auto; }
+    .project-card p { margin: 6px 0 0; font-size: 13px; line-height: 1.65; }
+    .project-card-hint { display: block; margin-top: 4px; color: #679477; font-size: 10px; }
+    .stuff-heading { width:fit-content;max-width:96vw;margin:8px auto 0!important;color:green;font:clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace;text-align:left;white-space:pre;overflow-x:auto; }
     @media(max-width:640px) { .stuff-heading { font-size:clamp(4px,1.65vw,10px); } }
   </style>
   <link rel="icon" href="/files/favicon.ico">
@@ -68,7 +69,7 @@
   <!-- top row button links -->
       <p class="page-navigation" style="color: green;display:flex;align-items:center;justify-content:center;gap:clamp(10px,2vw,22px);margin:0!important;padding:0;">
         <a href="/" aria-label="Home" style="display:flex;flex-direction:column;align-items:center;font-size:clamp(15px,3vw,42px);line-height:1;text-decoration:none;">
-          <span aria-hidden="true" style="position:relative;display:inline-block;flex:0 0 2.7em;width:2.7em;height:1.12em;font-size:clamp(15px,3vw,42px);line-height:1;vertical-align:middle;"><span style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.28);font-family:"Lucida Console",monospace!important;font-size:inherit!important;line-height:1!important;color:#46bf46;white-space:pre;text-align:left;'>
+          <span aria-hidden="true" style="position:relative;display:inline-block;flex:0 0 2.3em;width:2.3em;height:1em;font-size:clamp(15px,3vw,42px);line-height:1;vertical-align:middle;"><span style='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.24);font-family:"Lucida Console",monospace!important;font-size:inherit!important;line-height:1!important;color:#46bf46;white-space:pre;text-align:left;'>
  ///////////\
 ///////////  \
 |    _    |  |
@@ -85,7 +86,7 @@ about
 stuff
               </span>
       </p>
-  <span style="border-top-style: dotted;border-color: green;padding-right: 20vw;padding-left: 20vw;">
+  <span style="display:block;width:40vw;height:0;margin:0 auto;padding:0;border-top:1px dotted green;line-height:0;">
 
   </span>
   <!-- end button links -->
