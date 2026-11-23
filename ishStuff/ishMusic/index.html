@@ -4,10 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Album recommendations from Ish.">
-  <link rel="stylesheet" type="text/css" href="/files/default.css?v=20261030-fit-width">
+  <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
+  <link rel="stylesheet" href="/ishStuff/keyboards/styles.css?v=20261123-music-layout">
   <title>ishMusic — ishStuff</title>
   <link rel="icon" href="/files/favicon.ico">
   <style>
+    body.kb-page{ text-align:left; }
+    .music-content{width:100%;max-width:none;margin:0;color:#a7ffbb;font:13px/1.6 "Lucida Console","Courier New",monospace;text-align:left}
+    .music-panel-title{margin:0 0 16px;color:#91e99e;font:clamp(25px,4vw,38px)/1.15 "BlueScreenV1",Consolas,monospace}
+    .music-panel[hidden]{display:none!important}
+    .spotify-card{padding:18px;border:1px solid #145214;background:#010401;box-shadow:0 0 18px rgba(39,245,73,.06)}
+    .spotify-card p{margin:0 0 16px;color:#9db8a3;line-height:1.8}
+    .spotify-connect{display:inline-block;padding:10px 14px;border:1px solid #27f549;background:#020803;color:#a7ffbb;font:12px "Lucida Console",monospace;text-decoration:none}
+    .spotify-connect:hover,.spotify-connect:focus-visible{background:#06200a;color:#39ff78;outline:1px solid #46bf46}
+    .spotify-result{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;align-items:center}
+    .spotify-result img{display:block;width:120px;aspect-ratio:1;object-fit:cover;border:1px solid #145214;filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
+    .spotify-result h3{margin:0 0 8px;color:#46bf46;font:clamp(22px,3vw,34px)/1.2 "BlueScreenV1",Consolas,monospace}
+    .spotify-result p{margin:0;color:#719279;font-size:11px}
+    .spotify-status{color:#679477;font-size:11px}
+    @media(max-width:720px){.spotify-result{grid-template-columns:80px minmax(0,1fr);gap:12px}.spotify-result img{width:80px}}
+    .kb-content .music-content{width:100%;max-width:100%;min-width:0;margin:0}
+    @media(max-width:720px){.kb-content .music-content{width:100%;max-width:100%;min-width:0;margin:0}}
     body { background: #000; color: #46bf46; text-align: center; }
     .music-content {
       width: min(1100px, 90vw);
@@ -16,24 +33,6 @@
       font: 13px/1.6 "Lucida Console", "Courier New", monospace;
       text-align: left;
     }
-    .favorite-song { display:grid; grid-template-columns:1fr; gap:16px; align-items:center; margin:0 0 22px; padding:14px; border:1px solid #145214; background:#010401; box-shadow:0 0 18px rgba(39,245,73,.06); }
-    .favorite-song h2 { margin:0 0 10px; color:#46bf46; font:16px "BlueScreenV1", "Lucida Console", monospace; letter-spacing:.04em; text-transform:uppercase; }
-    .favorite-player-frame { width:160px; height:90px; border:1px solid #145214; background:#000; }
-    .favorite-player-frame iframe { display:block; width:100%; height:100%; border:0; }
-    .favorite-song-controls { display:grid; grid-template-columns:auto minmax(100px,1fr) auto; gap:10px; align-items:center; }
-    .favorite-song-button { min-height:36px; padding:7px 12px; border:1px solid #27f549; border-radius:0; background:#020803; color:#a7ffbb; font:12px "Lucida Console", monospace; cursor:pointer; }
-    .favorite-song-button:hover,.favorite-song-button:focus-visible { background:#06200a; outline:1px solid #46bf46; }
-    .favorite-waveform { width:100%; height:42px; display:block; color:#27f549; cursor:pointer; touch-action:none; user-select:none; }
-    .favorite-waveform:focus-visible { outline:1px solid #46bf46; outline-offset:2px; }
-    .favorite-volume { display:flex; align-items:center; gap:7px; color:#679477; font-size:10px; white-space:nowrap; }
-    .favorite-volume input { width:90px; height:16px; margin:0; appearance:none; -webkit-appearance:none; background:transparent; cursor:pointer; }
-    .favorite-volume input::-webkit-slider-runnable-track { height:6px; border:1px solid #145214; background:#06200a; }
-    .favorite-volume input::-moz-range-track { height:6px; border:1px solid #145214; background:#06200a; }
-    .favorite-volume input::-webkit-slider-thumb { width:14px; height:14px; margin-top:-5px; appearance:none; -webkit-appearance:none; border:1px solid #27f549; border-radius:0; background:#000; box-shadow:0 0 7px #27f549; }
-    .favorite-volume input::-moz-range-thumb { width:12px; height:12px; border:1px solid #27f549; border-radius:0; background:#000; box-shadow:0 0 7px #27f549; }
-    .favorite-volume input:focus-visible { outline:1px solid #46bf46; outline-offset:3px; }
-    .favorite-song-time { grid-column:2; display:flex; justify-content:space-between; color:#679477; font-size:10px; }
-    @media (max-width:640px) { .favorite-song { grid-template-columns:1fr; } .favorite-player-frame { width:100%; height:auto; aspect-ratio:16/9; } .favorite-song-controls { grid-template-columns:auto minmax(40px,1fr); } .favorite-volume { grid-column:1/-1; } .favorite-song-time { grid-column:1; } }
     .album-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .album-status { color: #679477; font-size: 11px; }
     .album-search {
@@ -63,75 +62,89 @@
       .album-table { table-layout:fixed; }
       .album-table th,.album-table td { min-width:0!important; padding:8px 6px; overflow-wrap:anywhere; }
       .table-frame { width:100%; max-width:100%; overflow-x:hidden; }
-      .favorite-song { min-width:0; }
     }
   </style>
 </head>
-<body class="ish-subpage">
-  <span class="page-title" style="font-family:'BlueScreenV1';line-height:80%;font-size:10vw;display:inline-block;color:green;">ishMusic</span>
-  <br><br>
-  <span>
-    <a href="/" aria-label="Home"><img src="/images/house.png" alt="Home" style="height:3vw;width:3vw;" onmouseover="this.src='/images/househover.png'" onmouseout="this.src='/images/house.png'"></a>
-    <p class="page-navigation" style="color:green;">
-      <a href="/ishabout"><span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;margin-right:2vw;'>about</span></a>
-      <a href="/ishStuff/"><span style='font-family:"BlueScreenV1";line-height:.2vw;font-size:3vw;display:inline-block;text-align:center;'>ishStuff</span></a>
-    </p>
-  </span>
-  <br>
-  <span style="border-top-style:dotted;border-color:green;padding-right:20vw;padding-left:20vw;"></span>
+<body class="kb-page">
+  <main class="kb-shell">
+    <nav class="kb-topbar" aria-label="Site navigation">
+      <a href="/ishStuff/">← ishStuff</a>
+      <h1 class="kb-heading page-title">ishMusic</h1>
+      <a href="/">Home</a>
+    </nav>
 
-  <main class="music-content">
-    <section class="favorite-song" aria-labelledby="favoriteSongTitle">
-      <audio id="favoriteSongAudio" preload="metadata" src="/files/IshMusic/JACKIE%27S%20BOX%20-%20FNAF%20MIMIC%20SONG%20(Secret%20Of%20The%20Mimic%20Original%20Song).mp3"></audio>
-      <div>
-        <h2 id="favoriteSongTitle">Listen to my favorite song</h2>
-        <div class="favorite-song-controls">
-          <button class="favorite-song-button" id="favoriteSongToggle" type="button" aria-label="Play favorite song" disabled>▶ PLAY</button>
-          <canvas class="favorite-waveform" id="favoriteSongWaveform" role="slider" tabindex="0" aria-label="Seek through favorite song" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0" aria-valuetext="0:00 of 0:00" width="720" height="84"></canvas>
-          <label class="favorite-volume"><span>VOL</span><input id="favoriteSongVolume" type="range" min="0" max="100" value="70" aria-label="Favorite song volume" disabled><span id="favoriteSongVolumeValue">70%</span></label>
-          <div class="favorite-song-time"><span id="favoriteSongElapsed">0:00</span><span id="favoriteSongDuration">0:00</span></div>
-        </div>
-      </div>
-    </section>
-<div class="album-tools">
-      <span class="album-status" id="albumStatus" role="status">[ LOADING ALBUM RECOMMENDATIONS… ]</span>
-      <input class="album-search" id="albumSearch" type="search" placeholder="Filter albums, artists, notes…" aria-label="Filter album recommendations" disabled>
-    </div>
-    <div class="table-frame">
-      <table class="album-table" aria-label="Album recommendations">
-        <thead><tr id="albumHeaders"></tr></thead>
-        <tbody id="albumRows"><tr><td class="empty-state">Reading album recs.xlsx…</td></tr></tbody>
-      </table>
+    <div class="kb-layout">
+      <aside class="kb-sidebar" aria-label="Music pages">
+        <h2 class="kb-sidebar-title">Pages</h2>
+        <nav class="kb-nav" id="musicNav">
+          <a href="#albums" data-page="albums" aria-current="page">albumRecommendations</a>
+          <a href="#spotifyArtist" data-page="spotifyArtist">spotifyArtist</a>
+        </nav>
+      </aside>
+
+      <article class="kb-content" id="musicArticle" aria-live="polite">
+        <section class="music-panel" id="albums" data-page-panel>
+          <p class="kb-article-meta">albumRecommendations</p>
+          <h2 class="music-panel-title">Album Recommendations</h2>
+          <div class="music-content">
+            <div class="album-tools">
+              <span class="album-status" id="albumStatus" role="status">[ LOADING ALBUM RECOMMENDATIONS… ]</span>
+              <input class="album-search" id="albumSearch" type="search" placeholder="Filter albums, artists, notes…" aria-label="Filter album recommendations" disabled>
+            </div>
+            <div class="table-frame">
+              <table class="album-table" aria-label="Album recommendations">
+                <thead><tr id="albumHeaders"></tr></thead>
+                <tbody id="albumRows"><tr><td class="empty-state">Reading album recs.xlsx…</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="music-panel" id="spotifyArtist" data-page-panel hidden>
+          <p class="kb-article-meta">spotifyArtist</p>
+          <h2 class="music-panel-title">Most Played Artist · Past 7 Days</h2>
+          <div class="music-content">
+            <div class="spotify-card" id="spotifyArtistCard" aria-live="polite">
+              <p class="spotify-status" id="spotifyArtistStatus">Loading Spotify listening history…</p>
+            </div>
+          </div>
+        </section>
+      </article>
     </div>
   </main>
-    <script>
+  <script>
     (() => {
-      const audio=document.getElementById("favoriteSongAudio"), button=document.getElementById("favoriteSongToggle"), volume=document.getElementById("favoriteSongVolume"), volumeValue=document.getElementById("favoriteSongVolumeValue"), canvas=document.getElementById("favoriteSongWaveform"), ctx=canvas.getContext("2d"), elapsed=document.getElementById("favoriteSongElapsed"), duration=document.getElementById("favoriteSongDuration");
-      const bars=Array.from({length:72},(_,i)=>.18+Math.abs(Math.sin(i*12.9898)*Math.cos(i*4.1414))*.82);
-      let ready=false;
-      function formatTime(seconds){seconds=Math.max(0,Math.floor(seconds||0));return Math.floor(seconds/60)+":"+String(seconds%60).padStart(2,"0");}
-      function drawWave(progress=0){const w=canvas.width,h=canvas.height,mid=h/2,barWidth=5,gap=5;ctx.clearRect(0,0,w,h);bars.forEach((level,i)=>{const x=i*(barWidth+gap),amp=level*(h*.42),active=(i/(bars.length-1))<=progress;ctx.fillStyle=active?"#46bf46":"#145214";ctx.fillRect(x,mid-amp,barWidth,amp*2);});if(progress>0&&progress<1){const x=progress*w;ctx.fillStyle="#a7ffbb";ctx.fillRect(x-1,4,2,h-8);}}
-      function updateSeek(time,total){const current=Math.max(0,Math.min(time,total||0));elapsed.textContent=formatTime(current);duration.textContent=formatTime(total);canvas.setAttribute("aria-valuemax",String(Math.floor(total||0)));canvas.setAttribute("aria-valuenow",String(Math.floor(current)));canvas.setAttribute("aria-valuetext",formatTime(current)+" of "+formatTime(total));drawWave(total?current/total:0);}
-      function seekFromPointer(event){if(!ready)return;const rect=canvas.getBoundingClientRect(),ratio=Math.max(0,Math.min(1,(event.clientX-rect.left)/rect.width)),total=audio.duration;if(!total)return;const target=ratio*total;audio.currentTime=target;updateSeek(target,total);}
-      function updateButton(){const playing=!audio.paused&&!audio.ended;button.textContent=playing?"Ⅱ PAUSE":"▶ PLAY";button.setAttribute("aria-label",playing?"Pause favorite song":"Play favorite song");}
-      drawWave();
-      canvas.addEventListener("pointerdown",event=>{if(!ready)return;event.preventDefault();canvas.setPointerCapture(event.pointerId);seekFromPointer(event);});
-      canvas.addEventListener("pointermove",event=>{if(ready&&canvas.hasPointerCapture(event.pointerId))seekFromPointer(event);});
-      canvas.addEventListener("keydown",event=>{if(!ready)return;const total=audio.duration,current=audio.currentTime;let target=current;if(event.key==="ArrowRight")target=current+5;else if(event.key==="ArrowLeft")target=current-5;else if(event.key==="PageUp")target=current+15;else if(event.key==="PageDown")target=current-15;else if(event.key==="Home")target=0;else if(event.key==="End")target=total;else return;event.preventDefault();target=Math.max(0,Math.min(total,target));audio.currentTime=target;updateSeek(target,total);});
-      audio.addEventListener("loadedmetadata",()=>{ready=true;button.disabled=false;volume.disabled=false;updateSeek(0,audio.duration);});
-      audio.addEventListener("timeupdate",()=>updateSeek(audio.currentTime,audio.duration));
-      audio.addEventListener("play",updateButton);
-      audio.addEventListener("pause",updateButton);
-      audio.addEventListener("ended",()=>{updateButton();updateSeek(0,audio.duration);});
-      audio.addEventListener("error",()=>{button.disabled=true;duration.textContent="AUDIO UNAVAILABLE";});
-      audio.volume=Number(volume.value)/100;
-      button.addEventListener("click",()=>{if(!ready)return;if(audio.paused)audio.play().catch(()=>{});else audio.pause();});
-      volume.addEventListener("input",()=>{const value=Number(volume.value);volumeValue.textContent=value+"%";audio.volume=value/100;});
+      const nav=[...document.querySelectorAll("#musicNav a[data-page]")];
+      const panels=[...document.querySelectorAll("[data-page-panel]")];
+      function showMusicPage(id,updateHistory=false){const panel=document.getElementById(id);const link=nav.find(item=>item.dataset.page===id);if(!panel||!link)return showMusicPage("albums");panels.forEach(item=>{item.hidden=item!==panel});nav.forEach(item=>{if(item===link)item.setAttribute("aria-current","page");else item.removeAttribute("aria-current")});if(updateHistory)history.replaceState(null,"","#"+id)}
+      nav.forEach(link=>link.addEventListener("click",event=>{event.preventDefault();showMusicPage(link.dataset.page,true)}));
+      window.addEventListener("hashchange",()=>showMusicPage(location.hash.slice(1)||"albums"));
+      showMusicPage(location.hash.slice(1)||"albums");
     })();
   </script>
 
   <script src="/ishScript.js"></script>
   <script>
+    async function loadSpotifyArtist(){
+      const card=document.getElementById("spotifyArtistCard");
+      const status=document.getElementById("spotifyArtistStatus");
+      try{
+        const response=await fetch("/ishStuff/ishMusic/spotify.php?action=artist",{cache:"no-store"});
+        const data=await response.json();
+        if(data.connected===false){status.textContent="Spotify has not been connected yet.";const link=document.createElement("a");link.className="spotify-connect";link.href="/ishStuff/ishMusic/spotify.php?action=connect";link.textContent="CONNECT NAT_LYISH SPOTIFY";card.append(link);return;}
+        if(!response.ok||data.error)throw new Error(data.error||"Spotify is temporarily unavailable.");
+        if(!data.artist){status.textContent="No recently played tracks were returned for the past seven days.";return;}
+        card.replaceChildren();
+        const layout=document.createElement("div");layout.className="spotify-result";
+        if(data.image){const image=document.createElement("img");image.src=data.image;image.alt="";layout.append(image);}
+        const details=document.createElement("div");
+        const name=document.createElement("h3");name.textContent=data.artist;
+        const count=document.createElement("p");count.textContent=`${data.plays} plays in the returned history · updated ${new Date(data.updated).toLocaleString()}`;
+        details.append(name,count);layout.append(details);card.append(layout);
+      }catch(error){status.textContent=error.message||"Could not load Spotify listening history.";}
+    }
+    loadSpotifyArtist();
+
     // Source of truth: /files/IshMusic/album recs.xlsx. Save the workbook and reload this page to refresh the table.
     const WORKBOOK_URL = "/files/IshMusic/album%20recs.xlsx";
     const statusEl = document.getElementById("albumStatus");
