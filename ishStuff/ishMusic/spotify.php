@@ -52,6 +52,11 @@ function readSavedToken(): array
     return is_array($token) ? $token : [];
 }
 
+function spotifyAccountIsBound(): bool
+{
+    return !empty(readSavedToken()['refresh_token']);
+}
+
 function saveToken(array $token): void
 {
     $directory = dirname(tokenPath());
@@ -140,6 +145,10 @@ function finishCallback(): void
         http_response_code(400);
         exit('Spotify authorization could not be verified. Return to ishMusic and try again.');
     }
+    if (spotifyAccountIsBound()) {
+        header('Location: /ishStuff/ishMusic/#spotifyArtist', true, 303);
+        exit;
+    }
     if (clientSecret() === '') {
         http_response_code(500);
         exit('The site administrator must configure ISHPAGE_SPOTIFY_CLIENT_SECRET on the server.');
@@ -162,16 +171,30 @@ function finishCallback(): void
         $reason = (string) ($response['error_description'] ?? $response['error'] ?? ('HTTP ' . $status));
         exit('Spotify could not complete authorization: ' . htmlspecialchars($reason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '. Check the client credentials and redirect URI.');
     }
+    $lockHandle = @fopen(tokenPath() . '.lock', 'c');
+    if ($lockHandle === false || !flock($lockHandle, LOCK_EX)) {
+        if (is_resource($lockHandle)) {
+            fclose($lockHandle);
+        }
+        http_response_code(500);
+        exit('The site could not lock the Spotify account binding.');
+    }
     try {
-        saveToken([
-            'access_token' => $response['access_token'],
-            'refresh_token' => $response['refresh_token'],
-            'expires_at' => time() + (int) ($response['expires_in'] ?? 3600),
-        ]);
+        if (!spotifyAccountIsBound()) {
+            saveToken([
+                'access_token' => $response['access_token'],
+                'refresh_token' => $response['refresh_token'],
+                'expires_at' => time() + (int) ($response['expires_in'] ?? 3600),
+            ]);
+        }
     } catch (Throwable $error) {
+        flock($lockHandle, LOCK_UN);
+        fclose($lockHandle);
         http_response_code(500);
         exit('Spotify connected, but the site could not securely save the refresh token.');
     }
+    flock($lockHandle, LOCK_UN);
+    fclose($lockHandle);
     header('Location: /ishStuff/ishMusic/#spotifyArtist', true, 303);
     exit;
 }
@@ -292,6 +315,10 @@ if ($action === 'connect') {
     if (clientSecret() === '') {
         http_response_code(503);
         exit('The site administrator must configure ISHPAGE_SPOTIFY_CLIENT_SECRET on the server before connecting Spotify.');
+    }
+    if (spotifyAccountIsBound()) {
+        header('Location: /ishStuff/ishMusic/#spotifyArtist', true, 303);
+        exit;
     }
     $state = bin2hex(random_bytes(24));
     $_SESSION['spotify_oauth_state'] = $state;
