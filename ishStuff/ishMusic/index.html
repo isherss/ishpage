@@ -131,7 +131,7 @@
       try{
         const response=await fetch("/ishStuff/ishMusic/spotify.php?action=artist",{cache:"no-store"});
         const data=await response.json();
-        if(data.connected===false){status.textContent="Spotify has not been connected yet.";const link=document.createElement("a");link.className="spotify-connect";link.href="/ishStuff/ishMusic/spotify.php?action=connect";link.textContent="CONNECT NAT_LYISH SPOTIFY";card.append(link);return;}
+        if(data.connected===false){status.textContent=data.configured===false?"Spotify is ready to connect once spotify-config.php is installed in rngmine/private.":"Spotify has not been connected yet.";const link=document.createElement("a");link.className="spotify-connect";link.href="/ishStuff/ishMusic/spotify.php?action=connect";link.textContent="CONNECT NAT_LYISH SPOTIFY";card.append(link);return;}
         if(!response.ok||data.error)throw new Error(data.error||"Spotify is temporarily unavailable.");
         if(!data.artist){status.textContent="No recently played tracks were returned for the past seven days.";return;}
         card.replaceChildren();

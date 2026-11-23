@@ -247,7 +247,7 @@ $action = (string) ($_GET['action'] ?? 'callback');
 
 if ($action === 'artist') {
     if (clientSecret() === '') {
-        jsonResponse(['configured' => false, 'error' => 'Spotify server credentials are not configured.'], 503);
+        jsonResponse(['connected' => false, 'configured' => false]);
     }
     getArtistSummary();
 }
