@@ -82,8 +82,11 @@ function clientSecret(): string
     $privateConfigPath = dirname(__DIR__, 2) . '/rngmine/private/spotify-config.php';
     if (is_file($privateConfigPath)) {
         $privateConfig = require $privateConfigPath;
-        if (is_array($privateConfig) && !empty($privateConfig['spotify_client_secret'])) {
-            return trim((string) $privateConfig['spotify_client_secret']);
+        if (is_array($privateConfig)) {
+            $configuredSecret = $privateConfig['client_secret'] ?? $privateConfig['spotify_client_secret'] ?? '';
+            if (is_string($configuredSecret) && trim($configuredSecret) !== '') {
+                return trim($configuredSecret);
+            }
         }
     }
     return '';
@@ -156,7 +159,8 @@ function finishCallback(): void
     );
     if ($status < 200 || $status >= 300 || empty($response['access_token']) || empty($response['refresh_token'])) {
         http_response_code(502);
-        exit('Spotify could not complete authorization. Check the client credentials and redirect URI.');
+        $reason = (string) ($response['error_description'] ?? $response['error'] ?? ('HTTP ' . $status));
+        exit('Spotify could not complete authorization: ' . htmlspecialchars($reason, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '. Check the client credentials and redirect URI.');
     }
     try {
         saveToken([
