@@ -78,9 +78,8 @@ function clientSecret(): string
         return trim($secret);
     }
 
-    // Hostinger shared PHP hosting does not expose Node.js app variables to PHP.
-    // Allow an optional secret file in the account directory above public_html.
-    $privateConfigPath = dirname(__DIR__, 3) . '/spotify-config.php';
+    // Keep the Spotify secret beside the other server-side API keys.
+    $privateConfigPath = dirname(__DIR__, 2) . '/rngmine/private/spotify-config.php';
     if (is_file($privateConfigPath)) {
         $privateConfig = require $privateConfigPath;
         if (is_array($privateConfig) && !empty($privateConfig['spotify_client_secret'])) {

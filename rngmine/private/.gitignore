@@ -2,6 +2,7 @@ config.php
 accounts.php
 bungie.php
 raidhub.php
+spotify-config.php
 ishradbot-cache.json
 ishradbot-cache-*.json
 ishradbot-cache-*.json.lock
