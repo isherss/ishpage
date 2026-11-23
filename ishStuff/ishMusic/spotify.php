@@ -74,7 +74,20 @@ function saveToken(array $token): void
 function clientSecret(): string
 {
     $secret = getenv('ISHPAGE_SPOTIFY_CLIENT_SECRET');
-    return is_string($secret) ? trim($secret) : '';
+    if (is_string($secret) && trim($secret) !== '') {
+        return trim($secret);
+    }
+
+    // Hostinger shared PHP hosting does not expose Node.js app variables to PHP.
+    // Allow an optional secret file in the account directory above public_html.
+    $privateConfigPath = dirname(__DIR__, 3) . '/spotify-config.php';
+    if (is_file($privateConfigPath)) {
+        $privateConfig = require $privateConfigPath;
+        if (is_array($privateConfig) && !empty($privateConfig['spotify_client_secret'])) {
+            return trim((string) $privateConfig['spotify_client_secret']);
+        }
+    }
+    return '';
 }
 
 function refreshAccessToken(array $saved): array
