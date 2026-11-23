@@ -17,12 +17,17 @@
     .spotify-card p{margin:0 0 16px;color:#9db8a3;line-height:1.8}
     .spotify-connect{display:inline-block;padding:10px 14px;border:1px solid #27f549;background:#020803;color:#a7ffbb;font:12px "Lucida Console",monospace;text-decoration:none}
     .spotify-connect:hover,.spotify-connect:focus-visible{background:#06200a;color:#39ff78;outline:1px solid #46bf46}
-    .spotify-result{display:grid;grid-template-columns:120px minmax(0,1fr);gap:18px;align-items:center}
-    .spotify-result img{display:block;width:120px;aspect-ratio:1;object-fit:cover;border:1px solid #145214;filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
-    .spotify-result h3{margin:0 0 8px;color:#46bf46;font:clamp(22px,3vw,34px)/1.2 "BlueScreenV1",Consolas,monospace}
-    .spotify-result p{margin:0;color:#719279;font-size:11px}
+    .spotify-result{display:grid;grid-template-columns:minmax(100px,180px) minmax(0,1fr);gap:22px;align-items:center}
+    .spotify-artist-link{position:relative;display:block;width:100%;padding:8px;overflow:hidden;border:1px solid #287b38;background:#020602;box-shadow:0 0 18px rgba(57,255,120,.12)}
+    .spotify-artist-link img{display:block;width:100%;height:auto;filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
+    .spotify-artist-link::after{position:absolute;inset:8px;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0,rgba(0,0,0,.28) 1px,transparent 1px,transparent 4px),linear-gradient(110deg,rgba(38,255,90,.10),rgba(0,20,4,.08));box-shadow:inset 0 0 26px rgba(0,0,0,.48);content:"";pointer-events:none}
+    .spotify-result h3{margin:0 0 14px;color:#46bf46;font:clamp(22px,3vw,34px)/1.2 "BlueScreenV1",Consolas,monospace;overflow-wrap:anywhere}
+    .spotify-result h3 a{color:inherit;text-decoration:none}
+    .spotify-track-name{margin:0 0 11px;color:#b8d9bd;font-size:14px}
+    .spotify-brand{display:inline-block;margin-top:20px}
+    .spotify-brand img{display:block;width:90px;height:auto}
     .spotify-status{color:#679477;font-size:11px}
-    @media(max-width:720px){.spotify-result{grid-template-columns:80px minmax(0,1fr);gap:12px}.spotify-result img{width:80px}}
+    @media(max-width:720px){.spotify-result{grid-template-columns:minmax(80px,120px) minmax(0,1fr);gap:14px}.spotify-artist-link{padding:5px}.spotify-artist-link::after{inset:5px}.spotify-track-name{font-size:12px}}
     .kb-content .music-content{width:100%;max-width:100%;min-width:0;margin:0}
     @media(max-width:720px){.kb-content .music-content{width:100%;max-width:100%;min-width:0;margin:0}}
     body { background: #000; color: #46bf46; text-align: center; }
@@ -102,7 +107,7 @@
 
         <section class="music-panel" id="spotifyArtist" data-page-panel hidden>
           <p class="kb-article-meta">spotifyArtist</p>
-          <h2 class="music-panel-title">Most Played Artist · Past 7 Days</h2>
+          <h2 class="music-panel-title">Who I'm listening to a lot right now:</h2>
           <div class="music-content">
             <div class="spotify-card" id="spotifyArtistCard" aria-live="polite">
               <p class="spotify-status" id="spotifyArtistStatus">Loading Spotify listening history…</p>
@@ -136,11 +141,18 @@
         if(!data.artist){status.textContent="No recently played tracks were returned for the past seven days.";return;}
         card.replaceChildren();
         const layout=document.createElement("div");layout.className="spotify-result";
-        if(data.image){const image=document.createElement("img");image.src=data.image;image.alt="";layout.append(image);}
+        if(data.image){const imageLink=document.createElement("a");imageLink.className="spotify-artist-link";imageLink.href=data.artistUrl;imageLink.target="_blank";imageLink.rel="noopener noreferrer";const image=document.createElement("img");image.src=data.image;image.alt=`${data.artist} on Spotify`;imageLink.append(image);layout.append(imageLink);}
         const details=document.createElement("div");
-        const name=document.createElement("h3");name.textContent=data.artist;
-        const count=document.createElement("p");count.textContent=`${data.plays} plays in the returned history · updated ${new Date(data.updated).toLocaleString()}`;
-        details.append(name,count);layout.append(details);card.append(layout);
+        const name=document.createElement("h3");const artistLink=document.createElement("a");artistLink.href=data.artistUrl;artistLink.target="_blank";artistLink.rel="noopener noreferrer";artistLink.textContent=data.artist;name.append(artistLink);
+        details.append(name);
+        if(data.track){
+          const song=document.createElement("p");song.className="spotify-track-name";song.textContent=`Most played song: ${data.track}`;
+          const play=document.createElement("a");play.className="spotify-connect";play.href=data.trackUrl;play.target="_blank";play.rel="noopener noreferrer";play.textContent="▶ LISTEN ON SPOTIFY";
+          details.append(song,play);
+        }
+        layout.append(details);card.replaceChildren(layout);
+        const brandLink=document.createElement("a");brandLink.className="spotify-brand";brandLink.href="https://open.spotify.com/";brandLink.target="_blank";brandLink.rel="noopener noreferrer";brandLink.setAttribute("aria-label","Spotify");
+        const brand=document.createElement("img");brand.src="https://developer-assets.spotifycdn.com/images/guidelines/design/full-logo-framed.svg";brand.alt="Spotify";brandLink.append(brand);card.append(brandLink);
       }catch(error){status.textContent=error.message||"Could not load Spotify listening history.";}
     }
     loadSpotifyArtist();

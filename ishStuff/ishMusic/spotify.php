@@ -180,7 +180,9 @@ function getArtistSummary(): void
 {
     $cachedContents = @file_get_contents(artistCachePath());
     $cached = is_string($cachedContents) ? json_decode($cachedContents, true) : null;
-    if (is_array($cached) && (int) ($cached['cached_at'] ?? 0) > time() - 300) {
+    $cacheHasDisplayFields = is_array($cached)
+        && (array_key_exists('artistUrl', $cached) || ($cached['artist'] ?? null) === null);
+    if (is_array($cached) && $cacheHasDisplayFields && (int) ($cached['cached_at'] ?? 0) > time() - 300) {
         unset($cached['cached_at']);
         jsonResponse($cached);
     }
@@ -193,7 +195,6 @@ function getArtistSummary(): void
     $url = 'https://api.spotify.com/v1/me/player/recently-played?' . http_build_query(['after' => $after, 'limit' => 50]);
     $counts = [];
     $pages = 0;
-    $updatedAt = gmdate(DATE_ATOM);
     while ($url !== '' && $pages < 20) {
         [$status, $page] = spotifyRequest($url, 'GET', ['Authorization: Bearer ' . $saved['access_token']]);
         if ($status === 401) {
@@ -212,33 +213,64 @@ function getArtistSummary(): void
             if ($playedAt === false || $playedAt < time() - 7 * 24 * 60 * 60) {
                 continue;
             }
+            $track = $item['track'] ?? [];
+            $trackId = (string) ($track['id'] ?? $track['name'] ?? '');
+            if ($trackId === '') {
+                continue;
+            }
             foreach (($item['track']['artists'] ?? []) as $artist) {
                 $id = (string) ($artist['id'] ?? $artist['name'] ?? '');
                 if ($id === '') {
                     continue;
                 }
                 if (!isset($counts[$id])) {
-                    $counts[$id] = ['artist' => (string) ($artist['name'] ?? 'Unknown artist'), 'plays' => 0, 'image' => ''];
+                    $counts[$id] = [
+                        'artist' => (string) ($artist['name'] ?? 'Unknown artist'),
+                        'plays' => 0,
+                        'artist_url' => (string) ($artist['external_urls']['spotify'] ?? ('https://open.spotify.com/artist/' . rawurlencode($id))),
+                        'tracks' => [],
+                    ];
                 }
                 $counts[$id]['plays']++;
+                if (!isset($counts[$id]['tracks'][$trackId])) {
+                    $counts[$id]['tracks'][$trackId] = [
+                        'name' => (string) ($track['name'] ?? 'Unknown track'),
+                        'plays' => 0,
+                        'url' => (string) ($track['external_urls']['spotify'] ?? ('https://open.spotify.com/track/' . rawurlencode($trackId))),
+                    ];
+                }
+                $counts[$id]['tracks'][$trackId]['plays']++;
             }
         }
         $url = (string) ($page['next'] ?? '');
         $pages++;
     }
     if ($counts === []) {
-        $summary = ['connected' => true, 'artist' => null, 'updated' => $updatedAt];
+        $summary = ['connected' => true, 'artist' => null];
         @file_put_contents(artistCachePath(), json_encode($summary + ['cached_at' => time()]), LOCK_EX);
         jsonResponse($summary);
     }
     uasort($counts, static fn(array $left, array $right): int => $right['plays'] <=> $left['plays']);
     $winner = reset($counts);
+    $winnerId = (string) array_key_first($counts);
+    uasort($winner['tracks'], static fn(array $left, array $right): int => $right['plays'] <=> $left['plays']);
+    $topTrack = reset($winner['tracks']);
+    [$artistStatus, $artistInfo] = spotifyRequest(
+        'https://api.spotify.com/v1/artists/' . rawurlencode($winnerId),
+        'GET',
+        ['Authorization: Bearer ' . $saved['access_token']]
+    );
+    $artistImage = '';
+    if ($artistStatus >= 200 && $artistStatus < 300 && !empty($artistInfo['images'][0]['url'])) {
+        $artistImage = (string) $artistInfo['images'][0]['url'];
+    }
     $summary = [
         'connected' => true,
         'artist' => $winner['artist'],
-        'plays' => $winner['plays'],
-        'image' => $winner['image'],
-        'updated' => $updatedAt,
+        'artistUrl' => $winner['artist_url'],
+        'image' => $artistImage,
+        'track' => $topTrack['name'] ?? '',
+        'trackUrl' => $topTrack['url'] ?? '',
     ];
     @file_put_contents(artistCachePath(), json_encode($summary + ['cached_at' => time()]), LOCK_EX);
     jsonResponse($summary);
