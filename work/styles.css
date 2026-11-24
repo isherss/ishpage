@@ -16,7 +16,7 @@
 .work-attribution{margin:8px 0 0;color:var(--kb-muted);font-size:10px;text-align:right}
 .work-attribution a{color:var(--kb-muted);text-decoration:underline}
 .work-page .leaflet-container{font:12px "Lucida Console",Consolas,monospace;background:#081109}
-.work-page .leaflet-tile-pane .leaflet-tile{filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.82) contrast(1.16)}
+.work-page .leaflet-tile-pane .leaflet-tile{filter:grayscale(1) sepia(1) hue-rotate(65deg) saturate(2.1) brightness(.38) contrast(1.16)}
 .work-page .leaflet-tile-pane::after{position:absolute;z-index:1;inset:0;background:repeating-linear-gradient(to bottom,rgba(0,0,0,.28) 0,rgba(0,0,0,.28) 1px,transparent 1px,transparent 4px),linear-gradient(110deg,rgba(38,255,90,.10),rgba(0,20,4,.08));box-shadow:inset 0 0 26px rgba(0,0,0,.48);content:"";pointer-events:none}
 .work-page .leaflet-control-zoom a{background:#030904;color:#46bf46;border-color:#174d22}
 .work-page .leaflet-control-attribution{background:rgba(0,0,0,.78);color:#8aa48e}
