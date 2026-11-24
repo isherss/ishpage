@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const canvas = document.getElementById("projectMapCanvas");
   const status = document.getElementById("mapStatus");
   const title = document.getElementById("projectTitle");
@@ -20,7 +20,17 @@
     status.textContent = "Map tiles could not load. Check your connection or whether this network blocks OpenStreetMap.";
   });
 
-  const projectAreas = typeof PROJECT_AREAS !== "undefined" && Array.isArray(PROJECT_AREAS) ? PROJECT_AREAS : [];
+  let projectAreas;
+  try {
+    const projectDataUrl = new URL("/work/project-areas.js", window.location.href);
+    projectDataUrl.searchParams.set("refresh", Date.now().toString());
+    ({ PROJECT_AREAS: projectAreas } = await import(projectDataUrl.href));
+    if (!Array.isArray(projectAreas)) throw new Error("Project data must export a PROJECT_AREAS array.");
+  } catch (error) {
+    console.error("Could not load project areas:", error);
+    status.textContent = "Project areas could not be loaded. Check work/project-areas.js and reload.";
+    return;
+  }
   const layers = [];
 
   function showProject(project) {

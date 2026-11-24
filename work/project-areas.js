@@ -5,11 +5,11 @@
   Use either:
     bounds: [[south, west], [north, east]]  // quick rectangular highlight
   or:
-    polygon: [[lat, lng], [lat, lng], ...]  // custom outline, 3+ points
+    polygon: [[lng, lat], [lng, lat], ...]  // custom outline, 3+ points
 
   Each entry may include title, location, dates, role, description, and link.
 */
-const PROJECT_AREAS = [
+export const PROJECT_AREAS = [
   {
     title: "Phase 2 EB I-190 | Bessie Coleman Dr to River Rd",
     location: "Chicago/Rosemont, Illinois",

@@ -1,6 +1,6 @@
 # Adding project areas
 
-Open `project-areas.js` and add one object to the `PROJECT_AREAS` array for each project. The live work map only shows the areas saved in that file; it has no visitor drawing or editing tools.
+Open `project-areas.js` and add one object to the `PROJECT_AREAS` array for each project. The work map reloads this file each time the page opens, so future data edits do not require changing a cache value in the HTML. The live map has no visitor drawing or editing tools.
 
 For a quick rectangular area, use `bounds` with southwest and northeast latitude/longitude coordinates:
 
