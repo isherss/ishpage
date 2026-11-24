@@ -103,6 +103,7 @@ const PROJECT_AREAS = [
         [
           -87.884917,
           41.978116
-        ]]
+        ]],
+    polygonOrder: "lnglat"
   }
 ];

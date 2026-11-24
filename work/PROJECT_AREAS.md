@@ -15,4 +15,4 @@ For a quick rectangular area, use `bounds` with southwest and northeast latitude
 }
 ```
 
-For a custom outline, replace `bounds` with `polygon` and list at least three `[latitude, longitude]` points in order around the area. Add another object after a comma to include another project. Only the project title and geometry are required.
+For a custom outline, replace `bounds` with `polygon` and list at least three `[longitude, latitude]` points in order around the area. This matches the coordinate order commonly copied from mapping tools. Add another object after a comma to include another project. Only the project title and geometry are required. Set `polygonOrder: "latlng"` only if your points are in `[latitude, longitude]` order.

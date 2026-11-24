@@ -55,7 +55,10 @@
   projectAreas.forEach((project) => {
     let layer;
     if (Array.isArray(project.polygon) && project.polygon.length >= 3) {
-      layer = L.polygon(project.polygon, { color: "#39ff78", weight: 2, fillColor: "#27f549", fillOpacity: 0.22 });
+      const positions = project.polygon.map(([first, second]) =>
+        project.polygonOrder === "latlng" ? [first, second] : [second, first]
+      );
+      layer = L.polygon(positions, { color: "#39ff78", weight: 2, fillColor: "#27f549", fillOpacity: 0.22 });
     } else if (Array.isArray(project.bounds) && project.bounds.length === 2) {
       layer = L.rectangle(project.bounds, { color: "#39ff78", weight: 2, fillColor: "#27f549", fillOpacity: 0.22 });
     }
