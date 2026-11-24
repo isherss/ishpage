@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Portfolio of the stuff Ish does for work.">
+  <title>Work — Ish</title>
+  <link rel="icon" href="/files/favicon.ico">
+  <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
+  <link rel="stylesheet" href="/ishStuff/keyboards/styles.css?v=20261124-mobile-title">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="/work/styles.css?v=20261124-work-map">
+</head>
+<body class="kb-page work-page">
+  <main class="kb-shell">
+    <nav class="kb-topbar" aria-label="Site navigation">
+      <a href="/ishStuff/">← ishStuff</a>
+      <h1 class="kb-heading page-title">ishWork</h1>
+      <a href="/">Home</a>
+    </nav>
+
+    <div class="kb-layout">
+      <aside class="kb-sidebar" aria-label="Work sections">
+        <nav class="kb-nav">
+          <a href="#projectMap" aria-current="page">projectMap</a>
+        </nav>
+      </aside>
+
+      <article class="kb-content work-content">
+        <section id="projectMap" aria-labelledby="mapTitle">
+          <p class="kb-article-meta">projectMap</p>
+          <h2 id="mapTitle">Transportation Projects</h2>
+          <p class="work-intro">Select a highlighted area to view its project information.</p>
+          <div class="work-map-layout">
+            <div class="work-map-frame">
+              <div id="projectMapCanvas" role="application" aria-label="Interactive map of project areas"></div>
+              <p class="work-map-note" id="mapStatus" aria-live="polite">Loading project map…</p>
+            </div>
+            <section class="work-project-card" id="projectDetails" aria-live="polite" aria-labelledby="projectTitle">
+              <p class="kb-article-meta">selectedProject</p>
+              <h3 id="projectTitle">Choose a highlighted area</h3>
+              <p id="projectPrompt">Project details will appear here when you select an area on the map.</p>
+              <dl id="projectFacts" hidden></dl>
+              <div id="projectDescription" class="work-project-description"></div>
+            </section>
+          </div>
+          <p class="work-attribution">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a></p>
+        </section>
+      </article>
+    </div>
+  </main>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="/work/project-areas.js?v=20261124-project-areas"></script>
+  <script src="/work/map.js?v=20261124-work-map" defer></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+.work-content{padding-top:14px}
+.work-intro{margin:0 0 18px;color:var(--kb-copy);font-size:13px;line-height:1.7}
+.work-map-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,.75fr);gap:16px;align-items:stretch}
+.work-map-frame,.work-project-card{min-width:0;border:1px solid var(--kb-line);background:#030904;box-shadow:0 0 18px rgba(57,255,120,.06)}
+.work-map-frame{position:relative;min-height:480px;overflow:hidden}
+#projectMapCanvas{position:absolute;inset:0;min-height:480px;background:#07100a}
+.work-map-note{position:absolute;z-index:500;right:10px;bottom:10px;left:10px;width:max-content;max-width:calc(100% - 20px);margin:0;padding:7px 10px;border:1px solid #174d22;background:rgba(0,8,2,.92);color:#b8d9bd;font-size:11px;line-height:1.5;pointer-events:none}
+.work-project-card{padding:16px;color:var(--kb-copy)}
+.work-project-card .kb-article-meta{margin-bottom:16px}
+.work-project-card h3{margin:0 0 12px;color:#91e99e;font:clamp(20px,2.5vw,28px)/1.2 "BlueScreenV1",Consolas,monospace;overflow-wrap:anywhere}
+.work-project-card p{margin:0 0 12px;font-size:13px;line-height:1.75}
+.work-project-card dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px 12px;margin:0 0 14px;font-size:11px;line-height:1.6}
+.work-project-card dt{color:var(--kb-muted);text-transform:uppercase;letter-spacing:.04em}
+.work-project-card dd{min-width:0;margin:0;color:var(--kb-copy);overflow-wrap:anywhere}
+.work-project-description{font-size:13px;line-height:1.75;white-space:pre-line}
+.work-project-link{display:inline-block;margin-top:8px;color:var(--kb-bright);text-decoration:underline}
+.work-attribution{margin:8px 0 0;color:var(--kb-muted);font-size:10px;text-align:right}
+.work-attribution a{color:var(--kb-muted);text-decoration:underline}
+.work-page .leaflet-container{font:12px "Lucida Console",Consolas,monospace;background:#081109}
+.work-page .leaflet-control-zoom a{background:#030904;color:#46bf46;border-color:#174d22}
+.work-page .leaflet-control-attribution{background:rgba(0,0,0,.78);color:#8aa48e}
+.work-page .leaflet-control-attribution a{color:#a7ffbb}
+.work-page .leaflet-popup-content-wrapper,.work-page .leaflet-popup-tip{background:#030904;color:#b8d9bd;border:1px solid #174d22;border-radius:0}
+.work-page .leaflet-popup-content{margin:10px 12px;font:12px/1.5 "Lucida Console",Consolas,monospace}
+.work-page .leaflet-interactive{cursor:pointer}
+@media(max-width:820px){.work-map-layout{grid-template-columns:1fr}.work-map-frame,#projectMapCanvas{min-height:400px}.work-project-card{min-height:180px}}
+@media(max-width:720px){.work-content{padding:18px 0 0}.work-map-frame,#projectMapCanvas{min-height:360px}.work-project-card{padding:13px}.work-attribution{text-align:left}}
