@@ -1,6 +1,6 @@
 .work-content{width:100%;padding:14px 0 10px;border:0}
 .work-intro{margin:0 0 18px;color:var(--kb-copy);font-size:13px;line-height:1.7}
-.work-map-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(230px,.75fr);gap:16px;align-items:stretch}
+.work-map-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.95fr);gap:16px;align-items:stretch}
 .work-map-frame,.work-project-card{min-width:0;border:1px solid var(--kb-line);background:#030904;box-shadow:0 0 18px rgba(57,255,120,.06)}
 .work-map-frame{position:relative;height:480px;overflow:hidden}
 #projectMapCanvas{position:absolute;inset:0;width:100%;height:100%;background:#07100a}
