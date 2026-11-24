@@ -157,5 +157,103 @@ const PROJECT_AREAS = [
           41.848657
         ]],
     polygonOrder: "lnglat"
+  },
+{
+    title: "Phase 2 I-290 Drainage Improvements | Central Av to Des Plaines River",
+    location: "Chicago/Oak Park/Forest Park, Illinois",
+    dates: "2025",
+    role: "Engineer I",
+    description: "Preliminary roadway plan/removal drawings and profiles",
+    polygon: [[
+          -87.81209,
+          41.872916
+        ],
+        [
+          -87.763864,
+          41.869862
+        ],
+        [
+          -87.764411,
+          41.871542
+        ],
+        [
+          -87.805309,
+          41.874322
+        ],
+        [
+          -87.812262,
+          41.874866
+        ],
+        [
+          -87.82548,
+          41.872533
+        ],
+        [
+          -87.825952,
+          41.87135
+        ],
+        [
+          -87.818699,
+          41.87151
+        ],
+        [
+          -87.81209,
+          41.872916
+        ]],
+    polygonOrder: "lnglat"
+  },
+{
+    title: "Phase 3 MDOT Urban BIP Bundle | Fraser St over Kawkawlin River (SN 678)",
+    location: "Kawkawlin, Michigan",
+    dates: "2025",
+    role: "Engineer I",
+    description: "Roadway drainage design- created a complex storm sewer system to replace existing storm sewer to accomodate the new roadway grading and bridge design using MDOT design criteira. Created spreadsheets to calculate spread and hydraulic capacity. Wrote a drainage design report describing existing conditions, design criteria, and proposed design. Coordinated with utility companies to avoid utility conflicts. Coordinated with roadway and structure groups to confirm non-conflicts with proposed drainage design.",
+    polygon: [[
+          -83.950675,
+          43.65196
+        ],
+        [
+          -83.951608,
+          43.650951
+        ],
+        [
+          -83.946694,
+          43.649453
+        ],
+        [
+          -83.945922,
+          43.650633
+        ]],
+    polygonOrder: "lnglat"
+  },
+{
+    title: "Phase 3 MDOT Urban BIP Bundle | Elm St over Red Cedar River (SN 3936)",
+    location: "Lansing, Michigan",
+    dates: "2025",
+    role: "Engineer I",
+    description: "Roadway drainage design- created a complex storm sewer system to replace existing storm sewer to accomodate the new roadway grading and bridge design using MDOT design criteira. Created spreadsheets to calculate spread and hydraulic capacity. Wrote a drainage design report describing existing conditions, design criteria, and proposed design. Coordinated with utility companies to avoid utility conflicts. Coordinated with roadway and structure groups to confirm non-conflicts with proposed drainage design.",
+    polygon: [[
+          -84.550036,
+          42.722125
+        ],
+        [
+          -84.550089,
+          42.721565
+        ],
+        [
+          -84.546549,
+          42.721597
+        ],
+        [
+          -84.546506,
+          42.72218
+        ],
+        [
+          -84.550036,
+          42.722125
+        ]],
+    polygonOrder: "lnglat"
   }
+
+
 ];
