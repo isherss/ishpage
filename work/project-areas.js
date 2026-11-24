@@ -11,7 +11,7 @@
 */
 const PROJECT_AREAS = [
   {
-    title: "EB I-190 | Bessie Coleman Dr to River Rd",
+    title: "Phase 2 EB I-190 | Bessie Coleman Dr to River Rd",
     location: "Chicago/Rosemont, Illinois",
     dates: "2024–2026",
     role: "Engineer I",
@@ -103,6 +103,58 @@ const PROJECT_AREAS = [
         [
           -87.884917,
           41.978116
+        ]],
+    polygonOrder: "lnglat"
+  },
+{
+    title: "Phase 2 PACE Pulse BRT | Cermak Rd - Yorktown Mall to Central Av",
+    location: "Chicago/Berwyn/Oak Brook/Westchester, Illinois",
+    dates: "2025–2026",
+    role: "Engineer I",
+    description: "Completed draft design 1 consisting of 42 bus stops over 24 miles of roadway. Created sight triangle sheets, station detail sheets, and pavement marking details. Completed intersection design studies (IDS) for Harlem/Cermak/North Riverside Mall including 50 BDE 3100 design exception forms. Submitted a traffic signal warrant for 21st Av/Cermak Av using IDOT's right turn factorization method.",
+    polygon: [[
+          -87.925301,
+          41.848657
+        ],
+        [
+          -87.762351,
+          41.851886
+        ],
+        [
+          -87.762351,
+          41.850192
+        ],
+        [
+          -87.868652,
+          41.847954
+        ],
+        [
+          -87.982464,
+          41.844821
+        ],
+        [
+          -88.009844,
+          41.834206
+        ],
+        [
+          -88.012161,
+          41.833886
+        ],
+        [
+          -88.012247,
+          41.840281
+        ],
+        [
+          -88.010187,
+          41.840089
+        ],
+        [
+          -87.982121,
+          41.84757
+        ],
+        [
+          -87.925301,
+          41.848657
         ]],
     polygonOrder: "lnglat"
   }

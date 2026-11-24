@@ -17,6 +17,7 @@
 .work-attribution{margin:8px 0 0;color:var(--kb-muted);font-size:10px;text-align:right}
 .work-attribution a{color:var(--kb-muted);text-decoration:underline}
 .work-page .leaflet-container{font:12px "Lucida Console",Consolas,monospace;background:#081109}
+.work-page .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.72) saturate(.78)}
 .work-page .leaflet-control-zoom a{background:#030904;color:#46bf46;border-color:#174d22}
 .work-page .leaflet-control-attribution{background:rgba(0,0,0,.78);color:#8aa48e}
 .work-page .leaflet-control-attribution a{color:#a7ffbb}
