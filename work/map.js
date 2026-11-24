@@ -77,6 +77,19 @@
     layer.addTo(map);
     layer.bindTooltip(project.title || "Project area", { sticky: true });
     layer.on("click", () => showProject(project));
+    const pin = L.marker(layer.getBounds().getCenter(), {
+      icon: L.divIcon({
+        className: "work-pin-icon",
+        html: '<span class="work-pin-shape" aria-hidden="true"></span>',
+        iconSize: [28, 36],
+        iconAnchor: [14, 34]
+      }),
+      title: project.title || "Project area",
+      alt: project.title || "Project area",
+      zIndexOffset: 1000
+    }).addTo(map);
+    pin.bindTooltip(project.title || "Project area", { direction: "top", offset: [0, -28] });
+    pin.on("click", () => showProject(project));
     layers.push(layer);
   });
 

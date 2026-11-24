@@ -3,6 +3,9 @@ accounts.php
 bungie.php
 raidhub.php
 spotify-config.php
+spotify-token.json
+spotify-token.json.lock
+spotify-token.json.*.tmp
 ishradbot-cache.json
 ishradbot-cache-*.json
 ishradbot-cache-*.json.lock

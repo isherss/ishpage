@@ -37,6 +37,15 @@ function spotifyRequest(string $url, string $method = 'GET', array $headers = []
 
 function tokenPath(): string
 {
+    $configuredPath = getenv('ISHPAGE_SPOTIFY_TOKEN_PATH');
+    if (is_string($configuredPath) && trim($configuredPath) !== '') {
+        return trim($configuredPath);
+    }
+    return dirname(__DIR__, 2) . '/rngmine/private/spotify-token.json';
+}
+
+function legacyTokenPath(): string
+{
     return __DIR__ . '/private/spotify-token.json';
 }
 
@@ -49,7 +58,23 @@ function readSavedToken(): array
 {
     $contents = @file_get_contents(tokenPath());
     $token = is_string($contents) ? json_decode($contents, true) : null;
-    return is_array($token) ? $token : [];
+    if (is_array($token) && $token !== []) {
+        return $token;
+    }
+
+    // Move tokens created by the earlier page-local storage into the protected
+    // persistent config directory on the first request after this update.
+    $legacyContents = @file_get_contents(legacyTokenPath());
+    $legacyToken = is_string($legacyContents) ? json_decode($legacyContents, true) : null;
+    if (!is_array($legacyToken) || $legacyToken === []) {
+        return [];
+    }
+    try {
+        saveToken($legacyToken);
+    } catch (Throwable $error) {
+        error_log('Could not migrate the saved Spotify token: ' . $error->getMessage());
+    }
+    return $legacyToken;
 }
 
 function spotifyAccountIsBound(): bool
