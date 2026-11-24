@@ -1,13 +1,12 @@
 (async () => {
   const canvas = document.getElementById("projectMapCanvas");
-  const status = document.getElementById("mapStatus");
   const title = document.getElementById("projectTitle");
   const prompt = document.getElementById("projectPrompt");
   const facts = document.getElementById("projectFacts");
   const description = document.getElementById("projectDescription");
 
   if (!window.L) {
-    status.textContent = "The map library could not load. Check your internet connection and reload.";
+    console.error("The map library could not load. Check your internet connection and reload.");
     return;
   }
 
@@ -17,7 +16,7 @@
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
   tiles.on("tileerror", () => {
-    status.textContent = "Map tiles could not load. Check your connection or whether this network blocks OpenStreetMap.";
+    console.warn("Map tiles could not load. Check your connection or whether this network blocks OpenStreetMap.");
   });
 
   let projectAreas;
@@ -28,7 +27,6 @@
     if (!Array.isArray(projectAreas)) throw new Error("Project data must export a PROJECT_AREAS array.");
   } catch (error) {
     console.error("Could not load project areas:", error);
-    status.textContent = "Project areas could not be loaded. Check work/project-areas.js and reload.";
     return;
   }
   const layers = [];
@@ -78,12 +76,12 @@
     layer.addTo(map);
     layer.bindTooltip(project.title || "Project area", { sticky: true });
     layer.on("click", () => showProject(project));
-    const pin = L.marker(layer.getBounds().getCenter(), {
+    const pin = L.marker(layer.getCenter(), {
       icon: L.divIcon({
         className: "work-pin-icon",
         html: '<span class="work-pin-shape" aria-hidden="true"></span>',
         iconSize: [28, 36],
-        iconAnchor: [14, 34]
+        iconAnchor: [14, 25]
       }),
       title: project.title || "Project area",
       alt: project.title || "Project area",
@@ -96,9 +94,6 @@
 
   if (layers.length) {
     map.fitBounds(L.featureGroup(layers).getBounds().pad(0.18));
-    status.textContent = `${layers.length} project area${layers.length === 1 ? "" : "s"} shown. Select an area for details.`;
-  } else {
-    status.textContent = "Map ready. Add project areas in work/project-areas.js to highlight locations.";
   }
 
   window.addEventListener("resize", () => map.invalidateSize());
