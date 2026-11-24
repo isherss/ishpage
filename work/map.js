@@ -12,10 +12,13 @@
   }
 
   const map = L.map(canvas, { scrollWheelZoom: false }).setView([41.88, -87.63], 5);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  const tiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   }).addTo(map);
+  tiles.on("tileerror", () => {
+    status.textContent = "Map tiles could not load. Check your connection or whether this network blocks OpenStreetMap.";
+  });
 
   const projectAreas = typeof PROJECT_AREAS !== "undefined" && Array.isArray(PROJECT_AREAS) ? PROJECT_AREAS : [];
   const layers = [];
