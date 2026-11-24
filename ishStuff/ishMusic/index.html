@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Album recommendations from Ish.">
   <link rel="stylesheet" href="/files/default.css?v=20261111-heading-mobile-fix">
-  <link rel="stylesheet" href="/ishStuff/keyboards/styles.css?v=20261123-music-layout">
+  <link rel="stylesheet" href="/ishStuff/keyboards/styles.css?v=20261124-mobile-title">
   <title>ishMusic — ishStuff</title>
   <link rel="icon" href="/files/favicon.ico">
   <style>
@@ -82,13 +82,13 @@
       <aside class="kb-sidebar" aria-label="Music pages">
         <h2 class="kb-sidebar-title">Pages</h2>
         <nav class="kb-nav" id="musicNav">
-          <a href="#albums" data-page="albums" aria-current="page">albumRecommendations</a>
-          <a href="#spotifyArtist" data-page="spotifyArtist">spotifyArtist</a>
+          <a href="#albums" data-page="albums">albumRecommendations</a>
+          <a href="#spotifyArtist" data-page="spotifyArtist" aria-current="page">spotifyArtist</a>
         </nav>
       </aside>
 
       <article class="kb-content" id="musicArticle" aria-live="polite">
-        <section class="music-panel" id="albums" data-page-panel>
+        <section class="music-panel" id="albums" data-page-panel hidden>
           <p class="kb-article-meta">albumRecommendations</p>
           <h2 class="music-panel-title">Album Recommendations</h2>
           <div class="music-content">
@@ -123,8 +123,8 @@
       const panels=[...document.querySelectorAll("[data-page-panel]")];
       function showMusicPage(id,updateHistory=false){const panel=document.getElementById(id);const link=nav.find(item=>item.dataset.page===id);if(!panel||!link)return showMusicPage("albums");panels.forEach(item=>{item.hidden=item!==panel});nav.forEach(item=>{if(item===link)item.setAttribute("aria-current","page");else item.removeAttribute("aria-current")});if(updateHistory)history.replaceState(null,"","#"+id)}
       nav.forEach(link=>link.addEventListener("click",event=>{event.preventDefault();showMusicPage(link.dataset.page,true)}));
-      window.addEventListener("hashchange",()=>showMusicPage(location.hash.slice(1)||"albums"));
-      showMusicPage(location.hash.slice(1)||"albums");
+      window.addEventListener("hashchange",()=>showMusicPage(location.hash.slice(1)||"spotifyArtist"));
+      showMusicPage(location.hash.slice(1)||"spotifyArtist");
     })();
   </script>
 
@@ -291,6 +291,7 @@
   </script>
 </body>
 </html>
+
 
 
 
