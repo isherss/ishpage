@@ -96,10 +96,10 @@
         .stuff-heading { width:fit-content;max-width:96vw;margin:8px auto 0!important;color:green;font:clamp(5px,1.65vw,20px)/1.2 "Lucida Console",monospace;text-align:left;white-space:pre;overflow-x:auto; }
         @media(max-width:640px) { .stuff-heading { font-size:clamp(4px,1.65vw,10px); } }
         .terminal-divider { display:block;width:40vw;height:4px;margin:0 auto 32px;padding:0;background:radial-gradient(circle,#46bf46 1.4px,transparent 1.6px) left center/9px 4px repeat-x; }
-        .about-terminal { width:min(900px,88vw);margin:0 auto;color:#b8d9bd;font:17px/1.85 Consolas,"Lucida Console",monospace;text-align:left; }
-        .about-terminal p { position:relative;margin:0 0 1em;padding-left:1.2em; }
+        .about-terminal { box-sizing:border-box;min-width:0;width:min(900px,calc(100vw - 32px));max-width:100%;margin:0 auto;color:#b8d9bd;font:17px/1.85 Consolas,"Lucida Console",monospace;text-align:left!important; }
+        .about-terminal p { position:relative;box-sizing:border-box;width:100%;min-width:0;max-width:100%;margin:0 0 1em;padding-left:1.2em;overflow-wrap:break-word;word-wrap:break-word; }
         .about-terminal p:before { position:absolute;left:0;color:#39ff78;content:">"; }
-        @media(max-width:640px) { .about-terminal { width:94vw;font-size:16px; } }
+        @media(max-width:640px) { .about-terminal { width:calc(100vw - 32px);font-size:16px; } }
         body.ish-subpage, body.ish-subpage * { color:green!important; }
         body.ish-subpage .page-navigation > a:not([href="/"]), body.ish-subpage .page-navigation > span { display:inline-flex;align-items:center;justify-content:center;height:1.2em;line-height:1!important; }
         body.ish-subpage .page-navigation [aria-current="page"] { color:#46bf46!important; }
@@ -143,7 +143,7 @@ stuff
     <!-- end button links -->
 
     <!-- Text -->
-        <div class="what about-terminal">
+        <div class="about-terminal">
             <p>Hello webpage browser!</p>
             <p>I'm <strong>Ish</strong>! I do stuff as a Transportation Engineer... I do things like designing highways/roadways, bus shelters, traffic systems, and drainage systems in various computer aided design (CAD) softwares!</p>
             <p>In my spare time, I like tinkering with tech like mechanical keyboards, cassette decks, and computers! Check out some of my stuff @ishStuff :]</p> <br><br>
