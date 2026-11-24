@@ -32,6 +32,7 @@
     return;
   }
   const layers = [];
+  const projectHighlightColor = "#00e5ff";
 
   function showProject(project) {
     title.textContent = project.title || "Project";
@@ -68,9 +69,9 @@
       const positions = project.polygon.map(([first, second]) =>
         project.polygonOrder === "latlng" ? [first, second] : [second, first]
       );
-      layer = L.polygon(positions, { color: "#39ff78", weight: 2, fillColor: "#27f549", fillOpacity: 0.22 });
+      layer = L.polygon(positions, { color: projectHighlightColor, weight: 2, fillColor: projectHighlightColor, fillOpacity: 0.24 });
     } else if (Array.isArray(project.bounds) && project.bounds.length === 2) {
-      layer = L.rectangle(project.bounds, { color: "#39ff78", weight: 2, fillColor: "#27f549", fillOpacity: 0.22 });
+      layer = L.rectangle(project.bounds, { color: projectHighlightColor, weight: 2, fillColor: projectHighlightColor, fillOpacity: 0.24 });
     }
     if (!layer) return;
 
