@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 const SPOTIFY_CLIENT_ID = '0028cf65156e46e7a2253b63542d59c1';
 const SPOTIFY_REDIRECT_URI = 'https://ishpage.xyz/ishStuff/ishMusic/spotify.php';
-const SPOTIFY_SCOPE = 'user-read-recently-played';
+const SPOTIFY_SCOPE = 'user-read-recently-played user-read-currently-playing';
 
 function jsonResponse(array $data, int $status = 200): void
 {
@@ -226,14 +226,6 @@ function finishCallback(): void
 
 function getArtistSummary(): void
 {
-    $cachedContents = @file_get_contents(artistCachePath());
-    $cached = is_string($cachedContents) ? json_decode($cachedContents, true) : null;
-    $cacheHasDisplayFields = is_array($cached)
-        && (array_key_exists('artistUrl', $cached) || ($cached['artist'] ?? null) === null);
-    if (is_array($cached) && $cacheHasDisplayFields && (int) ($cached['cached_at'] ?? 0) > time() - 300) {
-        unset($cached['cached_at']);
-        jsonResponse($cached);
-    }
     $saved = validAccessToken(readSavedToken());
     if (empty($saved['access_token'])) {
         jsonResponse(['connected' => false]);
@@ -294,7 +286,7 @@ function getArtistSummary(): void
         $pages++;
     }
     if ($counts === []) {
-        $summary = ['connected' => true, 'artist' => null];
+        $summary = ['connected' => true, 'artist' => null, 'recentTrack' => null];
         @file_put_contents(artistCachePath(), json_encode($summary + ['cached_at' => time()]), LOCK_EX);
         jsonResponse($summary);
     }
@@ -312,6 +304,50 @@ function getArtistSummary(): void
     if ($artistStatus >= 200 && $artistStatus < 300 && !empty($artistInfo['images'][0]['url'])) {
         $artistImage = (string) $artistInfo['images'][0]['url'];
     }
+    $playback = null;
+    [$playbackStatus, $playbackData] = spotifyRequest(
+        'https://api.spotify.com/v1/me/player/currently-playing',
+        'GET',
+        ['Authorization: Bearer ' . $saved['access_token']]
+    );
+    if ($playbackStatus === 401) {
+        $saved = refreshAccessToken($saved);
+        if (!empty($saved['access_token'])) {
+            [$playbackStatus, $playbackData] = spotifyRequest(
+                'https://api.spotify.com/v1/me/player/currently-playing',
+                'GET',
+                ['Authorization: Bearer ' . $saved['access_token']]
+            );
+        }
+    }
+    if ($playbackStatus >= 200 && $playbackStatus < 300 && !empty($playbackData['item'])) {
+        $playbackTrack = $playbackData['item'];
+        $playbackArtist = (string) ($playbackTrack['artists'][0]['name'] ?? 'Unknown artist');
+        $playbackId = (string) ($playbackTrack['id'] ?? '');
+        $playback = [
+            'artist' => $playbackArtist,
+            'track' => (string) ($playbackTrack['name'] ?? 'Unknown track'),
+            'trackUrl' => (string) ($playbackTrack['external_urls']['spotify'] ?? ($playbackId !== '' ? 'https://open.spotify.com/track/' . rawurlencode($playbackId) : 'https://open.spotify.com/')),
+            'image' => (string) ($playbackTrack['album']['images'][0]['url'] ?? ''),
+            'isPlaying' => !empty($playbackData['is_playing']),
+        ];
+    }
+
+    // Spotify returns 204 when playback is idle. Use the latest item from the
+    // recently played page already fetched above as the display fallback.
+    $recentTrack = null;
+    $latest = $items[0] ?? null;
+    if (is_array($latest) && !empty($latest['track'])) {
+        $latestTrack = $latest['track'];
+        $latestId = (string) ($latestTrack['id'] ?? '');
+        $recentTrack = [
+            'artist' => (string) ($latestTrack['artists'][0]['name'] ?? 'Unknown artist'),
+            'track' => (string) ($latestTrack['name'] ?? 'Unknown track'),
+            'trackUrl' => (string) ($latestTrack['external_urls']['spotify'] ?? ($latestId !== '' ? 'https://open.spotify.com/track/' . rawurlencode($latestId) : 'https://open.spotify.com/')),
+            'image' => (string) ($latestTrack['album']['images'][0]['url'] ?? ''),
+        ];
+    }
+
     $summary = [
         'connected' => true,
         'artist' => $winner['artist'],
@@ -319,6 +355,8 @@ function getArtistSummary(): void
         'image' => $artistImage,
         'track' => $topTrack['name'] ?? '',
         'trackUrl' => $topTrack['url'] ?? '',
+        'playback' => $playback,
+        'recentTrack' => $recentTrack,
     ];
     @file_put_contents(artistCachePath(), json_encode($summary + ['cached_at' => time()]), LOCK_EX);
     jsonResponse($summary);
