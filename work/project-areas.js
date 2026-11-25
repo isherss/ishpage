@@ -1,14 +1,3 @@
-/*
-  Edit this file to add project highlights. Visitors can select the published
-  areas but the map has no drawing or editing controls.
-
-  Use either:
-    bounds: [[south, west], [north, east]]  // quick rectangular highlight
-  or:
-    polygon: [[lng, lat], [lng, lat], ...]  // custom outline, 3+ points
-
-  Each entry may include title, location, dates, role, description, and link.
-*/
 export const PROJECT_AREAS = [
   {
     title: "Phase 2 EB I-190 | Bessie Coleman Dr to River Rd",
@@ -251,6 +240,130 @@ export const PROJECT_AREAS = [
         [
           -84.550036,
           42.722125
+        ]],
+    polygonOrder: "lnglat"
+  },
+  {
+    title: "Phase 1 Metra Task Order 26 | Rock Island Track Relocation",
+    location: "Chicago, Illinois",
+    dates: "2025",
+    role: "Engineer I",
+    description: "Created terrain models to analyze drainage solutions as a result of the proposed railway track relocation. Designed three storm sewer alternatives with hydraulic capacity and runoff calculations in an excel spreadsheet and using Chicago's stormwater tool. Analyzed existing connections using historical Chicago storm sewer plans. ",
+    polygon: [[
+          -87.634828,
+          41.867516
+        ],
+        [
+          -87.630107,
+          41.867739
+        ],
+        [
+          -87.629743,
+          41.860149
+        ],
+        [
+          -87.634184,
+          41.859973
+        ],
+        [
+          -87.634828,
+          41.867516
+        ]],
+    polygonOrder: "lnglat"
+  },
+  {
+    title: "Phase 2 Divison St. Bridge Reconstruction",
+    location: "Chicago, Illinois",
+    dates: "2024 & 2026",
+    role: "Engineer 1",
+    description: "Created earthwork shapes and calculations as an intern at 90%. Revised roadway plans at 100% submittal.",
+    polygon: [[
+          -87.660631,
+          41.9037
+        ],
+        [
+          -87.660674,
+          41.903245
+        ],
+        [
+          -87.652123,
+          41.903309
+        ],
+        [
+          -87.652187,
+          41.903804
+        ],
+        [
+          -87.660631,
+          41.9037
+        ]],
+    polygonOrder: "lnglat"
+  },
+  {
+    title: "Phase 3 Harlem Bus Bridge",
+    location: "Chicago, Illinois",
+    dates: "2025",
+    role: "Engineer 1",
+    description: "Created emergency MOT plans needed for the relocation of a water main across Higgins Ave.",
+    polygon: [[
+          -87.812519,
+          41.982638
+        ],
+        [
+          -87.812948,
+          41.981621
+        ],
+        [
+          -87.803528,
+          41.979818
+        ],
+        [
+          -87.803528,
+          41.980903
+        ],
+        [
+          -87.812519,
+          41.982638
+        ]],
+    polygonOrder: "lnglat"
+  },
+  {
+    title: "Phase 1 IL2/75 Reconstruction | Location Drainage Study",
+    location: "South Beloit, Illinois",
+    dates: "2024-2025",
+    role: "Engineer 1",
+    description: "Created a location drainage study for the corridor due to many complaints of flooding in the area. Analyzed the storm sewer, ditch, and culvert system using HY-8, SWMM, and Hydraulic Toolbox.",
+    polygon: [[
+          -89.038954,
+          42.496909
+        ],
+        [
+          -89.034276,
+          42.496627
+        ],
+        [
+          -89.03758,
+          42.480263
+        ],
+        [
+          -89.057236,
+          42.467222
+        ],
+        [
+          -89.0623,
+          42.468488
+        ],
+        [
+          -89.058695,
+          42.472793
+        ],
+        [
+          -89.046164,
+          42.482479
+        ],
+        [
+          -89.038954,
+          42.496909
         ]],
     polygonOrder: "lnglat"
   }
