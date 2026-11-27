@@ -86,7 +86,16 @@
       </aside>
 
       <article class="kb-content" id="musicArticle" aria-live="polite">
-        <section class="music-panel" id="albums" data-page-panel hidden>
+        <section class="music-panel" id="spotifyArtist" data-page-panel hidden>
+          <p class="kb-article-meta">spotifyArtist</p>
+          <div class="music-content">
+            <div class="spotify-card" id="spotifyArtistCard">
+              <p class="spotify-status" id="spotifyArtistStatus" role="status" style="grid-column:1/-1">Loading Spotify listening history…</p>
+            </div>
+          </div>
+        </section>
+
+       <section class="music-panel" id="albums" data-page-panel hidden>
           <p class="kb-article-meta">albumRecommendations</p>
           <h2 class="music-panel-title">Album Recommendations</h2>
           <div class="music-content">
@@ -99,16 +108,6 @@
                 <thead><tr id="albumHeaders"></tr></thead>
                 <tbody id="albumRows"><tr><td class="empty-state">Reading album recs.xlsx…</td></tr></tbody>
               </table>
-            </div>
-          </div>
-        </section>
-
-        <section class="music-panel" id="spotifyArtist" data-page-panel hidden>
-          <p class="kb-article-meta">spotifyArtist</p>
-          <h2 class="music-panel-title">Who I'm listening to a lot right now:</h2>
-          <div class="music-content">
-            <div class="spotify-card" id="spotifyArtistCard">
-              <p class="spotify-status" id="spotifyArtistStatus" role="status" style="grid-column:1/-1">Loading Spotify listening history…</p>
             </div>
           </div>
         </section>
@@ -158,7 +157,7 @@
           const empty=document.createElement("p");empty.className="spotify-status";empty.textContent="No current or recent track was returned by Spotify.";playbackColumn.append(empty);
         }
         const artistColumn=document.createElement("section");artistColumn.className="spotify-column";
-        const artistTitle=document.createElement("h3");artistTitle.textContent="Most listened to artist:";artistColumn.append(artistTitle);
+        const artistTitle=document.createElement("h3");artistTitle.textContent="This week's favorite artist!!";artistColumn.append(artistTitle);
         if(data.artist){
           const cover=makeCover(data.image,`${data.artist} artist image`,data.artistUrl);if(cover)artistColumn.append(cover);
           const artist=document.createElement("p");artist.className="spotify-track-name";artist.textContent=data.artist;artistColumn.append(artist);
